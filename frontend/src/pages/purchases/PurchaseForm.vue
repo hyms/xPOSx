@@ -245,9 +245,20 @@ const onSubmit = async () => {
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
         (payload as any).voucher = { ...voucher, issuedAt: new Date().toISOString().substr(0, 10) }
     }
-    await purchaseService.create(payload as Purchase)
-    $q.notify({ color: 'positive', message: 'Compra registrada con éxito' })
-    router.push('/purchases')
+    const res = await purchaseService.create(payload as Purchase)
+    const purchaseId = res.data?.id || 1
+    
+    $q.dialog({
+      title: 'Compra Exitosa',
+      message: `La compra se ha registrado correctamente. ¿Desea imprimir el comprobante?`,
+      persistent: true,
+      ok: { label: 'Imprimir', color: 'primary', unelevated: true, icon: 'print' },
+      cancel: { label: 'No, gracias', flat: true, color: 'grey' }
+    }).onOk(() => {
+      router.push(`/purchases/print/${purchaseId}`)
+    }).onCancel(() => {
+      router.push('/purchases')
+    })
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al registrar la compra' })
   } finally {

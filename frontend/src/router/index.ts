@@ -69,11 +69,27 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/quotations/print/:id',
+    component: () => import('../layouts/PrintLayout.vue'),
+    meta: { requiresAuth: true, permission: 'quotations_view' },
+    children: [
+      { path: '', component: () => import('../components/QuotationPrint.vue'), props: true }
+    ]
+  },
+  {
     path: '/returns/sales/print/:id',
     component: () => import('../layouts/PrintLayout.vue'),
     meta: { requiresAuth: true, permission: 'returns_view' },
     children: [
       { path: '', component: () => import('../components/SaleReturnPrint.vue'), props: true }
+    ]
+  },
+  {
+    path: '/returns/purchases/print/:id',
+    component: () => import('../layouts/PrintLayout.vue'),
+    meta: { requiresAuth: true, permission: 'returns_view' },
+    children: [
+      { path: '', component: () => import('../components/PurchaseReturnPrint.vue'), props: true }
     ]
   }
 ]

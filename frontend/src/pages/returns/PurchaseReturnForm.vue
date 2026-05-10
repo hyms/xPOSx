@@ -234,9 +234,20 @@ const onSubmit = async () => {
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
         (payload as any).voucher = { ...voucher, issuedAt: new Date().toISOString().substr(0, 10) }
     }
-    await returnService.createPurchaseReturn(payload as PurchaseReturn)
-    $q.notify({ color: 'positive', message: 'Devolución de Compra registrada con éxito' })
-    router.push('/returns')
+    const res = await returnService.createPurchaseReturn(payload as PurchaseReturn)
+    const returnId = res.data?.id || 1
+
+    $q.dialog({
+      title: 'Devolución Exitosa',
+      message: `La devolución de compra se ha registrado correctamente. ¿Desea imprimir el comprobante?`,
+      persistent: true,
+      ok: { label: 'Imprimir', color: 'primary', unelevated: true, icon: 'print' },
+      cancel: { label: 'No, gracias', flat: true, color: 'grey' }
+    }).onOk(() => {
+      router.push(`/returns/purchases/print/${returnId}`)
+    }).onCancel(() => {
+      router.push('/returns')
+    })
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al registrar la devolución de compra' })
   } finally {

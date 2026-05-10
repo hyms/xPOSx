@@ -25,30 +25,32 @@
         </q-td>
       </template>
 
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn flat round color="primary" icon="visibility" @click="viewQuotation(props.row.id)" />
-          <q-btn flat round color="negative" icon="delete" @click="confirmDeleteQuotation(props.row)" />
-        </q-td>
-      </template>
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props">
+              <q-btn flat round color="primary" icon="visibility" @click="viewQuotation(props.row.id)" />
+              <q-btn flat round color="accent" icon="receipt" @click="printQuotation(props.row.id)" />
+              <q-btn flat round color="negative" icon="delete" @click="confirmDeleteQuotation(props.row)" />
+            </q-td>
+          </template>
     </q-table>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { quotationService } from '@/services/quotation.service'
-import { useConfirm } from '@/composables/useConfirm'
+import { quotationService } from '@/services/quotation.service';
 import type { QuotationReadDto } from '@/types'
-
+import { useConfirm } from '@/composables/useConfirm'
 import { useCurrency } from '@/composables/useCurrency';
 
 const $q = useQuasar()
+const router = useRouter()
 const { confirmDelete } = useConfirm()
+const { formatCurrency } = useCurrency();
 const loading = ref(false)
 const quotations = ref<QuotationReadDto[]>([])
-const { formatCurrency } = useCurrency();
 
 
 const columns = [
@@ -83,6 +85,10 @@ const getStatusColor = (status: string) => {
 
 const viewQuotation = (id: number) => {
   $q.notify({ message: 'Detalle de cotización ' + id })
+}
+
+const printQuotation = (id: number) => {
+  router.push(`/quotations/print/${id}`)
 }
 
 const confirmDeleteQuotation = (item: QuotationReadDto) => {

@@ -49,6 +49,14 @@ public class TransfersController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, transfer);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(long id, Transfer transfer)
+    {
+        if (id != transfer.Id) return BadRequest();
+        transfer.UpdatedBy = long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+        return await _transferRepository.UpdateAsync(transfer) ? Ok(transfer) : NotFound();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(long id)
     {

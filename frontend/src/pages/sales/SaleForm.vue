@@ -212,9 +212,20 @@ const onSubmit = async () => {
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
         (payload as any).voucher = { ...voucher, issuedAt: new Date() }
     }
-    await saleService.create(payload as Sale)
-    $q.notify({ color: 'positive', message: 'Venta creada con éxito' })
-    router.push('/sales')
+    const res = await saleService.create(payload as Sale)
+    const saleId = res.data?.id || 1
+
+    $q.dialog({
+      title: 'Venta Exitosa',
+      message: `La venta se ha registrado correctamente. ¿Desea imprimir el comprobante?`,
+      persistent: true,
+      ok: { label: 'Imprimir', color: 'primary', unelevated: true, icon: 'print' },
+      cancel: { label: 'No, gracias', flat: true, color: 'grey' }
+    }).onOk(() => {
+      router.push(`/sales/print/${saleId}`)
+    }).onCancel(() => {
+      router.push('/sales')
+    })
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al crear la venta' })
   } finally {

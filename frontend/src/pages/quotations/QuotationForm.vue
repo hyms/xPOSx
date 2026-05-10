@@ -202,9 +202,20 @@ const submitForm = async () => {
   }
   saving.value = true
   try {
-    await quotationService.create(formData)
-    $q.notify({ color: 'positive', message: 'Cotización creada correctamente' })
-    router.push('/quotations')
+    const res = await quotationService.create(formData)
+    const quotationId = res.data?.id || 1
+
+    $q.dialog({
+      title: 'Cotización Exitosa',
+      message: `La cotización se ha registrado correctamente. ¿Desea imprimir el comprobante?`,
+      persistent: true,
+      ok: { label: 'Imprimir', color: 'primary', unelevated: true, icon: 'print' },
+      cancel: { label: 'No, gracias', flat: true, color: 'grey' }
+    }).onOk(() => {
+      router.push(`/quotations/print/${quotationId}`)
+    }).onCancel(() => {
+      router.push('/quotations')
+    })
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al crear cotización' })
   } finally {

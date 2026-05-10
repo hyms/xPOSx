@@ -277,6 +277,7 @@ export interface PagedResult<T> {
 
 export interface Quotation {
     id?: number;
+    ref?: string;
     date: string;
     clientId: number;
     warehouseId: number;

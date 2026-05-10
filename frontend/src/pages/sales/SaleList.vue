@@ -79,7 +79,7 @@
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
               <q-btn flat round color="primary" icon="visibility" @click="viewSale(props.row.id)" />
-              <q-btn v-if="props.row.voucherId" flat round color="accent" icon="receipt" @click="printVoucher(props.row.id)" />
+              <q-btn flat round color="accent" icon="receipt" @click="printVoucher(props.row.id)" />
               <q-btn flat round color="negative" icon="delete" @click="confirmDeleteAction(props.row)" />
             </q-td>
           </template>
