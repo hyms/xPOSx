@@ -1,14 +1,13 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using XPos.Domain.Models;
 
 namespace XPos.Domain.Interfaces;
 
 public interface ICurrencyRepository
 {
-    Task<IEnumerable<Currency>> GetAllAsync();
-    Task<Currency?> GetByIdAsync(long id);
-    Task<long> CreateAsync(Currency currency);
-    Task<bool> UpdateAsync(Currency currency);
+    Task<CurrencySetting?> GetAsync();
+    Task<CurrencySetting?> GetByIdAsync(long id);
+    Task<List<CurrencySetting>> GetAllAsync();
+    Task<long> CreateAsync(CurrencySetting currency);
+    Task<bool> UpdateAsync(CurrencySetting currency);
     Task<bool> DeleteAsync(long id);
 }

@@ -18,7 +18,7 @@ export const useWarehouseStore = defineStore('warehouse', {
   }),
 
   getters: {
-    activeWarehouse: (state) => state.warehouses.find(w => w.id === state.activeWarehouseId)
+    activeWarehouse: (state) => state.warehouses.find((w: Warehouse) => w.id === state.activeWarehouseId)
   },
 
   actions: {

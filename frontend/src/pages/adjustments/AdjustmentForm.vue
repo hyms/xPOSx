@@ -5,11 +5,11 @@
         <div class="text-h6">Nuevo Ajuste de Inventario</div>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section class="q-pa-md">
         <q-form @submit="onSubmit" class="q-gutter-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="formData.date" type="date" label="Fecha" lazy-rules :rules="[val => !!val || 'Requerido']" />
+              <q-input v-model="formData.date" type="date" label="Fecha" lazy-rules :rules="[val => !!val || 'Requerido']" outlined dense />
             </div>
             <div class="col-12 col-md-8">
               <q-select
@@ -22,6 +22,8 @@
                 map-options
                 lazy-rules
                 :rules="[val => !!val || 'Requerido']"
+                outlined
+                dense
               />
             </div>
 
@@ -35,6 +37,8 @@
                 @filter="filterProducts"
                 option-label="name"
                 @update:model-value="addProduct"
+                outlined
+                dense
               >
                 <template v-slot:no-option>
                   <q-item><q-item-section class="text-grey">Sin resultados</q-item-section></q-item>
@@ -84,7 +88,7 @@
             </div>
 
             <div class="col-12">
-              <q-input v-model="formData.notes" label="Notas" type="textarea" autogrow />
+              <q-input v-model="formData.notes" label="Notas" type="textarea" autogrow outlined dense />
             </div>
           </div>
 
@@ -132,7 +136,7 @@ const itemColumns = [
   { name: 'actions', label: 'Acciones', field: 'actions', align: 'center' as const }
 ]
 
-const getProductName = (id: number) => allProducts.value.find(p => p.id === id)?.name || 'Desconocido'
+const getProductName = (id: number) => allProducts.value.find((p: Product) => p.id === id)?.name || 'Desconocido'
 
 const fetchData = async () => {
   try {
@@ -151,14 +155,14 @@ const fetchData = async () => {
 const filterProducts = (val: string, update: any) => {
   update(() => {
     const needle = val.toLowerCase()
-    products.value = allProducts.value.filter(v => v.name.toLowerCase().indexOf(needle) > -1)
+    products.value = allProducts.value.filter((v: Product) => v.name.toLowerCase().indexOf(needle) > -1)
   })
 }
 
 const addProduct = (product: Product) => {
   if (!product) return
   
-  const existing = formData.details.find(d => d.productId === product.id)
+  const existing = formData.details.find((d: AdjustmentDetail) => d.productId === product.id)
   if (existing) {
     existing.quantity++
   } else {

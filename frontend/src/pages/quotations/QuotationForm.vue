@@ -5,19 +5,21 @@
         <div class="text-h6">Crear Nueva Cotización</div>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section class="q-pa-md">
         <q-form @submit="submitForm" class="q-gutter-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="formData.date" label="Fecha" type="date" stack-label :rules="[val => !!val || 'Requerido']" />
+              <q-input v-model="formData.date" label="Fecha" type="date" stack-label outlined dense :rules="[val => !!val || 'Requerido']" />
             </div>
             <div class="col-12 col-md-4">
-              <q-select
+<q-select
                 v-model="formData.clientId"
                 :options="clientOptions"
                 label="Cliente"
                 emit-value
                 map-options
+                outlined
+                dense
                 :rules="[val => !!val || 'Requerido']"
               />
             </div>
@@ -28,6 +30,8 @@
                 label="Almacén"
                 emit-value
                 map-options
+                outlined
+                dense
                 :rules="[val => !!val || 'Requerido']"
               />
             </div>
@@ -44,6 +48,8 @@
                 :options="productOptions"
                 @filter="filterProducts"
                 @update:model-value="addProduct"
+                outlined
+                dense
               >
                 <template v-slot:no-option>
                   <q-item><q-item-section class="text-grey">No se encontraron productos</q-item-section></q-item>
@@ -98,11 +104,15 @@ import { quotationService } from '@/services/quotation.service'
 import { clientService } from '@/services/client.service'
 import { warehouseService } from '@/services/warehouse.service'
 import { productService } from '@/services/product.service'
-import type { Quotation, Product } from '@/types'
+import type { Quotation, Product, QuotationDetail } from '@/types'
+
+import { useCurrency } from '@/composables/useCurrency';
 
 const router = useRouter()
 const $q = useQuasar()
 const saving = ref(false)
+const { formatCurrency } = useCurrency();
+
 
 const clientOptions = ref<any[]>([])
 const warehouseOptions = ref<any[]>([])
@@ -146,15 +156,15 @@ const filterProducts = (val: string, update: any) => {
   update(() => {
     const needle = val.toLowerCase()
     productOptions.value = allProducts.value
-      .filter(v => v.name.toLowerCase().indexOf(needle) > -1 || v.code.toLowerCase().indexOf(needle) > -1)
-      .map(p => ({ label: `${p.code} - ${p.name}`, value: p }))
+      .filter((v: Product) => v.name.toLowerCase().indexOf(needle) > -1 || v.code.toLowerCase().indexOf(needle) > -1)
+      .map((p: Product) => ({ label: `${p.code} - ${p.name}`, value: p }))
   })
 }
 
 const addProduct = (val: any) => {
   if (!val) return
   const product = val.value
-  const existing = formData.details.find(d => d.productId === product.id)
+  const existing = formData.details.find((d: QuotationDetail) => d.productId === product.id)
   if (existing) {
     existing.quantity++
     updateRow(existing)
@@ -177,16 +187,12 @@ const updateRow = (row: any) => {
 }
 
 const removeProduct = (row: any) => {
-  formData.details = formData.details.filter(d => d.productId !== row.productId)
+  formData.details = formData.details.filter((d: QuotationDetail) => d.productId !== row.productId)
   calculateTotal()
 }
 
 const calculateTotal = () => {
-  formData.grandTotal = formData.details.reduce((acc, curr) => acc + curr.total, 0)
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
+  formData.grandTotal = formData.details.reduce((acc: number, curr: QuotationDetail) => acc + curr.total, 0)
 }
 
 const submitForm = async () => {

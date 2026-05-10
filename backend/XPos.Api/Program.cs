@@ -5,11 +5,15 @@ using Npgsql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
+using Dapper;
 using XPos.Api.Authorization;
 using XPos.Data.Migrations;
 using XPos.Data.Repositories;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Services;
+
+SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
+SqlMapper.AddTypeHandler(new DateTimeOffsetTypeHandler());
 
 var builder = WebApplication.CreateBuilder(args);
 

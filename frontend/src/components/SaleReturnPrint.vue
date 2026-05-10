@@ -63,9 +63,13 @@ import { useRoute } from 'vue-router'
 import { returnService } from '@/services/return.service'
 import type { SaleReturn } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const route = useRoute()
 const saleReturn = ref<SaleReturn | null>(null)
 const loading = ref(true)
+const { formatCurrency } = useCurrency();
+
 
 const fetchSaleReturn = async () => {
   try {
@@ -78,10 +82,6 @@ const fetchSaleReturn = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const printVoucher = () => {

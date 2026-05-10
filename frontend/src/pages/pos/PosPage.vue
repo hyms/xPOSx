@@ -8,11 +8,12 @@
           <div class="col-12 col-md-6">
             <q-input
               v-model="search"
-              placeholder="Buscar producto (F2)..."
+              placeholder="Buscar producto o Código (F2)..."
               filled
               dense
               bg-color="white"
               class="pos-search-input"
+              @keyup.enter="handleBarcodeScan"
             >
               <template v-slot:prepend>
                 <q-icon name="search" />
@@ -166,14 +167,23 @@
         <q-separator />
 
         <div class="q-py-md">
-          <div class="row justify-between text-subtitle1">
+          <div class="row justify-between text-subtitle1 q-mb-sm">
             <span>Subtotal:</span>
             <span class="text-tabular-nums">${{ subtotal.toFixed(2) }}</span>
           </div>
-          <div class="row justify-between text-subtitle1">
-            <span>Impuesto (0%):</span>
-            <span class="text-tabular-nums">$0.00</span>
+          
+          <div class="row q-col-gutter-sm q-mb-sm">
+             <div class="col-4">
+                <q-input v-model.number="formData.taxRate" label="Impuesto %" type="number" dense outlined input-class="text-right" @update:model-value="calculateTotals" />
+             </div>
+             <div class="col-4">
+                <q-input v-model.number="formData.discount" label="Descuento $" type="number" dense outlined input-class="text-right" @update:model-value="calculateTotals" />
+             </div>
+             <div class="col-4">
+                <q-input v-model.number="formData.shipping" label="Envío $" type="number" dense outlined input-class="text-right" @update:model-value="calculateTotals" />
+             </div>
           </div>
+
           <q-separator class="q-my-sm" />
           <div class="row justify-between text-h5 text-weight-bolder text-primary">
             <span>Total:</span>
@@ -208,16 +218,26 @@
           
           <div class="row q-col-gutter-md">
             <div class="col-12">
+              <q-input v-model="formData.notes" label="Notas de la Venta (Opcional)" type="textarea" autogrow filled dense class="q-mb-md" />
+            </div>
+            <div class="col-12">
               <q-input
                 v-model.number="paidAmount"
                 label="Monto Recibido"
                 type="number"
-                filled
+                outlined
+                dense
                 prefix="$"
                 input-class="text-h6"
                 @update:model-value="calculateChange"
               />
             </div>
+            
+            <div class="col-12 flex q-gutter-sm justify-center q-mb-md">
+                <q-btn v-for="amt in quickAmounts" :key="amt" :label="`$${amt}`" color="secondary" outline @click="setQuickAmount(amt)" />
+                <q-btn label="Exacto" color="secondary" outline @click="setQuickAmount(total)" />
+            </div>
+
             <div class="col-12">
               <div class="row justify-between text-h6">
                 <span>Cambio:</span>
@@ -245,7 +265,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 
 import { productService } from '@/services/product.service';
@@ -260,6 +280,7 @@ import { saleService } from '@/services/sale.service';
 import type { Sale, SaleDetail } from '@/types'
 
 const $q = useQuasar()
+const router = useRouter()
 
 
 const search = ref('')
@@ -279,11 +300,23 @@ const saving = ref(false)
 const formData = reactive({
   clientId: 0,
   warehouseId: 0,
-  date: new Date().toISOString().split('T')[0]
+  date: new Date().toISOString().split('T')[0],
+  taxRate: 0,
+  discount: 0,
+  shipping: 0,
+  notes: ''
 })
 
+const quickAmounts = [10, 20, 50, 100]
+
+const calculateTotals = () => {
+    // Totals are computed now, so just trigger reactivity if needed
+    paidAmount.value = total.value
+    calculateChange()
+}
+
 const filteredProducts = computed(() => {
-  return allProducts.value.filter(p => {
+  return allProducts.value.filter((p: Product) => {
     const matchesSearch = p.name.toLowerCase().includes(search.value.toLowerCase()) || 
                          (p.code && p.code.toLowerCase().includes(search.value.toLowerCase()))
     const matchesCategory = !selectedCategory.value || p.categoryId === selectedCategory.value
@@ -291,10 +324,29 @@ const filteredProducts = computed(() => {
   })
 })
 
-const subtotal = computed(() => cart.value.reduce((sum, item) => sum + item.total, 0))
-const total = computed(() => subtotal.value)
+const subtotal = computed(() => cart.value.reduce((sum: number, item: SaleDetail) => sum + item.total, 0))
+const total = computed(() => {
+    const taxAmount = subtotal.value * ((formData.taxRate || 0) / 100)
+    return subtotal.value + taxAmount + (formData.shipping || 0) - (formData.discount || 0)
+})
 
-const getProductName = (id: number) => allProducts.value.find(p => p.id === id)?.name || ''
+const setQuickAmount = (amount: number) => {
+    paidAmount.value = amount
+    calculateChange()
+}
+
+const handleBarcodeScan = () => {
+  if (!search.value) return
+  const exactMatch = allProducts.value.find(p => p.code === search.value)
+  if (exactMatch) {
+    addToCart(exactMatch)
+    search.value = ''
+  } else {
+    $q.notify({ color: 'warning', message: 'Producto no encontrado por código', timeout: 1000 })
+  }
+}
+
+const getProductName = (id: number) => allProducts.value.find((p: Product) => p.id === id)?.name || ''
 const getStock = (productId: number) => stocks.value[productId] || 0
 
 const fetchData = async () => {
@@ -329,14 +381,14 @@ const fetchStocks = async () => {
     // For now we'll assume products have their global stock or we fetch individually
     // Ideally: const response = await warehouseService.getStocks(formData.warehouseId)
     // Placeholder logic:
-    allProducts.value.forEach(p => {
+    allProducts.value.forEach((p: Product) => {
       stocks.value[p.id!] = Math.floor(Math.random() * 50) + 10 // Placeholder
     })
   } catch (error) {}
 }
 
 const addToCart = (product: Product) => {
-  const existing = cart.value.find(item => item.productId === product.id)
+  const existing = cart.value.find((item: SaleDetail) => item.productId === product.id)
   if (existing) {
     existing.quantity++
     existing.total = existing.quantity * existing.price
@@ -374,6 +426,10 @@ const removeFromCart = (index: number) => {
 const clearCart = () => {
   cart.value = []
   paidAmount.value = 0
+  formData.taxRate = 0
+  formData.discount = 0
+  formData.shipping = 0
+  formData.notes = ''
 }
 
 // Keyboard shortcuts
@@ -406,6 +462,7 @@ const submitSale = async () => {
   try {
     const sale: Sale = {
       ...formData,
+      ref: `POS-${Date.now()}`,
       isPos: true,
       grandTotal: total.value,
       paidAmount: total.value,
@@ -414,16 +471,23 @@ const submitSale = async () => {
       details: cart.value
     }
 
-    await saleService.create(sale)
-    $q.notify({
-      color: 'positive',
-      message: 'Venta realizada con éxito',
-      icon: 'check',
-      timeout: 1000
-    })
-    
+    const res = await saleService.create(sale)
+    const saleId = res.data?.id || 1
+
     clearCart()
     showCheckoutDialog.value = false
+
+    $q.dialog({
+      title: 'Venta Exitosa',
+      message: `Venta realizada con éxito.\nTotal: $${total.value.toFixed(2)}\nCambio: $${change.value.toFixed(2)}`,
+      persistent: true,
+      ok: { label: 'Imprimir Comprobante', color: 'primary', unelevated: true },
+      cancel: { label: 'Cerrar', flat: true, color: 'grey' }
+    }).onOk(() => {
+      router.push(`/sales/print/${saleId}`)
+    }).onCancel(() => {
+      // just close
+    })
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al procesar la venta' })
   } finally {

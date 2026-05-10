@@ -36,63 +36,78 @@
     </div>
 
     <!-- User Dialog -->
-    <q-dialog v-model="showDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Usuario' : 'Nuevo Usuario' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveUser" class="q-gutter-md">
-            <q-input
-              v-model="formData.username"
-              label="Nombre de Usuario"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-input
-              v-model="formData.firstName"
-              label="Nombre"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-input
-              v-model="formData.lastName"
-              label="Apellido"
-            />
-            <q-input
-              v-model="formData.email"
-              label="Email"
-              type="email"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-input
-              v-if="!isEdit"
-              v-model="formData.password"
-              label="Contraseña"
-              type="password"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-select
-              v-model="formData.role"
-              :options="roleOptions"
-              label="Rol"
-              emit-value
-              map-options
-              lazy-rules
-              :rules="[ val => !!val || 'Campo requerido']"
-            />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Usuario' : 'Nuevo Usuario'"
+      @submit="saveUser"
+      :saving="saving"
+    >
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.username"
+            label="Nombre de Usuario"
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.email"
+            label="Email"
+            type="email"
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.firstName"
+            label="Nombre"
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.lastName"
+            label="Apellido"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
+            v-model="formData.role"
+            :options="roleOptions"
+            label="Rol"
+            emit-value
+            map-options
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6" v-if="!isEdit">
+          <q-input
+            v-model="formData.password"
+            label="Contraseña"
+            type="password"
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+      </div>
+    </FormDialog>
   </q-page>
 </template>
 
@@ -102,6 +117,7 @@ import { useQuasar } from 'quasar'
 import { userService } from '@/services/user.service';
 import type { User } from '@/types'
 import { roleService } from '@/services/role.service'
+import FormDialog from '@/components/FormDialog.vue'
 import { useConfirm } from '@/composables/useConfirm'
 
 const $q = useQuasar()

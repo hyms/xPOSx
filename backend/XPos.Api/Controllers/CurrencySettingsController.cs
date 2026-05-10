@@ -18,12 +18,12 @@ public class CurrencySettingsController : ControllerBase
     }
 
     [HttpGet("currency")]
-    public async Task<IActionResult> Get() => Ok(await _currencyService.GetAllAsync());
+    public async Task<IActionResult> Get() => Ok(await _currencyService.GetAsync());
 
     [HttpPost("currency")]
-    public async Task<IActionResult> CreateOrUpdate(Currency currency)
+    public async Task<IActionResult> CreateOrUpdate(CurrencySetting currency)
     {
-        var existing = (await _currencyService.GetAllAsync()).FirstOrDefault();
+        var existing = await _currencyService.GetAsync();
         if (existing != null)
         {
             currency.Id = existing.Id;
@@ -31,8 +31,19 @@ public class CurrencySettingsController : ControllerBase
         }
         else
         {
-            await _currencyService.CreateAsync(currency);
+            var repo = GetCurrencyRepository();
+            if (repo != null)
+            {
+                await repo.CreateAsync(currency);
+            }
         }
         return Ok(new { id = currency.Id });
+    }
+
+    private ICurrencyRepository? GetCurrencyRepository()
+    {
+        var serviceProvider = HttpContext.RequestServices;
+        var scope = serviceProvider.CreateScope();
+        return scope.ServiceProvider.GetService(typeof(ICurrencyRepository)) as ICurrencyRepository;
     }
 }

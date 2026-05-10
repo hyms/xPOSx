@@ -42,10 +42,14 @@ import { quotationService } from '@/services/quotation.service'
 import { useConfirm } from '@/composables/useConfirm'
 import type { QuotationReadDto } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()
 const loading = ref(false)
 const quotations = ref<QuotationReadDto[]>([])
+const { formatCurrency } = useCurrency();
+
 
 const columns = [
   { name: 'date', label: 'Fecha', field: 'date', format: (val: string) => val.split('T')[0], sortable: true, align: 'left' as const },
@@ -75,10 +79,6 @@ const getStatusColor = (status: string) => {
     case 'pending': return 'warning'
     default: return 'grey'
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const viewQuotation = (id: number) => {

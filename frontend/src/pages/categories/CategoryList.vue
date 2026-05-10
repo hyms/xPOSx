@@ -23,25 +23,15 @@
       </div>
     </div>
 
-    <q-dialog v-model="showDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Categoría' : 'Nueva Categoría' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveCategory" class="q-gutter-md">
-            <q-input v-model="formData.code" label="Código" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-            <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Categoría' : 'Nueva Categoría'"
+      @submit="saveCategory"
+      :saving="saving"
+    >
+      <q-input v-model="formData.code" label="Código" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+      <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+    </FormDialog>
   </q-page>
 </template>
 
@@ -50,6 +40,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { useQuasar } from 'quasar'
 import { categoryService } from '@/services/category.service';
 import type { Category } from '@/types'
+import FormDialog from '@/components/FormDialog.vue'
 
 const $q = useQuasar()
 const categories = ref<Category[]>([])

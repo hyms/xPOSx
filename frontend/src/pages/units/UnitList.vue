@@ -40,78 +40,67 @@
             </div>
         </div>
 
-        <!-- Unit Dialog -->
-        <q-dialog v-model="showDialog" persistent>
-            <q-card style="min-width: 400px">
-                <q-card-section>
-                    <div class="text-h6">
-                        {{ isEdit ? "Editar Unidad" : "Nueva Unidad" }}
-                    </div>
-                </q-card-section>
-
-                <q-card-section class="q-pt-none">
-                    <q-form @submit="saveUnit" class="q-gutter-md">
-                        <q-input
-                            v-model="formData.name"
-                            label="Nombre"
-                            lazy-rules
-                            :rules="[(val) => !!val || 'Requerido']"
-                        />
-                        <q-input
-                            v-model="formData.shortName"
-                            label="Nombre Corto"
-                            lazy-rules
-                            :rules="[(val) => !!val || 'Requerido']"
-                        />
-
-                        <q-select
-                            v-model="formData.baseUnit"
-                            :options="unitOptions"
-                            label="Unidad Base"
-                            option-value="id"
-                            option-label="name"
-                            emit-value
-                            map-options
-                            clearable
-                        />
-
-                        <div
-                            class="row q-col-gutter-sm"
-                        >
-                            <div class="col-6">
-                                <q-select
-                                    v-model="formData.operator"
-                                    :options="['*', '/']"
-                                    label="Operador"
-                                />
-                            </div>
-                            <div class="col-6">
-                                <q-input
-                                    v-model.number="formData.operatorValue"
-                                    label="Valor"
-                                    type="number"
-                                />
-                            </div>
-                        </div>
-
-                        <div class="row justify-end q-mt-md">
-                            <q-btn
-                                label="Cancelar"
-                                color="primary"
-                                flat
-                                v-close-popup
-                            />
-                            <q-btn
-                                :label="isEdit ? 'Actualizar' : 'Guardar'"
-                                color="primary"
-                                type="submit"
-                                :loading="saving"
-                            />
-                        </div>
-                    </q-form>
-                </q-card-section>
-            </q-card>
-        </q-dialog>
+        <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Unidad' : 'Nueva Unidad'"
+      @submit="saveUnit"
+      :saving="saving"
+    >
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.name"
+            label="Nombre"
+            lazy-rules
+            :rules="[val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.shortName"
+            label="Nombre Corto"
+            lazy-rules
+            :rules="[val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12">
+          <q-select
+            v-model="formData.baseUnit"
+            :options="unitOptions"
+            label="Unidad Base"
+            option-value="id"
+            option-label="name"
+            emit-value
+            map-options
+            clearable
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-6">
+          <q-select
+            v-model="formData.operator"
+            :options="['*', '/']"
+            label="Operador"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-6">
+          <q-input
+            v-model.number="formData.operatorValue"
+            label="Valor"
+            type="number"
+            outlined
+            dense
+          />
+        </div>
+      </div>
+    </FormDialog>
     </q-page>
 </template>
 
@@ -120,6 +109,7 @@ import { ref, onMounted, reactive, computed } from "vue";
 import { useQuasar } from "quasar";
 import { unitService } from "@/services/unit.service";
 import type { Unit } from "@/types";
+import FormDialog from '@/components/FormDialog.vue'
 
 const $q = useQuasar();
 const units = ref<Unit[]>([]);
@@ -177,7 +167,7 @@ const columns = [
     },
 ];
 
-const unitOptions = computed(() => units.value.filter((u) => !u.baseUnit));
+const unitOptions = computed(() => units.value.filter((u: Unit) => !u.baseUnit));
 
 const fetchUnits = async () => {
     loading.value = true;

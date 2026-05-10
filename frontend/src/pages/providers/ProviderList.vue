@@ -24,46 +24,36 @@
     </div>
 
     <!-- Provider Dialog -->
-    <q-dialog v-model="showDialog" persistent>
-      <q-card style="min-width: 450px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveProvider" class="q-gutter-md">
-            <div class="row q-col-gutter-sm">
-              <div class="col-12 col-md-6">
-                <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input v-model.number="formData.code" label="Código" type="number" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input v-model="formData.email" label="Email" type="email" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input v-model="formData.phone" label="Teléfono" />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input v-model="formData.city" label="Ciudad" />
-              </div>
-              <div class="col-12 col-md-6">
-                <q-input v-model="formData.country" label="País" />
-              </div>
-              <div class="col-12">
-                <q-input v-model="formData.address" label="Dirección" type="textarea" autogrow />
-              </div>
-            </div>
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor'"
+      @submit="saveProvider"
+      :saving="saving"
+    >
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model.number="formData.code" label="Código" type="number" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.email" label="Email" type="email" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.phone" label="Teléfono" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.city" label="Ciudad" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.country" label="País" outlined dense />
+        </div>
+        <div class="col-12">
+          <q-input v-model="formData.address" label="Dirección" type="textarea" autogrow outlined dense />
+        </div>
+      </div>
+    </FormDialog>
   </q-page>
 </template>
 
@@ -72,6 +62,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { useQuasar } from 'quasar'
 import { providerService } from '@/services/provider.service';
 import type { Provider } from '@/types'
+import FormDialog from '@/components/FormDialog.vue'
 
 const $q = useQuasar()
 const providers = ref<Provider[]>([])

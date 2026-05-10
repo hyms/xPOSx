@@ -7,14 +7,15 @@
             <div class="text-h6">Mi Perfil</div>
           </q-card-section>
 
-          <q-card-section>
+          <q-card-section class="q-pa-md">
             <q-form @submit="onUpdate" class="q-gutter-md">
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-6">
                   <q-input
                     v-model="userData.username"
                     label="Usuario"
-                    filled
+                    outlined
+                    dense
                     readonly
                   />
                 </div>
@@ -22,7 +23,8 @@
                   <q-input
                     v-model="userData.email"
                     label="Email"
-                    filled
+                    outlined
+                    dense
                     lazy-rules
                     :rules="[val => !!val || 'Requerido', val => /.+@.+\..+/.test(val) || 'Email inválido']"
                   />
@@ -31,7 +33,8 @@
                   <q-input
                     v-model="userData.firstName"
                     label="Nombre"
-                    filled
+                    outlined
+                    dense
                     lazy-rules
                     :rules="[val => !!val || 'Requerido']"
                   />
@@ -40,7 +43,8 @@
                   <q-input
                     v-model="userData.lastName"
                     label="Apellido"
-                    filled
+                    outlined
+                    dense
                   />
                 </div>
                 <div class="col-12 col-md-6">
@@ -48,7 +52,8 @@
                     v-model="userData.newPassword"
                     label="Nueva Contraseña"
                     type="password"
-                    filled
+                    outlined
+                    dense
                     lazy-rules
                     :rules="[val => !val || val.length >= 6 || 'Mínimo 6 caracteres']"
                   />

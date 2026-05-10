@@ -121,7 +121,13 @@ import { ref, onMounted } from 'vue'
 import { reportService } from '@/services/report.service'
 import type { DashboardSummaryDto } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const summary = ref<DashboardSummaryDto>({
+  sales: 0,
+  purchases: 0,
+  expenses: 0,
+  revenue: 0,
   todaySales: 0,
   todaySalesCount: 0,
   monthlySales: 0,
@@ -129,6 +135,8 @@ const summary = ref<DashboardSummaryDto>({
   recentSales: [],
   topProducts: []
 })
+const { formatCurrency } = useCurrency();
+
 
 const recentColumns = ref([
   { name: 'ref', label: 'Ref', field: 'ref', align: 'left' as const },
@@ -150,10 +158,6 @@ const fetchSummary = async () => {
   } catch (error) {
     console.error('Error fetching dashboard summary:', error)
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 onMounted(fetchSummary)

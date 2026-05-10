@@ -24,7 +24,7 @@
 
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="general">
-              <q-form @submit="saveSettings" class="q-gutter-md">
+              <q-form @submit="saveSettings" class="q-pa-md">
                 <div class="row q-col-gutter-md">
                   <div class="col-12 col-md-6">
                     <q-input
@@ -32,6 +32,8 @@
                       label="Nombre de la Empresa"
                       lazy-rules
                       :rules="[ val => val && val.length > 0 || 'Campo requerido']"
+                      outlined
+                      dense
                     />
                   </div>
                   <div class="col-12 col-md-6">
@@ -39,12 +41,16 @@
                       v-model="formData.email"
                       label="Email de la Empresa"
                       type="email"
+                      outlined
+                      dense
                     />
                   </div>
                   <div class="col-12 col-md-6">
                     <q-input
                       v-model="formData.companyPhone"
                       label="Teléfono de la Empresa"
+                      outlined
+                      dense
                     />
                   </div>
                   <div class="col-12 col-md-6">
@@ -52,6 +58,8 @@
                       v-model="formData.version"
                       label="Versión del Sistema"
                       readonly
+                      outlined
+                      dense
                     />
                   </div>
                   <div class="col-12">
@@ -60,6 +68,8 @@
                       label="Dirección de la Empresa"
                       type="textarea"
                       autogrow
+                      outlined
+                      dense
                     />
                   </div>
                   <div class="col-12 col-md-6">
@@ -67,6 +77,8 @@
                       v-model.number="formData.days"
                       label="Días de Validez/Suscripción"
                       type="number"
+                      outlined
+                      dense
                     />
                   </div>
                 </div>
@@ -104,9 +116,9 @@
 
             <q-tab-panel name="currency">
               <div class="text-subtitle1 q-mb-md">Configuración de Moneda</div>
-              <q-form @submit="saveCurrencySettings" class="q-gutter-md">
-                <q-input v-model="currencySettings.code" label="Código de Moneda (USD, EUR)" />
-                <q-input v-model="currencySettings.symbol" label="Símbolo de Moneda ($, €)" />
+              <q-form @submit="saveCurrencySettings" class="q-pa-md">
+                <q-input v-model="currencySettings.code" label="Código de Moneda (USD, EUR)" outlined dense />
+                <q-input v-model="currencySettings.symbol" label="Símbolo de Moneda ($, €)" outlined dense />
                 <div class="row justify-end q-mt-md">
                   <q-btn label="Guardar Cambios" color="primary" type="submit" :loading="saving" />
                 </div>
@@ -115,14 +127,14 @@
 
             <q-tab-panel name="mail">
               <div class="text-subtitle1 q-mb-md">Configuración de Correo Electrónico</div>
-              <q-form @submit="saveMailSettings" class="q-gutter-md">
-                <q-input v-model="mailSettings.host" label="Host SMTP" />
-                <q-input v-model="mailSettings.port" label="Puerto SMTP" type="number" />
-                <q-input v-model="mailSettings.username" label="Usuario SMTP" />
-                <q-input v-model="mailSettings.password" label="Contraseña SMTP" type="password" />
-                <q-input v-model="mailSettings.encryption" label="Encriptación (tls, ssl)" />
-                <q-input v-model="mailSettings.fromAddress" label="Desde Email" type="email" />
-                <q-input v-model="mailSettings.fromName" label="Desde Nombre" />
+              <q-form @submit="saveMailSettings" class="q-pa-md">
+                <q-input v-model="mailSettings.host" label="Host SMTP" outlined dense />
+                <q-input v-model="mailSettings.port" label="Puerto SMTP" type="number" outlined dense />
+                <q-input v-model="mailSettings.username" label="Usuario SMTP" outlined dense />
+                <q-input v-model="mailSettings.password" label="Contraseña SMTP" type="password" outlined dense />
+                <q-input v-model="mailSettings.encryption" label="Encriptación (tls, ssl)" outlined dense />
+                <q-input v-model="mailSettings.fromAddress" label="Desde Email" type="email" outlined dense />
+                <q-input v-model="mailSettings.fromName" label="Desde Nombre" outlined dense />
                 <div class="row justify-end q-mt-md">
                   <q-btn label="Guardar Cambios" color="primary" type="submit" :loading="saving" />
                 </div>
@@ -131,10 +143,10 @@
 
             <q-tab-panel name="sms">
               <div class="text-subtitle1 q-mb-md">Configuración de SMS</div>
-              <q-form @submit="saveSmsSettings" class="q-gutter-md">
-                <q-input v-model="smsSettings.sid" label="Twilio SID" />
-                <q-input v-model="smsSettings.token" label="Twilio Token" type="password" />
-                <q-input v-model="smsSettings.fromNumber" label="Número Twilio" />
+              <q-form @submit="saveSmsSettings" class="q-pa-md">
+                <q-input v-model="smsSettings.sid" label="Twilio SID" outlined dense />
+                <q-input v-model="smsSettings.token" label="Twilio Token" type="password" outlined dense />
+                <q-input v-model="smsSettings.fromNumber" label="Número Twilio" outlined dense />
                 <div class="row justify-end q-mt-md">
                   <q-btn label="Guardar Cambios" color="primary" type="submit" :loading="saving" />
                 </div>
@@ -143,11 +155,11 @@
 
             <q-tab-panel name="payment_gateways">
               <div class="text-subtitle1 q-mb-md">Configuración de Pasarelas de Pago</div>
-              <q-form @submit="savePaymentGatewaySettings" class="q-gutter-md">
-                <q-input v-model="paymentGatewaySettings.stripeKey" label="Stripe Public Key" />
-                <q-input v-model="paymentGatewaySettings.stripeSecret" label="Stripe Secret Key" type="password" />
-                <q-input v-model="paymentGatewaySettings.paypalClientId" label="PayPal Client ID" />
-                <q-input v-model="paymentGatewaySettings.paypalClientSecret" label="PayPal Client Secret" type="password" />
+              <q-form @submit="savePaymentGatewaySettings" class="q-pa-md">
+                <q-input v-model="paymentGatewaySettings.stripeKey" label="Stripe Public Key" outlined dense />
+                <q-input v-model="paymentGatewaySettings.stripeSecret" label="Stripe Secret Key" type="password" outlined dense />
+                <q-input v-model="paymentGatewaySettings.paypalClientId" label="PayPal Client ID" outlined dense />
+                <q-input v-model="paymentGatewaySettings.paypalClientSecret" label="PayPal Client Secret" type="password" outlined dense />
                 <div class="row justify-end q-mt-md">
                   <q-btn label="Guardar Cambios" color="primary" type="submit" :loading="saving" />
                 </div>
@@ -161,23 +173,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { settingService } from '@/services/setting.service';
+import { useSettings } from '@/services/settings.service';
+// ... (import other services)
 import { notificationService } from '@/services/notification.service';
 import { currencyService } from '@/services/currency.service';
 import { mailService } from '@/services/mail.service';
 import { smsService } from '@/services/sms.service';
 import { paymentGatewayService } from '@/services/paymentGateway.service';
-import type { Setting, NotificationSetting, CurrencySetting, MailSetting, SmsSetting, PaymentGatewaySetting } from '@/types'
+import type { NotificationSetting, CurrencySetting, MailSetting, SmsSetting, PaymentGatewaySetting } from '@/types'
+
+const { settings, updateSingleSetting } = useSettings();
 
 const $q = useQuasar()
 const saving = ref(false)
 const tab = ref('general')
 const notifSettings = ref<NotificationSetting[]>([])
 
-const formData = reactive<Setting>({
-  id: 0,
+const formData = reactive({
   companyName: '',
   email: '',
   companyPhone: '',
@@ -186,6 +200,19 @@ const formData = reactive<Setting>({
   version: '1.0.0',
   days: 365
 })
+
+watch(settings, (newSettings) => {
+  if (newSettings) {
+    formData.companyName = newSettings.companyName || ''
+    formData.email = newSettings.email || ''
+    formData.companyPhone = newSettings.companyPhone || ''
+    formData.companyAddress = newSettings.companyAddress || ''
+    formData.currency = newSettings.currency || 'USD'
+    formData.version = newSettings.version || '1.0.0'
+    formData.days = newSettings.days ? parseInt(newSettings.days, 10) : 365
+  }
+}, { immediate: true, deep: true });
+
 
 const currencySettings = reactive<CurrencySetting>({
   id: 0,
@@ -219,16 +246,30 @@ const paymentGatewaySettings = reactive<PaymentGatewaySetting>({
   paypalClientSecret: ''
 })
 
-const fetchSettings = async () => {
+const saveSettings = async () => {
+  saving.value = true;
   try {
-    const response = await settingService.get()
-    if (response.data) {
-      Object.assign(formData, response.data)
+    const updatePromises = [];
+    for (const key in formData) {
+      if (Object.prototype.hasOwnProperty.call(formData, key)) {
+        const localValue = formData[key as keyof typeof formData];
+        const remoteValue = settings.value[key];
+        
+        // Check if value has changed before sending update request
+        if (String(localValue) !== String(remoteValue)) {
+          updatePromises.push(updateSingleSetting(key, String(localValue)));
+        }
+      }
     }
+
+    await Promise.all(updatePromises);
+    $q.notify({ color: 'positive', message: 'Configuración general actualizada' });
   } catch (error) {
-    $q.notify({ color: 'negative', message: 'Error al cargar configuración' })
+    $q.notify({ color: 'negative', message: 'Error al guardar la configuración' });
+  } finally {
+    saving.value = false;
   }
-}
+};
 
 const fetchNotifSettings = async () => {
   try {
@@ -236,18 +277,6 @@ const fetchNotifSettings = async () => {
     notifSettings.value = response.data
   } catch (error) {
     console.error('Error fetching notification settings:', error)
-  }
-}
-
-const saveSettings = async () => {
-  saving.value = true
-  try {
-    await settingService.update(formData)
-    $q.notify({ color: 'positive', message: 'Configuración actualizada correctamente' })
-  } catch (error) {
-    $q.notify({ color: 'negative', message: 'Error al guardar configuración' })
-  } finally {
-    saving.value = false
   }
 }
 
@@ -264,6 +293,7 @@ const updateNotifSetting = async (setting: NotificationSetting) => {
     $q.notify({ color: 'negative', message: 'Error al actualizar configuración de notificación' })
   }
 }
+
 
 // Currency Settings
 const fetchCurrencySettings = async () => {
@@ -370,7 +400,6 @@ const getCategoryIcon = (category: string) => {
 }
 
 onMounted(() => {
-  fetchSettings()
   fetchNotifSettings()
   fetchCurrencySettings()
   fetchMailSettings()

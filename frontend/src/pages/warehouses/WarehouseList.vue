@@ -24,33 +24,37 @@
     </div>
 
     <!-- Warehouse Dialog -->
-    <q-dialog v-model="showDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Almacén' : 'Nuevo Almacén' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveWarehouse" class="q-gutter-md">
-            <q-input
-              v-model="formData.name"
-              label="Nombre del Almacén"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-input v-model="formData.city" label="Ciudad" />
-            <q-input v-model="formData.mobile" label="Teléfono/Móvil" />
-            <q-input v-model="formData.email" label="Email" type="email" />
-            <q-input v-model="formData.country" label="País" />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Almacén' : 'Nuevo Almacén'"
+      @submit="saveWarehouse"
+      :saving="saving"
+    >
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="formData.name"
+            label="Nombre del Almacén"
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.city" label="Ciudad" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.mobile" label="Teléfono/Móvil" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.email" label="Email" type="email" outlined dense />
+        </div>
+        <div class="col-12">
+          <q-input v-model="formData.country" label="País" outlined dense />
+        </div>
+      </div>
+    </FormDialog>
   </q-page>
 </template>
 
@@ -60,6 +64,7 @@ import { useQuasar } from 'quasar'
 import { warehouseService } from '@/services/warehouse.service';
 import type { Warehouse } from '@/types'
 import { useConfirm } from '@/composables/useConfirm'
+import FormDialog from '@/components/FormDialog.vue'
 
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()

@@ -16,8 +16,8 @@ public class Voucher
     public string VoucherType { get; set; } = string.Empty;
     public string VoucherNumber { get; set; } = string.Empty;
     public string Cae { get; set; } = string.Empty;
-    public DateTime CaeExpiration { get; set; }
-    public DateTime IssuedAt { get; set; }
+    public string? CaeExpiration { get; set; }
+    public string? IssuedAt { get; set; }
     
     // Audit fields
     public DateTime? CreatedAt { get; set; }

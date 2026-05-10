@@ -31,45 +31,41 @@
     </div>
 
     <!-- Role Dialog -->
-    <q-dialog v-model="showDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Rol' : 'Nuevo Rol' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveRole" class="q-gutter-md">
-            <q-input
-              v-model="formData.name"
-              label="Nombre del Rol"
-              lazy-rules
-              :rules="[ val => val && val.length > 0 || 'Campo requerido']"
-            />
-            <q-input
-              v-model="formData.description"
-              label="Descripción"
-              type="textarea"
-              autogrow
-            />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Rol' : 'Nuevo Rol'"
+      @submit="saveRole"
+      :saving="saving"
+    >
+      <q-input
+        v-model="formData.name"
+        label="Nombre del Rol"
+        lazy-rules
+        :rules="[ val => !!val || 'Requerido']"
+        outlined
+        dense
+      />
+      <q-input
+        v-model="formData.description"
+        label="Descripción"
+        type="textarea"
+        autogrow
+        outlined
+        dense
+      />
+    </FormDialog>
 
     <!-- Permissions Dialog -->
-    <q-dialog v-model="showPermissionsDialog" persistent>
-      <q-card style="min-width: 450px">
-        <q-card-section>
+    <q-dialog v-model="showPermissionsDialog" persistent min-width="500px">
+      <q-card>
+        <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">Asignar Permisos: {{ selectedRole?.name }}</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section class="q-pt-none scroll" style="max-height: 50vh">
-          <q-input v-model="permissionFilter" debounce="300" placeholder="Buscar permiso..." dense class="q-mb-md" borderless style="background: #f5f5f5; padding: 8px; border-radius: 4px;">
+          <q-input v-model="permissionFilter" debounce="300" placeholder="Buscar permiso..." dense class="q-mb-md" outlined>
             <template v-slot:prepend>
               <q-icon name="search" />
             </template>
@@ -102,7 +98,8 @@ import { ref, onMounted, reactive, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { roleService } from '@/services/role.service';
 import type { Role } from '@/types'
-import { permissionService } from '@/services/permission.service';
+import { permissionService } from '@/services/permission.service'
+import FormDialog from '@/components/FormDialog.vue'
 import type { Permission } from '@/types'
 
 const $q = useQuasar()
@@ -176,7 +173,7 @@ const openPermissionsDialog = async (role: Role) => {
     // Assuming backend returns permissions as objects with ID
     if (response.data.permissions) {
       // @ts-ignore (mapping based on assumed API response)
-      assignedPermissionIds.value = response.data.permissions.map((p: any) => p.id || p)
+      assignedPermissionIds.value = response.data.permissions.map((p: Permission) => p.id || p)
     }
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al cargar permisos del rol' })

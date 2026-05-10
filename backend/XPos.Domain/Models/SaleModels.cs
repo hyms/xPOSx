@@ -36,7 +36,7 @@ public class Sale
 public class SaleDetail
 {
     public long Id { get; set; }
-    public DateTime Date { get; set; }
+    public string Date { get; set; } = string.Empty;
     public long SaleId { get; set; }
     public long ProductId { get; set; }
     public long? ProductVariantId { get; set; }

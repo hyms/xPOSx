@@ -6,16 +6,17 @@
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit">
-        <q-card-section class="q-gutter-md">
+        <q-card-section class="q-pa-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="formData.ref" label="Referencia" filled readonly />
+              <q-input v-model="formData.ref" label="Referencia" outlined dense readonly />
             </div>
             <div class="col-12 col-md-4">
               <q-select
                 v-model="formData.providerId"
                 label="Proveedor"
-                filled
+                outlined
+                dense
                 :options="providerOptions"
                 emit-value
                 map-options
@@ -27,7 +28,8 @@
               <q-select
                 v-model="formData.warehouseId"
                 label="Almacén de Destino"
-                filled
+                outlined
+                dense
                 :options="warehouseOptions"
                 emit-value
                 map-options
@@ -43,7 +45,8 @@
               <q-select
                 v-model="selectedProduct"
                 label="Buscar producto por código o nombre"
-                filled
+                outlined
+                dense
                 :options="productOptions"
                 use-input
                 @filter="filterProducts"
@@ -97,6 +100,10 @@
                         <q-item-section>Total:</q-item-section>
                         <q-item-section side class="text-h6">{{ formatCurrency(formData.grandTotal) }}</q-item-section>
                     </q-item>
+                    <q-item>
+                        <q-item-section>Total:</q-item-section>
+                        <q-item-section side class="text-h6">{{ formatCurrency(formData.grandTotal) }}</q-item-section>
+                    </q-item>
                 </q-list>
             </div>
           </div>
@@ -109,16 +116,16 @@
           >
             <div class="row q-col-gutter-md q-pt-md">
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" filled />
+                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" filled />
+                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.cae" label="CAE" filled />
+                <q-input v-model="voucher.cae" label="CAE" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label filled />
+                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense />
               </div>
             </div>
           </q-expansion-item>
@@ -135,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { purchaseService } from '@/services/purchase.service'
@@ -144,8 +151,12 @@ import { warehouseService } from '@/services/warehouse.service'
 import { productService } from '@/services/product.service'
 import type { Purchase, PurchaseDetail, Product, Voucher } from '@/types'
 
+
+import { useCurrency } from '@/composables/useCurrency';
+
 const $q = useQuasar()
 const router = useRouter()
+const { formatCurrency, currencySymbol } = useCurrency();
 const saving = ref(false)
 
 const providerOptions = ref<any[]>([])
@@ -153,6 +164,7 @@ const warehouseOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 let allProducts: Product[] = []
 const selectedProduct = ref<Product | null>(null)
+
 
 const formData = reactive<Partial<Purchase> & { details: PurchaseDetail[] }>({
   ref: `PR-${Date.now()}`,
@@ -173,25 +185,25 @@ const voucher = reactive<Partial<Voucher>>({
     caeExpiration: ''
 })
 
+const subTotal = ref(0);
+
 const detailsColumns = [
-    { name: 'name', label: 'Producto', field: (row: any) => allProducts.find(p => p.id === row.productId)?.name || '', align: 'left' as const },
-    { name: 'cost', label: 'Costo', field: 'cost', format: (val: number) => formatCurrency(val), align: 'right' as const },
-    { name: 'quantity', label: 'Cantidad', field: 'quantity', align: 'center' as const },
-    { name: 'total', label: 'Total', field: 'total', align: 'right' as const },
-    { name: 'actions', label: '', field: 'actions' }
+  { name: 'name', label: 'Producto', field: 'productName', align: 'left' as const },
+  { name: 'cost', label: `Costo (${currencySymbol.value})`, field: 'cost', align: 'right' as const },
+  { name: 'quantity', label: 'Cantidad', field: 'quantity', align: 'center' as const },
+  { name: 'total', label: 'Total', field: 'total', align: 'right' as const },
+  { name: 'actions', label: '', field: 'actions', align: 'center' as const }
 ]
 
-const subTotal = computed(() => formData.details.reduce((acc, item) => acc + (item.quantity * item.cost), 0))
-
 const updateTotals = () => {
-    formData.grandTotal = subTotal.value
-    formData.paidAmount = subTotal.value // Assuming fully paid for simplicity, can be changed
+  subTotal.value = formData.details.reduce((acc, detail) => acc + (detail.quantity * detail.cost), 0)
+  formData.grandTotal = subTotal.value - (formData.discount || 0) + (formData.shipping || 0)
 }
 
 const addProductToPurchase = () => {
   if (!selectedProduct.value) return
   
-  const existingDetail = formData.details.find(d => d.productId === selectedProduct.value!.id)
+  const existingDetail = formData.details.find((d: PurchaseDetail) => d.productId === selectedProduct.value!.id)
   if (existingDetail) {
       existingDetail.quantity++
   } else {
@@ -208,7 +220,7 @@ const addProductToPurchase = () => {
 }
 
 const removeProduct = (row: PurchaseDetail) => {
-    const index = formData.details.findIndex(d => d.productId === row.productId)
+    const index = formData.details.findIndex((d: PurchaseDetail) => d.productId === row.productId)
     if(index > -1) {
         formData.details.splice(index, 1)
     }
@@ -242,8 +254,6 @@ const onSubmit = async () => {
     saving.value = false
   }
 }
-
-const formatCurrency = (val?: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val || 0)
 
 onMounted(async () => {
   const [providersRes, warehousesRes, productsRes] = await Promise.all([

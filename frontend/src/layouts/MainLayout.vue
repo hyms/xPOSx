@@ -258,11 +258,16 @@ import { useRouter } from 'vue-router'
 import { useQuasar, AppFullscreen } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
 import { useWarehouseStore } from '@/stores/warehouse'
+import type { Warehouse } from '@/types'
+
+import { useSettings } from '@/services/settings.service';
 
 const $q = useQuasar()
 const router = useRouter()
 const authStore = useAuthStore()
 const warehouseStore = useWarehouseStore()
+const settingsStore = useSettings()
+
 
 const leftDrawerOpen = ref(false)
 const miniState = ref(false)
@@ -273,7 +278,7 @@ const activeWarehouseId = computed({
 })
 
 const warehouseOptions = computed(() => {
-  return warehouseStore.warehouses.map(w => ({ label: w.name, value: w.id }))
+  return warehouseStore.warehouses.map((w: Warehouse) => ({ label: w.name, value: w.id }))
 })
 
 const hasOperationsPermission = computed(() => {
@@ -323,6 +328,7 @@ function logout () {
 
 onMounted(() => {
   warehouseStore.fetchWarehouses()
+  settingsStore.fetchSettings()
 })
 </script>
 

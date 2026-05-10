@@ -70,94 +70,102 @@
     </q-card>
 
     <!-- Expense Dialog -->
-    <q-dialog v-model="showExpenseDialog" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">{{ isEditExpense ? 'Editar Gasto' : 'Nuevo Gasto' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveExpense" class="q-gutter-md">
-            <q-input
-              v-model="expenseForm.date"
-              label="Fecha"
-              type="date"
-              stack-label
-              lazy-rules
-              :rules="[ val => !!val || 'Campo requerido']"
-            />
-            <q-select
-              v-model="expenseForm.expenseCategoryId"
-              :options="categoryOptions"
-              label="Categoría"
-              emit-value
-              map-options
-              lazy-rules
-              :rules="[ val => !!val || 'Campo requerido']"
-            />
-            <q-select
-              v-model="expenseForm.warehouseId"
-              :options="warehouseOptions"
-              label="Almacén"
-              emit-value
-              map-options
-              lazy-rules
-              :rules="[ val => !!val || 'Campo requerido']"
-            />
-            <q-input
-              v-model.number="expenseForm.amount"
-              label="Monto"
-              type="number"
-              step="0.01"
-              lazy-rules
-              :rules="[ val => val > 0 || 'Monto debe ser mayor a 0']"
-            />
-            <q-input
-              v-model="expenseForm.details"
-              label="Detalles / Referencia"
-              type="textarea"
-              rows="2"
-            />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEditExpense ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <FormDialog
+      v-model="showExpenseDialog"
+      :title="isEditExpense ? 'Editar Gasto' : 'Nuevo Gasto'"
+      @submit="saveExpense"
+      :saving="saving"
+    >
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="expenseForm.date"
+            label="Fecha"
+            type="date"
+            stack-label
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model.number="expenseForm.amount"
+            label="Monto"
+            type="number"
+            step="0.01"
+            :prefix="currencySymbol"
+            lazy-rules
+            :rules="[ val => val > 0 || 'Monto debe ser mayor a 0']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
+            v-model="expenseForm.expenseCategoryId"
+            :options="categoryOptions"
+            label="Categoría"
+            emit-value
+            map-options
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
+            v-model="expenseForm.warehouseId"
+            :options="warehouseOptions"
+            label="Almacén"
+            emit-value
+            map-options
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12">
+          <q-input
+            v-model="expenseForm.details"
+            label="Detalles / Referencia"
+            type="textarea"
+            autogrow
+            outlined
+            dense
+          />
+        </div>
+      </div>
+    </FormDialog>
 
     <!-- Category Dialog -->
-    <q-dialog v-model="showCategoryDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">{{ isEditCategory ? 'Editar Categoría' : 'Nueva Categoría' }}</div>
-        </q-card-section>
+    <FormDialog
+      v-model="showCategoryDialog"
+      :title="isEditCategory ? 'Editar Categoría' : 'Nueva Categoría'"
+      @submit="saveCategory"
+      :saving="saving"
+    >
+      <q-input
+        v-model="categoryForm.name"
+        label="Nombre"
+        lazy-rules
+        :rules="[ val => !!val || 'Requerido']"
+        outlined
+        dense
+      />
+      <q-input
+        v-model="categoryForm.description"
+        label="Descripción"
+        type="textarea"
+        autogrow
+        outlined
+        dense
+      />
+    </FormDialog>
 
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveCategory" class="q-gutter-md">
-            <q-input
-              v-model="categoryForm.name"
-              label="Nombre"
-              lazy-rules
-              :rules="[ val => !!val || 'Campo requerido']"
-            />
-            <q-input
-              v-model="categoryForm.description"
-              label="Descripción"
-              type="textarea"
-              rows="2"
-            />
-
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEditCategory ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -168,10 +176,15 @@ import { expenseService } from '@/services/expense.service'
 import { warehouseService } from '@/services/warehouse.service'
 import { useConfirm } from '@/composables/useConfirm'
 import type { Expense, ExpenseCategory, ExpenseReadDto } from '@/types'
+import FormDialog from '@/components/FormDialog.vue'
+
+import { useCurrency } from '@/composables/useCurrency';
 
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()
 const tab = ref('expenses')
+const { formatCurrency, currencySymbol } = useCurrency();
+
 const loadingExpenses = ref(false)
 const loadingCategories = ref(false)
 const saving = ref(false)
@@ -249,10 +262,6 @@ const fetchWarehouses = async () => {
   } catch (error) {
     console.error('Error fetching warehouses:', error)
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 // Expense Actions

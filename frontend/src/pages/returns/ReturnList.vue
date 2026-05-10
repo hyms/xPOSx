@@ -103,10 +103,14 @@ import { useConfirm } from '@/composables/useConfirm'
 import type { SaleReturnReadDto, PurchaseReturnReadDto } from '@/types'
 import { useRouter } from 'vue-router'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()
 const router = useRouter()
 const tab = ref('sale_returns')
+const { formatCurrency } = useCurrency();
+
 const loadingSales = ref(false)
 const loadingPurchases = ref(false)
 
@@ -165,10 +169,6 @@ const getStatusColor = (status: string) => {
     case 'pending': return 'warning'
     default: return 'grey'
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const viewSaleReturn = (id: number) => {

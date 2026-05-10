@@ -37,7 +37,7 @@ public class PurchaseRepository : IPurchaseRepository
         var countSql = "SELECT COUNT(*) " + sqlBuilder;
         var totalItems = await _uow.Connection.ExecuteScalarAsync<int>(countSql, parameters, _uow.Transaction);
 
-        var sql = new StringBuilder("SELECT p.id, p.ref, p.date, p.grand_total as GrandTotal, p.paid_amount as PaidAmount, p.status, p.payment_status as PaymentStatus, p.voucher_id as VoucherId, pr.name as ProviderName, w.name as WarehouseName ").Append(sqlBuilder);
+        var sql = new StringBuilder("SELECT p.id, p.ref, p.date::timestamp as Date, p.grand_total as GrandTotal, p.paid_amount as PaidAmount, p.status, p.payment_status as PaymentStatus, pr.name as ProviderName, w.name as WarehouseName ").Append(sqlBuilder);
 
         if (!string.IsNullOrWhiteSpace(pagingParams.SortBy))
         {
@@ -72,19 +72,16 @@ public class PurchaseRepository : IPurchaseRepository
     public async Task<Purchase?> GetByIdAsync(long id)
     {
         const string sql = @"
-            SELECT p.*, v.id as VoucherId, v.* 
-            FROM purchases p 
-            LEFT JOIN vouchers v ON p.voucher_id = v.id 
+            SELECT p.id, p.user_id as UserId, p.ref, p.date::timestamp as Date, p.provider_id as ProviderId, p.warehouse_id as WarehouseId, 
+                   p.tax_rate as TaxRate, p.tax_net as TaxNet, p.discount, p.shipping, p.grand_total as GrandTotal, 
+                   p.paid_amount as PaidAmount, p.status, p.payment_status as PaymentStatus, p.notes, 
+                   p.created_at as CreatedAt, p.updated_at as UpdatedAt, p.deleted_at as DeletedAt, 
+                   p.created_by as CreatedBy, p.updated_by as UpdatedBy, p.deleted_by as DeletedBy,
+                   p.voucher_id as VoucherId
+            FROM purchases p
             WHERE p.id = @id AND p.deleted_at IS NULL";
         
-        var purchases = await _uow.Connection.QueryAsync<Purchase, Voucher, Purchase>(
-            sql, 
-            (p, v) => { p.Voucher = v; return p; }, 
-            new { id }, 
-            splitOn: "VoucherId", 
-            transaction: _uow.Transaction);
-            
-        var purchase = purchases.FirstOrDefault();
+        var purchase = await _uow.Connection.QueryFirstOrDefaultAsync<Purchase>(sql, new { id }, _uow.Transaction);
 
         if (purchase != null)
         {

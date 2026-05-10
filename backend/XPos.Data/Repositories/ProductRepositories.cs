@@ -102,6 +102,7 @@ public class ProductRepository : IProductRepository
         const string sql = @"
             SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
                    p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   (SELECT SUM(qty) FROM product_warehouse pw WHERE pw.product_id = p.id) as stock,
                    c.id, c.code, c.name,
                    u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
             FROM products p 

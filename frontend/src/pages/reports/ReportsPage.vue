@@ -26,10 +26,10 @@
       <!-- Filters -->
       <q-card-section class="row q-col-gutter-sm items-center">
         <div class="col-12 col-md-3" v-if="tab === 'sales' || tab === 'purchases' || tab === 'profit_loss'">
-          <q-input v-model="filters.startDate" label="Desde" type="date" dense stack-label />
+          <q-input v-model="filters.startDate" label="Desde" type="date" dense stack-label outlined />
         </div>
         <div class="col-12 col-md-3" v-if="tab === 'sales' || tab === 'purchases' || tab === 'profit_loss'">
-          <q-input v-model="filters.endDate" label="Hasta" type="date" dense stack-label />
+          <q-input v-model="filters.endDate" label="Hasta" type="date" dense stack-label outlined />
         </div>
         <div class="col-12 col-md-3" v-if="tab === 'sales' || tab === 'purchases' || tab === 'stock' || tab === 'activity'">
           <q-select
@@ -40,6 +40,7 @@
             map-options
             dense
             clearable
+            outlined
           />
         </div>
         <div class="col-12 col-md-3" v-if="tab === 'activity'">
@@ -51,6 +52,7 @@
             map-options
             dense
             clearable
+            outlined
           />
         </div>
         <div class="col-12 col-md-3" v-if="tab === 'activity'">
@@ -62,6 +64,7 @@
             map-options
             dense
             clearable
+            outlined
           />
         </div>
         <div class="col-12 col-md-3">
@@ -237,11 +240,15 @@ import { productService } from '@/services/product.service'
 import { pdfService } from '@/services/pdf.service' // Import our new service
 import type { SalesReportDto, PurchaseReportDto, StockReportDto, ProfitLossReportDto, ClientReportDto, ProviderReportDto, TopProductDto, StockAlertReportDto, ActivityReportDto } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const tab = ref('sales')
 const loading = ref(false)
 const warehouseOptions = ref<any[]>([])
 const userOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
+const { formatCurrency } = useCurrency();
+
 
 const filters = reactive({
   startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().substr(0, 10),
@@ -380,10 +387,6 @@ const fetchUsers = async () => {
 const fetchProducts = async () => {
   const res = await productService.getAll()
   productOptions.value = res.data.map(p => ({ label: p.name, value: p.id }))
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const exportToPdf = () => {

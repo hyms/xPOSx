@@ -39,90 +39,96 @@
     </div>
 
     <!-- Product Dialog -->
-    <q-dialog v-model="showDialog" persistent full-width>
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? 'Editar Producto' : 'Nuevo Producto' }}</div>
-        </q-card-section>
+    <FormDialog
+      v-model="showDialog"
+      :title="isEdit ? 'Editar Producto' : 'Nuevo Producto'"
+      @submit="saveProduct"
+      :saving="saving"
+      full-width
+    >
+      <!-- Sección 1: Información Básica -->
+      <div class="text-subtitle1 text-primary q-mb-xs">Información Básica</div>
+      <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-input v-model="formData.code" label="Código" lazy-rules :rules="[ val => !!val || 'Requerido']" outlined dense />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
+            v-model="formData.categoryId"
+            :options="categories"
+            label="Categoría"
+            option-value="id"
+            option-label="name"
+            emit-value
+            map-options
+            lazy-rules
+            :rules="[ val => !!val || 'Requerido']"
+            outlined
+            dense
+          />
+        </div>
+        <div class="col-12 col-md-6">
+          <q-select
+            v-model="formData.unitId"
+            :options="units"
+            label="Unidad"
+            option-value="id"
+            option-label="name"
+            emit-value
+            map-options
+            outlined
+            dense
+          />
+        </div>
+      </div>
 
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveProduct" class="q-gutter-md">
-            <div class="row q-col-gutter-md">
-              <div class="col-12 col-md-8">
-                <div class="row q-col-gutter-md">
-                  <div class="col-12 col-md-6">
-                    <q-input v-model="formData.name" label="Nombre" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <q-input v-model="formData.code" label="Código" lazy-rules :rules="[ val => !!val || 'Requerido']" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <q-select
-                      v-model="formData.categoryId"
-                      :options="categories"
-                      label="Categoría"
-                      option-value="id"
-                      option-label="name"
-                      emit-value
-                      map-options
-                      lazy-rules
-                      :rules="[ val => !!val || 'Requerido']"
-                    />
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <q-input v-model.number="formData.cost" label="Costo" type="number" step="0.01" />
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <q-input v-model.number="formData.price" label="Precio" type="number" step="0.01" />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <q-select
-                      v-model="formData.unitId"
-                      :options="units"
-                      label="Unidad"
-                      option-value="id"
-                      option-label="name"
-                      emit-value
-                      map-options
-                    />
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <q-input v-model.number="formData.stockAlert" label="Alerta Stock" type="number" />
-                  </div>
-                  <div class="col-12">
-                    <q-input v-model="formData.note" label="Notas" type="textarea" autogrow />
-                  </div>
-                  <div class="col-12 row q-gutter-sm">
-                    <q-checkbox v-model="formData.isActive" label="Activo" />
-                    <q-checkbox v-model="formData.notSelling" label="No disponible para venta" />
-                  </div>
-                </div>
-              </div>
-              <div class="col-12 col-md-4">
-                <div class="text-subtitle2 q-mb-sm">Imagen referencial</div>
-                <q-card bordered flat class="image-upload-card">
-                  <div v-if="formData.image" class="image-preview">
-                    <img :src="formData.image" alt="Product image" />
-                    <q-btn round size="sm" color="negative" icon="close" class="remove-btn" @click="removeImage" />
-                  </div>
-                  <div v-else class="upload-placeholder" @click="triggerFileInput">
-                    <q-icon name="add_photo_alternate" size="48px" color="grey-6" />
-                    <div class="text-grey-6">Haga clic para agregar imagen</div>
-                    <div class="text-caption text-grey-5">PNG, JPG hasta 2MB</div>
-                  </div>
-                  <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileChange" />
-                </q-card>
-              </div>
-            </div>
+      <q-separator />
 
-            <div class="row justify-end q-mt-md">
-              <q-btn label="Cancelar" color="primary" flat v-close-popup />
-              <q-btn :label="isEdit ? 'Actualizar' : 'Guardar'" color="primary" type="submit" :loading="saving" />
+      <!-- Sección 2: Finanzas e Inventario -->
+      <div class="text-subtitle1 text-primary q-mt-md q-mb-xs">Finanzas e Inventario</div>
+      <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12 col-md-4">
+          <q-input v-model.number="formData.cost" label="Costo" type="number" step="0.01" prefix="$" outlined dense />
+        </div>
+        <div class="col-12 col-md-4">
+          <q-input v-model.number="formData.price" label="Precio" type="number" step="0.01" prefix="$" outlined dense />
+        </div>
+        <div class="col-12 col-md-4">
+          <q-input v-model.number="formData.stockAlert" label="Alerta Stock" type="number" outlined dense />
+        </div>
+      </div>
+
+      <q-separator />
+
+      <!-- Sección 3: Opciones y Notas -->
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-8">
+          <q-input v-model="formData.note" label="Notas" type="textarea" autogrow outlined dense />
+          <div class="q-mt-sm row q-gutter-md">
+            <q-checkbox v-model="formData.isActive" label="Activo" />
+            <q-checkbox v-model="formData.notSelling" label="No disponible para venta" />
+          </div>
+        </div>
+        
+        <div class="col-12 col-md-4">
+          <div class="text-subtitle2 q-mb-sm">Imagen referencial</div>
+          <q-card bordered flat class="image-upload-card">
+            <div v-if="formData.image" class="image-preview">
+              <img :src="formData.image" alt="Product image" />
+              <q-btn round size="sm" color="negative" icon="close" class="remove-btn" @click="removeImage" />
             </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+            <div v-else class="upload-placeholder" @click="triggerFileInput">
+              <q-icon name="add_photo_alternate" size="48px" color="grey-6" />
+              <div class="text-grey-6 text-center">Haga clic para agregar</div>
+            </div>
+            <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileChange" />
+          </q-card>
+        </div>
+      </div>
+    </FormDialog>
   </q-page>
 </template>
 
@@ -135,6 +141,7 @@ import { categoryService } from '@/services/category.service';
 import type { Category } from '@/types'
 import { unitService } from '@/services/unit.service';
 import type { Unit } from '@/types'
+import FormDialog from '@/components/FormDialog.vue'
 
 const $q = useQuasar()
 const products = ref<Product[]>([])
@@ -163,10 +170,10 @@ const formData = reactive<Product & { image?: string }>({
 
 const columns = [
   { name: 'image', label: 'Imagen', field: 'image', align: 'center' as const },
-  { name: 'id', label: 'ID', field: 'id', sortable: true, align: 'left' as const },
   { name: 'code', label: 'Código', field: 'code', sortable: true, align: 'left' as const },
   { name: 'name', label: 'Nombre', field: 'name', sortable: true, align: 'left' as const },
   { name: 'category', label: 'Categoría', field: (row: any) => row.category?.name || 'N/A', align: 'left' as const },
+  { name: 'stock', label: 'Stock', field: 'stock', sortable: true, align: 'center' as const },
   { name: 'cost', label: 'Costo', field: 'cost', format: (val: number) => `$${val.toFixed(2)}`, align: 'right' as const },
   { name: 'price', label: 'Precio', field: 'price', format: (val: number) => `$${val.toFixed(2)}`, align: 'right' as const },
   { name: 'actions', label: 'Acciones', field: 'actions', align: 'center' as const }

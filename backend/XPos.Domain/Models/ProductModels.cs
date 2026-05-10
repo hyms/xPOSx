@@ -40,6 +40,7 @@ public class Product
     // Navigation properties (optional for Dapper, but helpful for UI)
     public Category? Category { get; set; }
     public Unit? Unit { get; set; }
+    public double Stock { get; set; }
 }
 
 public class ProductVariant

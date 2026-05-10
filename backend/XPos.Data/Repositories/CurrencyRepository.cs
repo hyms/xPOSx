@@ -1,7 +1,5 @@
 using Dapper;
-using System.Collections.Generic;
-using System.Data;
-using System.Threading.Tasks;
+using Dapper.Contrib.Extensions;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 
@@ -9,40 +7,53 @@ namespace XPos.Data.Repositories;
 
 public class CurrencyRepository : ICurrencyRepository
 {
-    private readonly IUnitOfWork _uow;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CurrencyRepository(IUnitOfWork uow)
+    public CurrencyRepository(IUnitOfWork unitOfWork)
     {
-        _uow = uow;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<IEnumerable<Currency>> GetAllAsync()
+    public async Task<CurrencySetting?> GetAsync()
     {
-        const string sql = "SELECT id, code, symbol, name, is_main as IsMain FROM currencies";
-        return await _uow.Connection.QueryAsync<Currency>(sql, null, _uow.Transaction);
+        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\" LIMIT 1";
+        return await _unitOfWork.Connection.QueryFirstOrDefaultAsync<CurrencySetting>(sql, transaction: _unitOfWork.Transaction);
     }
 
-    public async Task<Currency?> GetByIdAsync(long id)
+    public async Task<CurrencySetting?> GetByIdAsync(long id)
     {
-        const string sql = "SELECT id, code, symbol, name, is_main as IsMain FROM currencies WHERE id = @Id";
-        return await _uow.Connection.QueryFirstOrDefaultAsync<Currency>(sql, new { Id = id }, _uow.Transaction);
+        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\" WHERE id = @id";
+        return await _unitOfWork.Connection.QueryFirstOrDefaultAsync<CurrencySetting>(sql, new { id }, _unitOfWork.Transaction);
     }
 
-    public async Task<long> CreateAsync(Currency currency)
+    public async Task<List<CurrencySetting>> GetAllAsync()
     {
-        const string sql = "INSERT INTO currencies (code, symbol, name, is_main) VALUES (@Code, @Symbol, @Name, @IsMain) RETURNING id";
-        return await _uow.Connection.ExecuteScalarAsync<long>(sql, currency, _uow.Transaction);
+        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\"";
+        var result = await _unitOfWork.Connection.QueryAsync<CurrencySetting>(sql, transaction: _unitOfWork.Transaction);
+        return result.ToList();
     }
 
-    public async Task<bool> UpdateAsync(Currency currency)
+    public async Task<long> CreateAsync(CurrencySetting currency)
     {
-        const string sql = "UPDATE currencies SET code = @Code, symbol = @Symbol, name = @Name, is_main = @IsMain WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, currency, _uow.Transaction) > 0;
+        const string sql = @"
+            INSERT INTO public.""CurrencySettings"" (code, symbol)
+            VALUES (@Code, @Symbol)
+            RETURNING id";
+        return await _unitOfWork.Connection.ExecuteScalarAsync<long>(sql, currency, _unitOfWork.Transaction);
+    }
+
+    public async Task<bool> UpdateAsync(CurrencySetting currency)
+    {
+        const string sql = @"
+            UPDATE public.""CurrencySettings""
+            SET code = @Code, symbol = @Symbol
+            WHERE id = @Id";
+        return await _unitOfWork.Connection.ExecuteAsync(sql, currency, _unitOfWork.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id)
     {
-        const string sql = "DELETE FROM currencies WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, new { Id = id }, _uow.Transaction) > 0;
+        const string sql = "DELETE FROM public.\"CurrencySettings\" WHERE id = @id";
+        return await _unitOfWork.Connection.ExecuteAsync(sql, new { id }, _unitOfWork.Transaction) > 0;
     }
 }

@@ -6,32 +6,32 @@
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit">
-        <q-card-section class="q-gutter-md">
+        <q-card-section class="q-pa-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="sale.ref" label="Referencia" filled readonly />
+              <q-input v-model="sale.ref" label="Referencia" outlined dense readonly />
             </div>
             <div class="col-12 col-md-4">
-              <q-select v-model="sale.clientId" label="Cliente" filled :options="clientOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
+              <q-select v-model="sale.clientId" label="Cliente" outlined dense :options="clientOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
             </div>
             <div class="col-12 col-md-4">
-              <q-select v-model="sale.warehouseId" label="Almacén" filled :options="warehouseOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
+              <q-select v-model="sale.warehouseId" label="Almacén" outlined dense :options="warehouseOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
             </div>
           </div>
 
           <!-- Product Search -->
           <div class="row items-center q-col-gutter-md">
             <div class="col-12 col-md-10">
-              <q-select
+<q-select
                 v-model="selectedProduct"
                 label="Buscar producto por código o nombre"
-                filled
                 :options="productOptions"
                 use-input
                 @filter="filterProducts"
                 option-value="id"
                 option-label="name"
-                return-object
+                outlined
+                dense
               />
             </div>
             <div class="col-12 col-md-2">
@@ -86,16 +86,16 @@
           >
             <div class="row q-col-gutter-md q-pt-md">
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" filled />
+                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" filled />
+                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.cae" label="CAE" filled />
+                <q-input v-model="voucher.cae" label="CAE" outlined dense />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label filled />
+                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense />
               </div>
             </div>
           </q-expansion-item>
@@ -121,9 +121,13 @@ import { warehouseService } from '@/services/warehouse.service'
 import { productService } from '@/services/product.service'
 import type { Sale, SaleDetail, Product, Voucher } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const $q = useQuasar()
 const router = useRouter()
 const submitting = ref(false)
+const { formatCurrency } = useCurrency();
+
 
 const clientOptions = ref<any[]>([])
 const warehouseOptions = ref<any[]>([])
@@ -158,7 +162,7 @@ const detailsColumns = [
     { name: 'actions', label: '', field: 'actions' }
 ]
 
-const subTotal = computed(() => sale.details.reduce((acc, item) => acc + (item.quantity * item.price), 0))
+const subTotal = computed(() => sale.details.reduce((acc: number, item: SaleDetail) => acc + (item.quantity * item.price), 0))
 
 const updateTotals = () => {
     sale.grandTotal = subTotal.value
@@ -167,7 +171,7 @@ const updateTotals = () => {
 const addProductToSale = () => {
   if (!selectedProduct.value) return
   
-  const existingDetail = sale.details.find(d => d.productId === selectedProduct.value!.id)
+  const existingDetail = sale.details.find((d: SaleDetail) => d.productId === selectedProduct.value!.id)
   if (existingDetail) {
       existingDetail.quantity++
   } else {
@@ -183,7 +187,7 @@ const addProductToSale = () => {
 }
 
 const removeProduct = (row: SaleDetail) => {
-    const index = sale.details.findIndex(d => d.productId === row.productId)
+    const index = sale.details.findIndex((d: SaleDetail) => d.productId === row.productId)
     if(index > -1) {
         sale.details.splice(index, 1)
     }
@@ -217,8 +221,6 @@ const onSubmit = async () => {
     submitting.value = false
   }
 }
-
-const formatCurrency = (val?: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val || 0)
 
 onMounted(async () => {
   const [clientsRes, warehousesRes, productsRes] = await Promise.all([

@@ -140,7 +140,7 @@ const onRequest = async (props: any) => {
   try {
     const response = await purchaseService.getAll(params)
     purchases.value = response.data.items
-    pagination.value.rowsNumber = response.data.totalItems
+    pagination.value.rowsNumber = response.data.totalItems || 0
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al cargar compras' })
   } finally {

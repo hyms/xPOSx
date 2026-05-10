@@ -158,7 +158,7 @@ const onRequest = async (props: any) => {
   try {
     const response: { data: PagedResult<SaleReadDto> } = await saleService.getAll(params)
     sales.value = response.data.items
-    pagination.value.rowsNumber = response.data.totalItems
+    pagination.value.rowsNumber = response.data.totalItems || 0
     pagination.value.page = page
     pagination.value.rowsPerPage = rowsPerPage
     pagination.value.sortBy = sortBy

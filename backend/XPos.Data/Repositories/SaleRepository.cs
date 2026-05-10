@@ -84,24 +84,33 @@ public class SaleRepository : ISaleRepository
     public async Task<Sale?> GetByIdAsync(long id)
     {
         const string sql = @"
-            SELECT s.*, v.id as VoucherId, v.* 
-            FROM sales s 
-            LEFT JOIN vouchers v ON s.voucher_id = v.id 
+            SELECT s.id, s.ref, s.date::timestamp as Date, s.is_pos as IsPos, s.client_id as ClientId, s.warehouse_id as WarehouseId,
+                   s.tax_rate as TaxRate, s.tax_net as TaxNet, s.discount, s.shipping,
+                   s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus,
+                   s.shipping_status as ShippingStatus, s.notes, s.created_at as CreatedAt, s.created_by as CreatedBy,
+                   s.updated_at as UpdatedAt, s.user_id as UserId,
+                   v.id as Vid, v.voucher_type as VoucherType, v.voucher_number as VoucherNumber,
+                   v.cae, v.cae_expiration::timestamp as CaeExpiration, v.issued_at::timestamp as IssuedAt
+            FROM sales s
+            LEFT JOIN vouchers v ON s.voucher_id = v.id
             WHERE s.id = @id AND s.deleted_at IS NULL";
-        
+
         var sales = await _uow.Connection.QueryAsync<Sale, Voucher, Sale>(
-            sql, 
-            (s, v) => { s.Voucher = v; return s; }, 
-            new { id }, 
-            splitOn: "VoucherId", 
+            sql,
+            (s, v) => { s.Voucher = v; return s; },
+            new { id },
+            splitOn: "Vid",
             transaction: _uow.Transaction);
-            
+
         var sale = sales.FirstOrDefault();
 
         if (sale != null)
         {
             const string detailsSql = @"
-                SELECT sd.*, p.name as ProductName 
+                SELECT sd.id, sd.sale_id as SaleId, sd.product_id as ProductId, sd.product_variant_id as ProductVariantId,
+                       sd.sale_unit_id as SaleUnitId, sd.price as Price, sd.tax_net as TaxNet, sd.tax_method as TaxMethod,
+                       sd.discount, sd.discount_method as DiscountMethod, sd.quantity as Quantity, sd.total as Total,
+                       sd.date::timestamp as Date, p.name as ProductName
                 FROM sale_details sd
                 JOIN products p ON sd.product_id = p.id
                 WHERE sd.sale_id = @id";

@@ -4,7 +4,7 @@
       <div class="header text-center">
         <div class="text-h5">Comprobante de Venta</div>
         <div class="text-subtitle1">Ref: {{ sale.ref }}</div>
-        <div class="text-body2">Fecha: {{ new Date(sale.date).toLocaleString() }}</div>
+        <div class="text-body2">Fecha: {{ sale.date ? new Date(sale.date).toLocaleString() : '' }}</div>
       </div>
 
       <q-separator class="q-my-md" />
@@ -61,9 +61,13 @@ import { useRoute } from 'vue-router'
 import { saleService } from '@/services/sale.service'
 import type { Sale } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const route = useRoute()
 const sale = ref<Sale | null>(null)
 const loading = ref(true)
+const { formatCurrency } = useCurrency();
+
 
 const fetchSale = async () => {
   try {
@@ -76,10 +80,6 @@ const fetchSale = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(val)
 }
 
 const printVoucher = () => {
