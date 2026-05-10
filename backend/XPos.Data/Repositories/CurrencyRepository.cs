@@ -16,19 +16,19 @@ public class CurrencyRepository : ICurrencyRepository
 
     public async Task<CurrencySetting?> GetAsync()
     {
-        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\" LIMIT 1";
+        const string sql = "SELECT \"Id\", \"Code\", \"Symbol\" FROM public.\"CurrencySettings\" LIMIT 1";
         return await _unitOfWork.Connection.QueryFirstOrDefaultAsync<CurrencySetting>(sql, transaction: _unitOfWork.Transaction);
     }
 
     public async Task<CurrencySetting?> GetByIdAsync(long id)
     {
-        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\" WHERE id = @id";
+        const string sql = "SELECT \"Id\", \"Code\", \"Symbol\" FROM public.\"CurrencySettings\" WHERE \"Id\" = @id";
         return await _unitOfWork.Connection.QueryFirstOrDefaultAsync<CurrencySetting>(sql, new { id }, _unitOfWork.Transaction);
     }
 
     public async Task<List<CurrencySetting>> GetAllAsync()
     {
-        const string sql = "SELECT id, code, symbol FROM public.\"CurrencySettings\"";
+        const string sql = "SELECT \"Id\", \"Code\", \"Symbol\" FROM public.\"CurrencySettings\"";
         var result = await _unitOfWork.Connection.QueryAsync<CurrencySetting>(sql, transaction: _unitOfWork.Transaction);
         return result.ToList();
     }
@@ -36,9 +36,9 @@ public class CurrencyRepository : ICurrencyRepository
     public async Task<long> CreateAsync(CurrencySetting currency)
     {
         const string sql = @"
-            INSERT INTO public.""CurrencySettings"" (code, symbol)
+            INSERT INTO public.""CurrencySettings"" (""Code"", ""Symbol"")
             VALUES (@Code, @Symbol)
-            RETURNING id";
+            RETURNING ""Id""";
         return await _unitOfWork.Connection.ExecuteScalarAsync<long>(sql, currency, _unitOfWork.Transaction);
     }
 
@@ -46,14 +46,14 @@ public class CurrencyRepository : ICurrencyRepository
     {
         const string sql = @"
             UPDATE public.""CurrencySettings""
-            SET code = @Code, symbol = @Symbol
-            WHERE id = @Id";
+            SET ""Code"" = @Code, ""Symbol"" = @Symbol
+            WHERE ""Id"" = @Id";
         return await _unitOfWork.Connection.ExecuteAsync(sql, currency, _unitOfWork.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id)
     {
-        const string sql = "DELETE FROM public.\"CurrencySettings\" WHERE id = @id";
+        const string sql = "DELETE FROM public.\"CurrencySettings\" WHERE \"Id\" = @id";
         return await _unitOfWork.Connection.ExecuteAsync(sql, new { id }, _unitOfWork.Transaction) > 0;
     }
 }

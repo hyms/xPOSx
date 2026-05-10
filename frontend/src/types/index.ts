@@ -64,6 +64,7 @@ export interface Purchase {
   voucher?: Partial<Voucher>;
   discount?: number;
   shipping?: number;
+  voucherId?: number;
 }
 
 export interface PurchaseDetail {
@@ -258,6 +259,7 @@ export interface PurchaseReadDto {
     grandTotal: number;
     status: string;
     paymentStatus: string;
+    voucherId?: number;
 }
 
 export interface PagingParams {
@@ -404,6 +406,7 @@ export interface PurchaseReturnDetail {
 }
 
 export interface Voucher {
+  id?: number;
   voucherType: string;
   voucherNumber: string;
   cae: string;

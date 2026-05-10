@@ -2,14 +2,14 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">Crear Transferencia</div>
+        <div class="text-h6">{{ isEdit ? 'Ver Transferencia' : 'Crear Transferencia' }}</div>
       </q-card-section>
 
       <q-card-section class="q-pa-md">
         <q-form @submit="onSubmit" class="q-gutter-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-3">
-              <q-input v-model="formData.date" type="date" label="Fecha" lazy-rules :rules="[val => !!val || 'Requerido']" outlined dense />
+              <q-input v-model="formData.date" type="date" label="Fecha" lazy-rules :rules="[val => !!val || 'Requerido']" outlined dense :readonly="isEdit" />
             </div>
             <div class="col-12 col-md-4.5">
               <q-select
@@ -24,6 +24,7 @@
                 :rules="[val => !!val || 'Requerido']"
                 outlined
                 dense
+                :readonly="isEdit"
               />
             </div>
             <div class="col-12 col-md-4.5">
@@ -39,6 +40,7 @@
                 :rules="[val => !!val || 'Requerido', val => val !== formData.fromWarehouseId || 'No puede ser el mismo almacén']"
                 outlined
                 dense
+                :readonly="isEdit"
               />
             </div>
 
@@ -54,6 +56,7 @@
                 @update:model-value="addProduct"
                 outlined
                 dense
+                :readonly="isEdit"
               >
                 <template v-slot:no-option>
                   <q-item><q-item-section class="text-grey">Sin resultados</q-item-section></q-item>
@@ -77,19 +80,20 @@
                       type="number"
                       dense
                       @update:model-value="calculateTotal(props.row)"
+                      :readonly="isEdit"
                     />
                   </q-td>
                 </template>
                 <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
-                    <q-btn flat round color="negative" icon="delete" @click="removeItem(props.row)" />
+                    <q-btn flat round color="negative" icon="delete" @click="removeItem(props.row)" :disable="isEdit" />
                   </q-td>
                 </template>
               </q-table>
             </div>
 
             <div class="col-12">
-              <q-input v-model="formData.notes" label="Notas" type="textarea" autogrow outlined dense />
+              <q-input v-model="formData.notes" label="Notas" type="textarea" autogrow outlined dense :readonly="isEdit" />
             </div>
           </div>
 
@@ -97,7 +101,7 @@
             <div class="text-h6 text-primary">Total: ${{ grandTotal.toFixed(2) }}</div>
             <div class="q-gutter-sm">
               <q-btn label="Cancelar" color="primary" flat to="/transfers" />
-              <q-btn label="Guardar Transferencia" color="primary" type="submit" :loading="saving" :disable="formData.details.length === 0" />
+              <q-btn label="Guardar Transferencia" color="primary" type="submit" :loading="saving" :disable="formData.details.length === 0 || isEdit" />
             </div>
           </div>
         </q-form>
@@ -124,6 +128,7 @@ const products = ref<Product[]>([])
 const allProducts = ref<Product[]>([])
 const selectedProduct = ref(null)
 const saving = ref(false)
+const isEdit = ref(false)
 
 const formData = reactive<Transfer>({
   date: new Date().toISOString().split('T')[0],
@@ -157,6 +162,26 @@ const fetchData = async () => {
     warehouses.value = wRes.data
     allProducts.value = pRes.data
     products.value = pRes.data
+
+    // Check if we are in edit mode
+    const transferId = Number(router.currentRoute.value.params.id)
+    if (transferId) {
+      isEdit.value = true
+      try {
+        const res = await transferService.getById(transferId)
+        const transferData = res.data
+        if (transferData) {
+          Object.assign(formData, {
+            ...transferData,
+            date: transferData.date ? transferData.date.split('T')[0] : formData.date,
+            details: transferData.details || []
+          })
+        }
+      } catch (error) {
+        $q.notify({ color: 'negative', message: 'Error al cargar la transferencia para visualización' })
+        router.push('/transfers')
+      }
+    }
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al cargar catálogos' })
   }

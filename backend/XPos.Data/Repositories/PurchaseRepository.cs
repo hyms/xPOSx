@@ -124,13 +124,41 @@ public class PurchaseRepository : IPurchaseRepository
     {
         const string sql = @"
             UPDATE purchases SET 
+                provider_id = @ProviderId,
+                warehouse_id = @WarehouseId,
+                grand_total = @GrandTotal,
+                paid_amount = @PaidAmount,
                 status = @Status, 
                 payment_status = @PaymentStatus, 
                 notes = @Notes, 
                 updated_at = CURRENT_TIMESTAMP, 
                 updated_by = @UpdatedBy 
             WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, purchase, _uow.Transaction) > 0;
+
+        var affected = await _uow.Connection.ExecuteAsync(sql, purchase, _uow.Transaction);
+        Console.WriteLine($"Affected rows: {affected}, PurchaseId: {purchase.Id}, GrandTotal: {purchase.GrandTotal}");
+
+        if (affected > 0 && purchase.Details != null)
+        {
+            await _uow.Connection.ExecuteAsync(
+                "DELETE FROM purchase_details WHERE purchase_id = @Id",
+                new { purchase.Id }, _uow.Transaction);
+
+            foreach (var detail in purchase.Details)
+            {
+                detail.PurchaseId = purchase.Id;
+                const string detailSql = @"
+                    INSERT INTO purchase_details (purchase_id, product_id, product_variant_id, purchase_unit_id, cost, tax_net, tax_method, discount, discount_method, quantity, total, created_at, created_by)
+                    VALUES (@PurchaseId, @ProductId, @ProductVariantId, @PurchaseUnitId, @Cost, @TaxNet, @TaxMethod, @Discount, @DiscountMethod, @Quantity, @Total, CURRENT_TIMESTAMP, @CreatedBy)";
+                await _uow.Connection.ExecuteAsync(detailSql, new {
+                    detail.PurchaseId, detail.ProductId, detail.ProductVariantId, detail.PurchaseUnitId,
+                    detail.Cost, detail.TaxNet, detail.TaxMethod, detail.Discount, detail.DiscountMethod,
+                    detail.Quantity, detail.Total, CreatedBy = purchase.UpdatedBy
+                }, _uow.Transaction);
+            }
+        }
+
+        return affected > 0;
     }
 
     public async Task<bool> DeleteAsync(long id, long deletedBy)

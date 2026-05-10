@@ -2,7 +2,7 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">Registrar Compra</div>
+        <div class="text-h6">{{ isEdit ? 'Ver Compra' : 'Registrar Compra' }}</div>
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit">
@@ -22,6 +22,7 @@
                 map-options
                 lazy-rules
                 :rules="[val => !!val || 'Requerido']"
+                :readonly="isEdit"
               />
             </div>
             <div class="col-12 col-md-4">
@@ -35,6 +36,7 @@
                 map-options
                 lazy-rules
                 :rules="[val => !!val || 'Requerido']"
+                :readonly="isEdit"
               />
             </div>
           </div>
@@ -53,10 +55,11 @@
                 option-value="id"
                 option-label="name"
                 return-object
+                :readonly="isEdit"
               />
             </div>
             <div class="col-12 col-md-2">
-              <q-btn color="primary" label="Añadir" @click="addProductToPurchase" :disable="!selectedProduct" class="full-width" />
+              <q-btn color="primary" label="Añadir" @click="addProductToPurchase" :disable="!selectedProduct || isEdit" class="full-width" />
             </div>
           </div>
 
@@ -70,12 +73,12 @@
           >
             <template v-slot:body-cell-cost="props">
               <q-td :props="props">
-                <q-input v-model.number="props.row.cost" type="number" dense @update:model-value="updateTotals" />
+                <q-input v-model.number="props.row.cost" type="number" dense @update:model-value="updateTotals" :readonly="isEdit" />
               </q-td>
             </template>
             <template v-slot:body-cell-quantity="props">
               <q-td :props="props">
-                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateTotals" />
+                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateTotals" :readonly="isEdit" />
               </q-td>
             </template>
             <template v-slot:body-cell-total="props">
@@ -83,7 +86,7 @@
             </template>
             <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
-                    <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" />
+                    <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" :disable="isEdit" />
                 </q-td>
             </template>
           </q-table>
@@ -116,16 +119,16 @@
           >
             <div class="row q-col-gutter-md q-pt-md">
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense />
+                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense />
+                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.cae" label="CAE" outlined dense />
+                <q-input v-model="voucher.cae" label="CAE" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense />
+                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense :readonly="isEdit" />
               </div>
             </div>
           </q-expansion-item>
@@ -134,7 +137,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" to="/purchases" />
-          <q-btn type="submit" color="primary" label="Guardar Compra" :loading="saving" :disable="saving || formData.details.length === 0" />
+          <q-btn type="submit" color="primary" label="Guardar Compra" :loading="saving" :disable="saving || formData.details.length === 0 || isEdit" />
         </q-card-actions>
       </q-form>
     </q-card>
@@ -178,7 +181,8 @@ const formData = reactive<Partial<Purchase> & { details: PurchaseDetail[] }>({
   details: []
 })
 
-const voucher = reactive<Partial<Voucher>>({
+const voucher = reactive<Partial<Voucher> & { id?: number }>({
+    id: undefined,
     voucherType: '',
     voucherNumber: '',
     cae: '',
@@ -186,6 +190,7 @@ const voucher = reactive<Partial<Voucher>>({
 })
 
 const subTotal = ref(0);
+const isEdit = ref(false); // Add this
 
 const detailsColumns = [
   { name: 'name', label: 'Producto', field: 'productName', align: 'left' as const },
@@ -245,8 +250,13 @@ const onSubmit = async () => {
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
         (payload as any).voucher = { ...voucher, issuedAt: new Date().toISOString().substr(0, 10) }
     }
-    const res = await purchaseService.create(payload as Purchase)
-    const purchaseId = res.data?.id || 1
+    // Ensure voucher.id is passed if it exists and is an edit
+    if (isEdit.value && voucher.id) {
+      (payload as any).voucher.id = voucher.id;
+    }
+
+    const res = await (isEdit.value ? purchaseService.update(formData.id!, payload as Purchase) : purchaseService.create(payload as Purchase))
+    const purchaseId = res.data?.id || formData.id || 1 // Use formData.id if it's an edit and no new id is returned
     
     $q.dialog({
       title: 'Compra Exitosa',
@@ -275,5 +285,31 @@ onMounted(async () => {
   providerOptions.value = providersRes.data.map(p => ({ label: p.name, value: p.id }))
   warehouseOptions.value = warehousesRes.data.map(w => ({ label: w.name, value: w.id }))
   allProducts = productsRes.data
+
+  // Check if we are in edit mode
+  const purchaseId = Number(router.currentRoute.value.params.id)
+  if (purchaseId) {
+    isEdit.value = true
+    try {
+      const res = await purchaseService.getById(purchaseId)
+      const purchaseData = res.data
+
+      if (purchaseData) {
+        // Populate formData
+        Object.assign(formData, { 
+            ...purchaseData, 
+            details: purchaseData.details || [] 
+        })
+        // Populate voucher
+        if (purchaseData.voucher) {
+          Object.assign(voucher, purchaseData.voucher)
+        }
+        updateTotals()
+      }
+    } catch (error) {
+      $q.notify({ color: 'negative', message: 'Error al cargar la compra para edición' })
+      router.push('/purchases')
+    }
+  }
 })
 </script>

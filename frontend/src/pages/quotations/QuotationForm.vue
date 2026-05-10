@@ -2,17 +2,17 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">Crear Nueva Cotización</div>
+        <div class="text-h6">{{ isEdit ? 'Ver Cotización' : 'Crear Nueva Cotización' }}</div>
       </q-card-section>
 
       <q-card-section class="q-pa-md">
         <q-form @submit="submitForm" class="q-gutter-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="formData.date" label="Fecha" type="date" stack-label outlined dense :rules="[val => !!val || 'Requerido']" />
+              <q-input v-model="formData.date" label="Fecha" type="date" stack-label outlined dense :rules="[val => !!val || 'Requerido']" :readonly="isEdit" />
             </div>
             <div class="col-12 col-md-4">
-<q-select
+              <q-select
                 v-model="formData.clientId"
                 :options="clientOptions"
                 label="Cliente"
@@ -21,6 +21,7 @@
                 outlined
                 dense
                 :rules="[val => !!val || 'Requerido']"
+                :readonly="isEdit"
               />
             </div>
             <div class="col-12 col-md-4">
@@ -33,6 +34,7 @@
                 outlined
                 dense
                 :rules="[val => !!val || 'Requerido']"
+                :readonly="isEdit"
               />
             </div>
           </div>
@@ -50,9 +52,10 @@
                 @update:model-value="addProduct"
                 outlined
                 dense
+                :readonly="isEdit"
               >
                 <template v-slot:no-option>
-                  <q-item><q-item-section class="text-grey">No se encontraron productos</q-item-section></q-item>
+                  <q-item><q-item-section class="text-grey">No se encontraron productos</q-item-section></template>
                 </template>
               </q-select>
             </div>
@@ -68,12 +71,12 @@
           >
             <template v-slot:body-cell-quantity="props">
               <q-td :props="props">
-                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateRow(props.row)" />
+                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateRow(props.row)" :readonly="isEdit" />
               </q-td>
             </template>
             <template v-slot:body-cell-actions="props">
               <q-td :props="props">
-                <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" />
+                <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" :disable="isEdit" />
               </q-td>
             </template>
           </q-table>
@@ -88,7 +91,7 @@
 
           <div class="row justify-end q-gutter-sm">
             <q-btn label="Cancelar" color="primary" flat to="/quotations" />
-            <q-btn label="Guardar Cotización" color="primary" type="submit" :loading="saving" />
+            <q-btn label="Guardar Cotización" color="primary" type="submit" :loading="saving" :disable="isEdit" />
           </div>
         </q-form>
       </q-card-section>
@@ -97,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { quotationService } from '@/services/quotation.service'
@@ -119,6 +122,7 @@ const warehouseOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 const searchProduct = ref(null)
 const allProducts = ref<Product[]>([])
+const isEdit = ref(false)
 
 const formData = reactive<Quotation>({
   date: new Date().toISOString().substr(0, 10),
@@ -137,21 +141,6 @@ const columns = [
   { name: 'actions', label: '', field: 'actions' }
 ]
 
-const fetchInitialData = async () => {
-  try {
-    const [clients, warehouses, products] = await Promise.all([
-      clientService.getAll(),
-      warehouseService.getAll(),
-      productService.getAll()
-    ])
-    clientOptions.value = clients.data.map(c => ({ label: c.name, value: c.id }))
-    warehouseOptions.value = warehouses.data.map(w => ({ label: w.name, value: w.id }))
-    allProducts.value = products.data
-  } catch (error) {
-    $q.notify({ color: 'negative', message: 'Error al cargar datos iniciales' })
-  }
-}
-
 const filterProducts = (val: string, update: any) => {
   update(() => {
     const needle = val.toLowerCase()
@@ -159,6 +148,11 @@ const filterProducts = (val: string, update: any) => {
       .filter((v: Product) => v.name.toLowerCase().indexOf(needle) > -1 || v.code.toLowerCase().indexOf(needle) > -1)
       .map((p: Product) => ({ label: `${p.code} - ${p.name}`, value: p }))
   })
+}
+
+const updateRow = (row: any) => {
+  row.total = row.price * row.quantity
+  calculateTotal()
 }
 
 const addProduct = (val: any) => {
@@ -171,18 +165,13 @@ const addProduct = (val: any) => {
   } else {
     formData.details.push({
       productId: product.id,
-      name: product.name, // Temporary for UI
+      name: product.name,
       price: product.price,
       quantity: 1,
       total: product.price
     } as any)
   }
   searchProduct.value = null
-  calculateTotal()
-}
-
-const updateRow = (row: any) => {
-  row.total = row.price * row.quantity
   calculateTotal()
 }
 
@@ -223,5 +212,35 @@ const submitForm = async () => {
   }
 }
 
-onMounted(fetchInitialData)
+onMounted(async () => {
+  const [clients, warehouses, products] = await Promise.all([
+    clientService.getAll(),
+    warehouseService.getAll(),
+    productService.getAll()
+  ])
+  clientOptions.value = clients.data.map(c => ({ label: c.name, value: c.id }))
+  warehouseOptions.value = warehouses.data.map(w => ({ label: w.name, value: w.id }))
+  allProducts.value = products.data
+
+  // Check if we are in edit mode
+  const quotationId = Number(router.currentRoute.value.params.id)
+  if (quotationId) {
+    isEdit.value = true
+    try {
+      const res = await quotationService.getById(quotationId)
+      const quotationData = res.data
+
+      if (quotationData) {
+        // Populate formData
+        Object.assign(formData, { 
+            ...quotationData, 
+            details: quotationData.details || [] 
+        })
+      }
+    } catch (error) {
+      $q.notify({ color: 'negative', message: 'Error al cargar la cotización para edición' })
+      router.push('/quotations')
+    }
+  }
+})
 </script>

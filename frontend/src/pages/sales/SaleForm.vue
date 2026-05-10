@@ -2,7 +2,7 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">Crear Venta</div>
+        <div class="text-h6">{{ isEdit ? 'Ver Venta' : 'Crear Venta' }}</div>
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit">
@@ -12,10 +12,10 @@
               <q-input v-model="sale.ref" label="Referencia" outlined dense readonly />
             </div>
             <div class="col-12 col-md-4">
-              <q-select v-model="sale.clientId" label="Cliente" outlined dense :options="clientOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
+              <q-select v-model="sale.clientId" label="Cliente" outlined dense :options="clientOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" :readonly="isEdit" />
             </div>
             <div class="col-12 col-md-4">
-              <q-select v-model="sale.warehouseId" label="Almacén" outlined dense :options="warehouseOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" />
+              <q-select v-model="sale.warehouseId" label="Almacén" outlined dense :options="warehouseOptions" emit-value map-options lazy-rules :rules="[val => !!val || 'Requerido']" :readonly="isEdit" />
             </div>
           </div>
 
@@ -32,10 +32,11 @@
                 option-label="name"
                 outlined
                 dense
+                :readonly="isEdit"
               />
             </div>
             <div class="col-12 col-md-2">
-              <q-btn color="primary" label="Añadir" @click="addProductToSale" :disable="!selectedProduct" class="full-width" />
+              <q-btn color="primary" label="Añadir" @click="addProductToSale" :disable="!selectedProduct || isEdit" class="full-width" />
             </div>
           </div>
 
@@ -49,7 +50,7 @@
           >
             <template v-slot:body-cell-quantity="props">
               <q-td :props="props">
-                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateTotals" />
+                <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateTotals" :readonly="isEdit" />
               </q-td>
             </template>
             <template v-slot:body-cell-total="props">
@@ -57,7 +58,7 @@
             </template>
             <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
-                    <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" />
+                    <q-btn flat round color="negative" icon="delete" @click="removeProduct(props.row)" :disable="isEdit" />
                 </q-td>
             </template>
           </q-table>
@@ -86,16 +87,16 @@
           >
             <div class="row q-col-gutter-md q-pt-md">
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense />
+                <q-input v-model="voucher.voucherType" label="Tipo (Factura A, Ticket B, etc.)" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense />
+                <q-input v-model="voucher.voucherNumber" label="Número de Comprobante" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.cae" label="CAE" outlined dense />
+                <q-input v-model="voucher.cae" label="CAE" outlined dense :readonly="isEdit" />
               </div>
               <div class="col-12 col-md-3">
-                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense />
+                <q-input v-model="voucher.caeExpiration" label="Vencimiento CAE" type="date" stack-label outlined dense :readonly="isEdit" />
               </div>
             </div>
           </q-expansion-item>
@@ -104,7 +105,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" to="/sales" />
-          <q-btn type="submit" color="primary" label="Guardar Venta" :loading="submitting" :disable="submitting || sale.details.length === 0" />
+          <q-btn type="submit" color="primary" label="Guardar Venta" :loading="submitting" :disable="submitting || sale.details.length === 0 || isEdit" />
         </q-card-actions>
       </q-form>
     </q-card>
@@ -134,6 +135,7 @@ const warehouseOptions = ref<any[]>([])
 const productOptions = ref<any[]>([])
 let allProducts: Product[] = []
 const selectedProduct = ref<Product | null>(null)
+const isEdit = ref(false) // Add this
 
 const sale = reactive<Partial<Sale> & { details: SaleDetail[] }>({
   ref: `SL-${Date.now()}`,
@@ -148,6 +150,7 @@ const sale = reactive<Partial<Sale> & { details: SaleDetail[] }>({
 })
 
 const voucher = reactive<Partial<Voucher>>({
+    id: undefined,
     voucherType: '',
     voucherNumber: '',
     cae: '',
@@ -242,5 +245,31 @@ onMounted(async () => {
   clientOptions.value = clientsRes.data.map(c => ({ label: c.name, value: c.id }))
   warehouseOptions.value = warehousesRes.data.map(w => ({ label: w.name, value: w.id }))
   allProducts = productsRes.data
+
+  // Check if we are in edit mode
+  const saleId = Number(router.currentRoute.value.params.id)
+  if (saleId) {
+    isEdit.value = true
+    try {
+      const res = await saleService.getById(saleId)
+      const saleData = res.data
+
+      if (saleData) {
+        // Populate formData
+        Object.assign(sale, { 
+            ...saleData, 
+            details: saleData.details || [] 
+        })
+        // Populate voucher
+        if (saleData.voucher) {
+          Object.assign(voucher, saleData.voucher)
+        }
+        updateTotals()
+      }
+    } catch (error) {
+      $q.notify({ color: 'negative', message: 'Error al cargar la venta para edición' })
+      router.push('/sales')
+    }
+  }
 })
 </script>

@@ -20,8 +20,8 @@ public class AdjustmentRepository : IAdjustmentRepository
     {
         var sql = @"
             SELECT a.id, a.ref, a.date, a.items, w.name as WarehouseName
-            FROM adjustments a
-            JOIN warehouses w ON a.warehouse_id = w.id
+            FROM public.adjustments a
+            JOIN public.warehouses w ON a.warehouse_id = w.id
             WHERE a.deleted_at IS NULL
             ";
             
@@ -37,11 +37,11 @@ public class AdjustmentRepository : IAdjustmentRepository
 
     public async Task<Adjustment?> GetByIdAsync(long id)
     {
-        const string sql = "SELECT * FROM adjustments WHERE id = @id AND deleted_at IS NULL";
+        const string sql = "SELECT * FROM public.adjustments WHERE id = @id AND deleted_at IS NULL";
         var adjustment = await _uow.Connection.QueryFirstOrDefaultAsync<Adjustment>(sql, new { id }, _uow.Transaction);
         if (adjustment != null)
         {
-            const string detailsSql = "SELECT * FROM adjustment_details WHERE adjustment_id = @id";
+            const string detailsSql = "SELECT * FROM public.adjustment_details WHERE adjustment_id = @id";
             adjustment.Details = (await _uow.Connection.QueryAsync<AdjustmentDetail>(detailsSql, new { id }, _uow.Transaction)).ToList();
         }
         return adjustment;
@@ -50,7 +50,7 @@ public class AdjustmentRepository : IAdjustmentRepository
     public async Task<long> CreateAsync(Adjustment adjustment)
     {
         const string sql = @"
-            INSERT INTO adjustments (user_id, ref, date, warehouse_id, items, notes, created_at, created_by)
+            INSERT INTO public.adjustments (user_id, ref, date, warehouse_id, items, notes, created_at, created_by)
             VALUES (@UserId, @Ref, @Date, @WarehouseId, @Items, @Notes, CURRENT_TIMESTAMP, @CreatedBy)
             RETURNING id";
         
@@ -60,7 +60,7 @@ public class AdjustmentRepository : IAdjustmentRepository
         {
             detail.AdjustmentId = adjustmentId;
             const string detailSql = @"
-                INSERT INTO adjustment_details (adjustment_id, product_id, product_variant_id, quantity, type, created_at, created_by)
+                INSERT INTO public.adjustment_details (adjustment_id, product_id, product_variant_id, quantity, type, created_at, created_by)
                 VALUES (@AdjustmentId, @ProductId, @ProductVariantId, @Quantity, @Type, CURRENT_TIMESTAMP, @CreatedBy)";
             await _uow.Connection.ExecuteAsync(detailSql, new { 
                 detail.AdjustmentId, detail.ProductId, detail.ProductVariantId, 
@@ -71,9 +71,41 @@ public class AdjustmentRepository : IAdjustmentRepository
         return adjustmentId;
     }
 
+    public async Task<bool> UpdateAsync(Adjustment adjustment)
+    {
+        const string sql = @"
+            UPDATE public.adjustments 
+            SET date = @Date, warehouse_id = @WarehouseId, items = @Items, notes = @Notes,
+                updated_at = CURRENT_TIMESTAMP, updated_by = @UpdatedBy
+            WHERE id = @Id AND deleted_at IS NULL";
+
+        var affected = await _uow.Connection.ExecuteAsync(sql, adjustment, _uow.Transaction);
+
+        if (affected > 0 && adjustment.Details != null)
+        {
+            await _uow.Connection.ExecuteAsync(
+                "DELETE FROM public.adjustment_details WHERE adjustment_id = @Id",
+                new { adjustment.Id }, _uow.Transaction);
+
+            foreach (var detail in adjustment.Details)
+            {
+                detail.AdjustmentId = adjustment.Id;
+                const string detailSql = @"
+                    INSERT INTO public.adjustment_details (adjustment_id, product_id, product_variant_id, quantity, type, created_at, created_by)
+                    VALUES (@AdjustmentId, @ProductId, @ProductVariantId, @Quantity, @Type, CURRENT_TIMESTAMP, @CreatedBy)";
+                await _uow.Connection.ExecuteAsync(detailSql, new {
+                    detail.AdjustmentId, detail.ProductId, detail.ProductVariantId,
+                    detail.Quantity, detail.Type, CreatedBy = adjustment.UpdatedBy
+                }, _uow.Transaction);
+            }
+        }
+
+        return affected > 0;
+    }
+
     public async Task<bool> DeleteAsync(long id, long deletedBy)
     {
-        const string sql = "UPDATE adjustments SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @deletedBy WHERE id = @id";
+        const string sql = "UPDATE public.adjustments SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @deletedBy WHERE id = @id";
         return await _uow.Connection.ExecuteAsync(sql, new { id, deletedBy }, _uow.Transaction) > 0;
     }
 }

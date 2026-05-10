@@ -49,6 +49,14 @@ public class AdjustmentsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, adjustment);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(long id, Adjustment adjustment)
+    {
+        if (id != adjustment.Id) return BadRequest();
+        adjustment.UpdatedBy = long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
+        return await _adjustmentRepository.UpdateAsync(adjustment) ? Ok(adjustment) : NotFound();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(long id)
     {
