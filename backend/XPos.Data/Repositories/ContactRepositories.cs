@@ -15,7 +15,10 @@ public class ClientRepository : IClientRepository
     public async Task<IEnumerable<Client>> GetAllAsync()
     {
         using var connection = CreateConnection();
-        return await connection.QueryAsync<Client>("SELECT * FROM clients WHERE deleted_at IS NULL");
+        const string sql = @"SELECT id, name, company_name AS CompanyName, code, email, city, phone, address, 
+                             nit_ci AS NitCi, created_at AS CreatedAt, updated_at AS UpdatedAt, deleted_at AS DeletedAt 
+                             FROM clients WHERE deleted_at IS NULL";
+        return await connection.QueryAsync<Client>(sql);
     }
 
     public async Task<Client?> GetByIdAsync(long id)

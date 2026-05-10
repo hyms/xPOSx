@@ -23,7 +23,6 @@
       </div>
     </div>
 
-    <!-- Category Dialog -->
     <q-dialog v-model="showDialog" persistent>
       <q-card style="min-width: 350px">
         <q-card-section>

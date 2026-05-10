@@ -35,6 +35,7 @@ public class Product
     public bool IsVariant { get; set; }
     public bool NotSelling { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? Image { get; set; }
     
     // Navigation properties (optional for Dapper, but helpful for UI)
     public Category? Category { get; set; }

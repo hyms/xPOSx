@@ -100,7 +100,10 @@ public class ProductRepository : IProductRepository
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
         const string sql = @"
-            SELECT p.*, c.name as CategoryName, u.name as UnitName 
+            SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
+                   p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   c.id, c.code, c.name,
+                   u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
             LEFT JOIN units u ON p.unit_id = u.id 
@@ -108,7 +111,7 @@ public class ProductRepository : IProductRepository
         
         return await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sql, 
             (p, c, u) => { p.Category = c; p.Unit = u; return p; }, 
-            splitOn: "CategoryName,UnitName", transaction: _uow.Transaction);
+            splitOn: "id,id", transaction: _uow.Transaction);
     }
 
     public async Task<Product?> GetByIdAsync(long id)
@@ -120,8 +123,8 @@ public class ProductRepository : IProductRepository
     public async Task<long> CreateAsync(Product product)
     {
         const string sql = @"
-            INSERT INTO products (code, name, cost, price, category_id, unit_id, unit_sale_id, unit_purchase_id, tax_net, tax_method, note, stock_alert, is_variant, not_selling, is_active, created_at) 
-            VALUES (@Code, @Name, @Cost, @Price, @CategoryId, @UnitId, @UnitSaleId, @UnitPurchaseId, @TaxNet, @TaxMethod, @Note, @StockAlert, @IsVariant, @NotSelling, @IsActive, CURRENT_TIMESTAMP) 
+            INSERT INTO products (code, name, cost, price, category_id, unit_id, unit_sale_id, unit_purchase_id, tax_net, tax_method, note, stock_alert, is_variant, not_selling, is_active, image, created_at) 
+            VALUES (@Code, @Name, @Cost, @Price, @CategoryId, @UnitId, @UnitSaleId, @UnitPurchaseId, @TaxNet, @TaxMethod, @Note, @StockAlert, @IsVariant, @NotSelling, @IsActive, @Image, CURRENT_TIMESTAMP) 
             RETURNING id";
         return await _uow.Connection.ExecuteScalarAsync<long>(sql, product, _uow.Transaction);
     }
@@ -134,7 +137,7 @@ public class ProductRepository : IProductRepository
                 unit_id = @UnitId, unit_sale_id = @UnitSaleId, unit_purchase_id = @UnitPurchaseId, 
                 tax_net = @TaxNet, tax_method = @TaxMethod, note = @Note, stock_alert = @StockAlert, 
                 is_variant = @IsVariant, not_selling = @NotSelling, is_active = @IsActive, 
-                updated_at = CURRENT_TIMESTAMP 
+                image = @Image, updated_at = CURRENT_TIMESTAMP 
             WHERE id = @Id";
         return await _uow.Connection.ExecuteAsync(sql, product, _uow.Transaction) > 0;
     }

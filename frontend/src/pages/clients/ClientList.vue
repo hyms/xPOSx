@@ -82,7 +82,7 @@ const isEdit = ref(false)
 
 const formData = reactive<Client>({
   name: '',
-  code: 0,
+  code: null,
   nitCi: '',
   phone: '',
   email: '',
@@ -94,7 +94,7 @@ const formData = reactive<Client>({
 const columns = [
   { name: 'id', label: 'ID', field: 'id', sortable: true, align: 'left' as const },
   { name: 'name', label: 'Nombre', field: 'name', sortable: true, align: 'left' as const },
-  { name: 'nitCi', label: 'NIT/CI', field: 'nitCi', align: 'left' as const },
+  { name: 'nitCi', label: 'NIT/CI', field: 'nitCi', format: (val: string) => val || '', align: 'left' as const },
   { name: 'phone', label: 'Teléfono', field: 'phone', align: 'left' as const },
   { name: 'actions', label: 'Acciones', field: 'actions', align: 'center' as const }
 ]
@@ -117,7 +117,7 @@ const openDialog = (client?: Client) => {
     Object.assign(formData, { ...client })
   } else {
     isEdit.value = false
-    Object.assign(formData, { name: '', nitCi: '', phone: '', email: '', companyName: '', city: '', address: '' })
+    Object.assign(formData, { name: '', code: null, nitCi: '', phone: '', email: '', companyName: '', city: '', address: '' })
   }
   showDialog.value = true
 }
