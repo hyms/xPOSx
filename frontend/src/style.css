@@ -1,0 +1,60 @@
+/* Global Typography & Resets */
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism Header */
+.glass-header {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1f2937 !important; /* Dark text for light mode header */
+  box-shadow: none !important;
+}
+
+.body--dark .glass-header {
+  background: rgba(15, 23, 42, 0.8) !important; /* Slate 900 with opacity */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f8fafc !important;
+}
+
+/* Elevate Quasar components slightly */
+.q-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+.body--dark .q-card {
+  background: #1e293b; /* Slate 800 */
+  border: 1px solid rgba(255,255,255, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Premium Dark Mode Colors */
+.body--dark {
+  background: #0f172a !important; /* Slate 900 */
+  color: #f8fafc !important;
+}
+
+.body--dark .bg-dark {
+  background: #0f172a !important;
+}
+
+.body--dark .bg-grey-10 {
+  background: #0f172a !important;
+}
+
+/* Input Fields Refinement */
+.q-field--outlined .q-field__control {
+  border-radius: 8px;
+}
