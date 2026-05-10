@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="XPos.Api/XPos.Api.csproj" />
+  <Project Path="XPos.Data/XPos.Data.csproj" />
+  <Project Path="XPos.Domain/XPos.Domain.csproj" />
+</Solution>
