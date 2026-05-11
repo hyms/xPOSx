@@ -1,12 +1,11 @@
 import axios, { type AxiosInstance } from "axios";
-import router from '@/router';
+import router from "@/router";
 
 class ApiClient {
   private static instance: ApiClient;
   private axiosInstance: AxiosInstance;
 
   private constructor() {
-    console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
     this.axiosInstance = axios.create({
       baseURL: import.meta.env.VITE_API_URL,
     });

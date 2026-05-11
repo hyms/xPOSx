@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* CSS Variables for Theming */
+:root {
+  --color-primary: #1976D2; /* Quasar primary default */
+  --color-secondary: #26A69A;
+  --color-accent: #9C27B0;
+
+  /* RGB values for primary color, for use in rgba functions */
+  --color-primary-rgb: 25, 118, 210; 
+  --color-text-light-rgb: 31, 41, 55; /* RGB for #1f2937 */
+  --color-text-dark-rgb: 248, 250, 252; /* RGB for #f8fafc */
+
+  --color-text-light: #1f2937; /* Dark grey for light mode text */
+  --color-text-dark: #f8fafc; /* Light grey for dark mode text */
+
+  --color-background-light: #ffffff;
+  --color-background-dark: #0f172a; /* Slate 900 */
+  --color-background-elevated-light: #f5f5f5; /* Slightly darker than background for cards */
+  --color-background-elevated-dark: #1e293b; /* Slate 800 */
+
+  --color-border-light: rgba(0, 0, 0, 0.05);
+  --color-border-dark: rgba(255, 255, 255, 0.05);
+
+  --font-family-display: 'Roboto', sans-serif;
+  --font-family-body: 'Roboto', sans-serif;
+}
+
+/* Dark Mode Variables */
+.body--dark {
+  --color-text-primary: var(--color-text-dark);
+  --color-background: var(--color-background-dark);
+  --color-background-elevated: var(--color-background-elevated-dark);
+  --color-border: var(--color-border-dark);
+}
+
+/* Light Mode Variables (defaults) */
+body:not(.body--dark) {
+  --color-text-primary: var(--color-text-light);
+  --color-background: var(--color-background-light);
+  --color-background-elevated: var(--color-background-elevated-light);
+  --color-border: var(--color-border-light);
+}
+
+/* Global Typography & Resets */
+body {
+  font-family: var(--font-family-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
+  font-weight: 700; /* Bolder for display */
+  letter-spacing: -0.02em; /* Tighter for impact */
+}
+
+/* Glassmorphism Header */
+.glass-header {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text-light) !important;
+  box-shadow: none !important;
+}
+
+.body--dark .glass-header {
+  background: rgba(15, 23, 42, 0.8) !important; /* Using a fixed rgba for header for now, as --color-background-dark is a string */
+  border-bottom: 1px solid var(--color-border-dark);
+  color: var(--color-text-dark) !important;
+}
+
+/* Elevate Quasar components slightly */
+.q-card {
+  border-radius: 12px;
+  background-color: var(--color-background-elevated);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+.body--dark .q-card {
+  border: 1px solid var(--color-border-dark);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Premium Dark Mode Colors */
+.body--dark {
+  background: var(--color-background) !important;
+  color: var(--color-text-dark) !important;
+}
+
+.body--dark .bg-dark {
+  background: var(--color-background) !important;
+}
+
+.body--dark .bg-grey-10 {
+  background: var(--color-background) !important;
+}
+
+/* Input Fields Refinement */
+.q-field--outlined .q-field__control, 
+.q-field--filled .q-field__control {
+  border-radius: 8px;
+  border-color: var(--color-border);
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-family-body);
+  color: var(--color-text-primary);
+}
+
+.q-field--outlined .q-field__control:hover,
+.q-field--filled .q-field__control:hover {
+  border-color: var(--color-primary); /* Slight primary tint on hover */
+}
+
+.q-field--outlined.q-field--focused .q-field__control,
+.q-field--filled.q-field--focused .q-field__control {
+  border-color: var(--color-primary); 
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); 
+}
+
+.q-field__label {
+  font-family: var(--font-family-body);
+  color: var(--color-text-primary);
+  opacity: 0.7; /* Slightly subdued label */
+}
+
+.body--dark {
+  .q-field--outlined .q-field__control,
+  .q-field--filled .q-field__control {
+    border-color: var(--color-border-dark);
+    color: var(--color-text-dark);
+  }
+
+  .q-field--outlined.q-field--focused .q-field__control,
+  .q-field--filled.q-field--focused .q-field__control {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.3);
+  }
+
+  .q-field__label {
+    color: var(--color-text-dark);
+  }
+}
+
+/* Button Refinement */
+.q-btn {
+  border-radius: 8px;
+  font-family: var(--font-family-body);
+  font-weight: 500;
+  text-transform: none; /* Keep natural casing */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.q-btn.q-btn--rectangle {
+  border-radius: 8px;
+}
+
+.q-btn:hover {
+  transform: translateY(-1px); /* Subtle lift */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Gentle shadow on hover */
+}
+
+.q-btn--flat:hover, .q-btn--outline:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.08);
+}
+
+.body--dark .q-btn:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Darker shadow for dark mode */
+}
+
+.body--dark .q-btn--flat:hover, .body--dark .q-btn--outline:hover {
+  background-color: rgba(var(--color-primary-rgb), 0.15);
+}
+
+/* Readonly / Disabled fields */
+.q-field--readonly .q-field__control,
+.q-field--disabled .q-field__control {
+  background-color: rgba(var(--color-text-light-rgb), 0.05);
+  opacity: 0.8; /* Slightly desaturate */
+  cursor: not-allowed;
+}
+
+.body--dark {
+  .q-field--readonly .q-field__control,
+  .q-field--disabled .q-field__control {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+
+/* Global scrollbar styling */
+body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body::-webkit-scrollbar-track {
+  background: var(--color-background-elevated);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 10px;
+  border: 2px solid var(--color-background-elevated);
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Quasar specific overrides for better theming control */
+.q-drawer {
+  background-color: var(--color-background-elevated) !important;
+}
+
+.body--dark .q-page-container {
+  background-color: var(--color-background) !important;
+}
+
+/* Q-Chip Styling for Status Indicators */
+.q-chip {
+  font-family: var(--font-family-body);
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 10px;
+  height: auto;
+  min-height: 24px;
+  .q-chip__content {
+    font-size: 0.8em;
+  }
+}
+
+/* Specific colors for status chips - adjust as needed */
+.q-chip--positive {
+  background-color: #28a745 !important; /* Green */
+  color: white !important;
+}
+.q-chip--warning {
+  background-color: #ffc107 !important; /* Yellow/Orange */
+  color: #333 !important;
+}
+.q-chip--negative {
+  background-color: #dc3545 !important; /* Red */
+  color: white !important;
+}
+.q-chip--info {
+  background-color: #17a2b8 !important; /* Blue */
+  color: white !important;
+}
+.q-chip--grey {
+  background-color: #6c757d !important; /* Grey */
+  color: white !important;
+}
+
+.body--dark {
+  .q-chip--warning {
+    color: white !important; /* Ensure readable text in dark mode */
+  }
+}
+
+/* App Table Container - General Styling for q-table wrappers */
+.app-table-container {
+  border-radius: 12px;
+  overflow: hidden; /* Ensures child borders/shadows are clipped */
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background-color: var(--color-background-elevated); /* Ensure background is elevated */
+
+  .body--dark & {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border-color: var(--color-border-dark);
+  }
+
+  .q-table__container {
+    box-shadow: none; /* Remove default Quasar table shadow */
+  }
+
+  .q-table__top,
+  .q-table__bottom,
+  thead tr:first-child th {
+    background-color: var(--color-background-elevated); /* Consistent header background */
+    color: var(--color-text-primary);
+    font-family: var(--font-family-body);
+    font-weight: 600;
+  }
+
+  .q-table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+    &:hover {
+      background-color: rgba(var(--color-primary-rgb), 0.05);
+    }
+  }
+
+  .body--dark .q-table tbody tr:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.1);
+  }
+
+  /* Specific styles for q-table cells to ensure consistent typography and padding */
+  .q-table td {
+    font-family: var(--font-family-body);
+    color: var(--color-text-primary);
+    padding: 12px 16px; /* Adjust padding for better readability */
+  }
+
+  .q-table th {
+    font-family: var(--font-family-body);
+    color: var(--color-text-primary);
+    padding: 12px 16px; /* Adjust padding for better readability */
+  }
+}

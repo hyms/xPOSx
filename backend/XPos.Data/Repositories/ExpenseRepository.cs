@@ -20,7 +20,7 @@ public class ExpenseRepository : IExpenseRepository
     {
         using var connection = CreateConnection();
         const string sql = @"
-            SELECT e.id, e.ref, e.date, e.details, e.amount,
+            SELECT e.id, e.ref, e.date::timestamp as Date, e.details, e.amount,
                    ec.name as CategoryName, w.name as WarehouseName
             FROM expenses e
             JOIN expense_categories ec ON e.expense_category_id = ec.id

@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="row q-col-gutter-md">
-      <div class="col-12">
+      <div class="col-12 app-table-container">
         <q-table
           v-if="loading && sales.length === 0"
           class="q-mt-md"
@@ -28,6 +28,7 @@
         <q-table
           v-else
           title="Ventas"
+          :title-style="{ fontFamily: 'var(--font-family-display)', fontSize: '1.5rem', fontWeight: '700' }"
           :rows="sales"
           :columns="columns"
           row-key="id"
@@ -46,33 +47,35 @@
               <span>
                 {{ message }}
               </span>
-              <q-btn color="primary" label="Nueva Venta" icon="add" to="/sales/create" />
+              <q-btn color="primary" label="Nueva Venta" icon="add" to="/sales/create" class="q-btn--elevated" />
             </div>
           </template>
 
           <template v-slot:top-right>
-            <q-input dense debounce="300" color="primary" v-model="filter" placeholder="Buscar">
-              <template v-slot:append>
-                <q-icon name="search" />
-              </template>
-            </q-input>
-            <q-btn color="primary" label="Ir al POS" icon="point_of_sale" to="/pos" class="q-mr-sm q-ml-md" />
-            <q-btn color="secondary" label="Nueva Venta" icon="add" to="/sales/create" />
+            <div class="row q-gutter-sm items-center">
+              <q-input dense debounce="300" color="primary" v-model="filter" placeholder="Buscar">
+                <template v-slot:append>
+                  <q-icon name="search" />
+                </template>
+              </q-input>
+              <q-btn color="primary" label="Ir al POS" icon="point_of_sale" to="/pos" class="q-btn--flat" />
+              <q-btn color="primary" label="Nueva Venta" icon="add" to="/sales/create" class="q-btn--elevated" />
+            </div>
           </template>
 
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
-              <q-badge :color="getStatusColor(props.value)">
+              <q-chip :color="getStatusColor(props.value)" text-color="white" dense>
                 {{ props.value }}
-              </q-badge>
+              </q-chip>
             </q-td>
           </template>
 
           <template v-slot:body-cell-paymentStatus="props">
             <q-td :props="props">
-              <q-badge :color="getPaymentStatusColor(props.value)">
+              <q-chip :color="getPaymentStatusColor(props.value)" text-color="white" dense>
                 {{ props.value }}
-              </q-badge>
+              </q-chip>
             </q-td>
           </template>
 

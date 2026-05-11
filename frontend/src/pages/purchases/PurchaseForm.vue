@@ -248,7 +248,7 @@ const onSubmit = async () => {
   try {
     const payload = { ...formData }
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
-        (payload as any).voucher = { ...voucher, issuedAt: new Date().toISOString().substr(0, 10) }
+        (payload as any).voucher = { ...voucher, issuedAt: voucher.issuedAt || new Date().toISOString().substr(0, 10) }
     }
     // Ensure voucher.id is passed if it exists and is an edit
     if (isEdit.value && voucher.id) {

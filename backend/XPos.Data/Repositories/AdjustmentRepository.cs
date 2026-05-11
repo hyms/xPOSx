@@ -19,7 +19,7 @@ public class AdjustmentRepository : IAdjustmentRepository
     public async Task<IEnumerable<AdjustmentReadDto>> GetAllAsync(string? filter = null)
     {
         var sql = @"
-            SELECT a.id, a.ref, a.date, a.items, w.name as WarehouseName
+            SELECT a.id, a.ref, a.date::timestamp as Date, a.items, w.name as WarehouseName
             FROM public.adjustments a
             JOIN public.warehouses w ON a.warehouse_id = w.id
             WHERE a.deleted_at IS NULL

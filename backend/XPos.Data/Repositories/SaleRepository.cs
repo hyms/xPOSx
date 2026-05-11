@@ -61,7 +61,7 @@ public class SaleRepository : ISaleRepository
         var total = await _uow.Connection.ExecuteScalarAsync<int>(countSql, parameters, _uow.Transaction);
 
         var dataSql = $@"
-             SELECT s.id, s.ref, s.date, s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus, s.voucher_id as VoucherId,
+             SELECT s.id, s.ref, s.date::timestamp as Date, s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus, s.voucher_id as VoucherId,
                     c.name as ClientName, w.name as WarehouseName
             {baseSql}
             ORDER BY {sortBy} {sortOrder}

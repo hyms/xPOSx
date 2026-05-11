@@ -2,7 +2,7 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">{{ isEdit ? 'Ver Cotización' : 'Crear Nueva Cotización' }}</div>
+        <div class="text-h6" :style="{ fontFamily: 'var(--font-family-display)' }">{{ isEdit ? 'Ver Cotización' : 'Crear Nueva Cotización' }}</div>
       </q-card-section>
 
       <q-card-section class="q-pa-md">
@@ -55,20 +55,21 @@
                 :readonly="isEdit"
               >
                 <template v-slot:no-option>
-                  <q-item><q-item-section class="text-grey">No se encontraron productos</q-item-section></template>
+                  <q-item><q-item-section class="text-grey">No se encontraron productos</q-item-section></q-item>
                 </template>
               </q-select>
             </div>
           </div>
 
           <!-- Details Table -->
-          <q-table
-            flat bordered
-            :rows="formData.details"
-            :columns="columns"
-            row-key="productId"
-            hide-pagination
-          >
+          <div class="app-table-container">
+            <q-table
+              flat bordered
+              :rows="formData.details"
+              :columns="columns"
+              row-key="productId"
+              hide-pagination
+            >
             <template v-slot:body-cell-quantity="props">
               <q-td :props="props">
                 <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateRow(props.row)" :readonly="isEdit" />
@@ -80,10 +81,11 @@
               </q-td>
             </template>
           </q-table>
+          </div>
 
           <div class="row justify-end q-mt-md">
             <div class="col-12 col-md-4">
-              <q-field label="Total Cotización" stack-label borderless class="text-h6">
+              <q-field label="Total Cotización" stack-label borderless class="text-h6 totals-list">
                 {{ formatCurrency(formData.grandTotal) }}
               </q-field>
             </div>
@@ -242,5 +244,30 @@ onMounted(async () => {
       router.push('/quotations')
     }
   }
-})
-</script>
+})</script>
+
+<style lang="scss">
+.totals-list {
+  border-radius: 12px;
+  background-color: var(--color-background-elevated);
+  border: 1px solid var(--color-border);
+  padding: 8px 16px;
+
+  .body--dark & {
+    background-color: var(--color-background-elevated);
+    border-color: var(--color-border-dark);
+  }
+
+  .q-field__label,
+  .q-field__native {
+    font-family: var(--font-family-body);
+    color: var(--color-text-primary);
+  }
+
+  .text-h6 {
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    color: var(--color-primary); /* Highlight total */
+  }
+}
+</style>

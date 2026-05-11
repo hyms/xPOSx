@@ -70,6 +70,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 builder.Services.AddScoped<ISettingRepository, SettingRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
 builder.Services.AddScoped<IQuotationRepository, QuotationRepository>();
 
 // Services
@@ -80,6 +81,7 @@ builder.Services.AddScoped<ITransferService, TransferService>();
 builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IQuotationService, QuotationService>();
 
 // Admin Settings Repositories
 builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();

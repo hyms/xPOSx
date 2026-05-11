@@ -2,7 +2,7 @@
   <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6">{{ isEdit ? 'Ver Venta' : 'Crear Venta' }}</div>
+        <div class="text-h6" :style="{ fontFamily: 'var(--font-family-display)' }">{{ isEdit ? 'Ver Venta' : 'Crear Venta' }}</div>
       </q-card-section>
 
       <q-form @submit.prevent="onSubmit">
@@ -41,13 +41,14 @@
           </div>
 
           <!-- Sale Details Table -->
-          <q-table
-            :rows="sale.details"
-            :columns="detailsColumns"
-            row-key="productId"
-            flat
-            bordered
-          >
+          <div class="app-table-container">
+            <q-table
+              :rows="sale.details"
+              :columns="detailsColumns"
+              row-key="productId"
+              flat
+              bordered
+            >
             <template v-slot:body-cell-quantity="props">
               <q-td :props="props">
                 <q-input v-model.number="props.row.quantity" type="number" dense @update:model-value="updateTotals" :readonly="isEdit" />
@@ -62,11 +63,12 @@
                 </q-td>
             </template>
           </q-table>
+          </div>
           
           <!-- Totals -->
           <div class="row justify-end q-mt-md">
             <div class="col-12 col-md-4">
-                <q-list bordered>
+                <q-list bordered class="totals-list">
                     <q-item>
                         <q-item-section>Subtotal:</q-item-section>
                         <q-item-section side>{{ formatCurrency(subTotal) }}</q-item-section>
@@ -213,7 +215,7 @@ const onSubmit = async () => {
   try {
     const payload = { ...sale }
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
-        (payload as any).voucher = { ...voucher, issuedAt: new Date() }
+        (payload as any).voucher = { ...voucher, issuedAt: voucher.issuedAt || new Date().toISOString().substr(0, 10) }
     }
     const res = await saleService.create(payload as Sale)
     const saleId = res.data?.id || 1
@@ -271,5 +273,30 @@ onMounted(async () => {
       router.push('/sales')
     }
   }
-})
-</script>
+})</script>
+
+<style lang="scss">
+.totals-list {
+  border-radius: 12px;
+  background-color: var(--color-background-elevated);
+  border: 1px solid var(--color-border);
+  padding: 8px 16px;
+
+  .body--dark & {
+    background-color: var(--color-background-elevated);
+    border-color: var(--color-border-dark);
+  }
+
+  .q-item {
+    padding: 8px 0;
+    font-family: var(--font-family-body);
+    color: var(--color-text-primary);
+  }
+
+  .text-h6 {
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    color: var(--color-primary); /* Highlight total */
+  }
+}
+</style>

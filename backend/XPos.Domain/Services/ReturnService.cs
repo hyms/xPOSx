@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 
+using XPos.Domain.Dtos;
+
 namespace XPos.Domain.Services;
 
 public class ReturnService : IReturnService
@@ -32,35 +34,48 @@ public class ReturnService : IReturnService
         _voucherRepository = voucherRepository;
     }
 
-    public async Task<long> CreateSaleReturnAsync(SaleReturn saleReturn)
+    public async Task<IEnumerable<SaleReturnReadDto>> GetAllSaleReturnsAsync()
     {
+        return await _saleReturnRepository.GetAllAsync();
+    }
+
+    public async Task<SaleReturn?> GetSaleReturnByIdAsync(long id)
+    {
+        return await _saleReturnRepository.GetByIdAsync(id);
+    }
+
+    public async Task<long> CreateSaleReturnAsync(CreateSaleReturnDto dto, long userId)
+    {
+        var saleReturn = new SaleReturn
+        {
+            Date = dto.Date,
+            ClientId = dto.ClientId,
+            WarehouseId = dto.WarehouseId,
+            GrandTotal = dto.GrandTotal,
+            PaidAmount = dto.PaidAmount,
+            Status = dto.Status,
+            PaymentStatus = dto.PaymentStatus,
+            UserId = userId,
+            CreatedBy = userId,
+            Ref = $"SR-{DateTime.Now:yyyyMMddHHmmss}",
+            Details = dto.Details.Select(d => new SaleReturnDetail
+            {
+                ProductId = d.ProductId,
+                Price = d.Price,
+                Quantity = d.Quantity,
+                Total = d.Price * d.Quantity
+            }).ToList()
+        };
+
         _uow.BeginTransaction();
         try
         {
             var returnId = await _saleReturnRepository.CreateAsync(saleReturn);
             saleReturn.Id = returnId;
 
-            // Crear el Comprobante (Voucher) si aplica
-            if (saleReturn.Voucher != null)
-            {
-                saleReturn.Voucher.SaleReturnId = returnId;
-                var voucherId = await _voucherRepository.CreateAsync(saleReturn.Voucher);
-                await _saleReturnRepository.UpdateVoucherIdAsync(returnId, voucherId);
-            }
-
-
             foreach (var detail in saleReturn.Details)
             {
-                Unit? unit = null;
-                if (detail.SaleUnitId.HasValue)
-                {
-                    unit = await _unitRepository.GetByIdAsync(detail.SaleUnitId.Value);
-                }
-
-                var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
-
-                // Sale Returns add back to the warehouse
-                await _inventoryRepository.UpdateStockAsync(detail.ProductId, saleReturn.WarehouseId, baseQuantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, saleReturn.WarehouseId, detail.Quantity);
             }
 
             _uow.Commit();
@@ -73,35 +88,53 @@ public class ReturnService : IReturnService
         }
     }
 
-    public async Task<long> CreatePurchaseReturnAsync(PurchaseReturn purchaseReturn)
+    public async Task<bool> DeleteSaleReturnAsync(long id, long userId)
     {
+        return await _saleReturnRepository.DeleteAsync(id, userId);
+    }
+
+    public async Task<IEnumerable<PurchaseReturnReadDto>> GetAllPurchaseReturnsAsync()
+    {
+        return await _purchaseReturnRepository.GetAllAsync();
+    }
+
+    public async Task<PurchaseReturn?> GetPurchaseReturnByIdAsync(long id)
+    {
+        return await _purchaseReturnRepository.GetByIdAsync(id);
+    }
+
+    public async Task<long> CreatePurchaseReturnAsync(CreatePurchaseReturnDto dto, long userId)
+    {
+        var purchaseReturn = new PurchaseReturn
+        {
+            Date = dto.Date,
+            ProviderId = dto.ProviderId,
+            WarehouseId = dto.WarehouseId,
+            GrandTotal = dto.GrandTotal,
+            PaidAmount = dto.PaidAmount,
+            Status = dto.Status,
+            PaymentStatus = dto.PaymentStatus,
+            UserId = userId,
+            CreatedBy = userId,
+            Ref = $"PR-{DateTime.Now:yyyyMMddHHmmss}",
+            Details = dto.Details.Select(d => new PurchaseReturnDetail
+            {
+                ProductId = d.ProductId,
+                Cost = d.Cost,
+                Quantity = d.Quantity,
+                Total = d.Cost * d.Quantity
+            }).ToList()
+        };
+
         _uow.BeginTransaction();
         try
         {
             var returnId = await _purchaseReturnRepository.CreateAsync(purchaseReturn);
             purchaseReturn.Id = returnId;
 
-            // Crear el Comprobante (Voucher) si aplica
-            if (purchaseReturn.Voucher != null)
-            {
-                purchaseReturn.Voucher.PurchaseReturnId = returnId;
-                var voucherId = await _voucherRepository.CreateAsync(purchaseReturn.Voucher);
-                await _purchaseReturnRepository.UpdateVoucherIdAsync(returnId, voucherId);
-            }
-
-
             foreach (var detail in purchaseReturn.Details)
             {
-                Unit? unit = null;
-                if (detail.PurchaseUnitId.HasValue)
-                {
-                    unit = await _unitRepository.GetByIdAsync(detail.PurchaseUnitId.Value);
-                }
-
-                var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
-
-                // Purchase Returns subtract from the warehouse
-                await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchaseReturn.WarehouseId, -baseQuantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchaseReturn.WarehouseId, -detail.Quantity);
             }
 
             _uow.Commit();
@@ -112,5 +145,10 @@ public class ReturnService : IReturnService
             _uow.Rollback();
             throw;
         }
+    }
+
+    public async Task<bool> DeletePurchaseReturnAsync(long id, long userId)
+    {
+        return await _purchaseReturnRepository.DeleteAsync(id, userId);
     }
 }

@@ -9,7 +9,7 @@ import '@quasar/extras/material-icons/material-icons.css'
 // Import Quasar css
 import 'quasar/src/css/index.sass'
 
-import './style.css'
+import './css/global.scss'
 import App from './App.vue'
 
 const myApp = createApp(App)

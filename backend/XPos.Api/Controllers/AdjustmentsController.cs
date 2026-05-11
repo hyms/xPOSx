@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using XPos.Domain.Interfaces;
-using XPos.Domain.Models;
+using XPos.Domain.Dtos;
 
 namespace XPos.Api.Controllers;
 
@@ -11,50 +11,42 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class AdjustmentsController : ControllerBase
 {
-    private readonly IAdjustmentRepository _adjustmentRepository;
     private readonly IAdjustmentService _adjustmentService;
     
-    public AdjustmentsController(IAdjustmentRepository adjustmentRepository, IAdjustmentService adjustmentService) 
+    public AdjustmentsController(IAdjustmentService adjustmentService) 
     { 
-        _adjustmentRepository = adjustmentRepository; 
         _adjustmentService = adjustmentService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? filter = null) => Ok(await _adjustmentRepository.GetAllAsync(filter));
+    public async Task<IActionResult> GetAll([FromQuery] string? filter = null) => Ok(await _adjustmentService.GetAllAsync(filter));
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var adjustment = await _adjustmentRepository.GetByIdAsync(id);
+        var adjustment = await _adjustmentService.GetByIdAsync(id);
         return adjustment == null ? NotFound() : Ok(adjustment);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Adjustment adjustment)
+    public async Task<IActionResult> Create(CreateAdjustmentDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            adjustment.UserId = userId;
-            adjustment.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(adjustment.Ref))
-        {
-            adjustment.Ref = $"ADJ-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _adjustmentService.CreateAdjustmentAsync(adjustment);
-        return CreatedAtAction(nameof(GetById), new { id }, adjustment);
+        var id = await _adjustmentService.CreateAdjustmentAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, Adjustment adjustment)
+    public async Task<IActionResult> Update(long id, UpdateAdjustmentDto dto)
     {
-        if (id != adjustment.Id) return BadRequest();
-        adjustment.UpdatedBy = long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
-        return await _adjustmentRepository.UpdateAsync(adjustment) ? Ok(adjustment) : NotFound();
+        if (id != dto.Id) return BadRequest();
+        
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        long.TryParse(userIdStr, out long userId);
+
+        return await _adjustmentService.UpdateAdjustmentAsync(dto, userId) ? Ok() : NotFound();
     }
 
     [HttpDelete("{id}")]
@@ -62,6 +54,6 @@ public class AdjustmentsController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _adjustmentRepository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _adjustmentService.DeleteAdjustmentAsync(id, userId) ? NoContent() : NotFound();
     }
 }

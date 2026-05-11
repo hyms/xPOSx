@@ -1,9 +1,10 @@
 <template>
   <q-page padding>
     <div class="row q-col-gutter-md">
-      <div class="col-12">
+      <div class="col-12 app-table-container">
         <q-table
           title="Productos"
+          :title-style="{ fontFamily: 'var(--font-family-display)', fontSize: '1.5rem', fontWeight: '700' }"
           :rows="products"
           :columns="columns"
           row-key="id"
@@ -16,7 +17,7 @@
                 <q-icon name="search" />
               </template>
             </q-input>
-            <q-btn color="primary" label="Nuevo Producto" icon="add" @click="openDialog()" class="q-ml-md" />
+            <q-btn color="primary" label="Nuevo Producto" icon="add" @click="openDialog()" class="q-ml-md q-btn--elevated" />
           </template>
 
           <template v-slot:body-cell-image="props">
@@ -281,29 +282,67 @@ onMounted(fetchData)
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px; /* Consistent border-radius */
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background-elevated);
+
+  .body--dark & {
+    border-color: var(--color-border-dark);
+    background-color: var(--color-background-elevated-dark);
+  }
 }
 @media (min-width: 768px) {
   .product-image-container {
-    width: 120px;
-    height: 120px;
+    width: 100px; /* Slightly larger for tablets */
+    height: 100px;
   }
 }
 @media (min-width: 1024px) {
   .product-image-container {
-    width: 160px;
-    height: 160px;
+    width: 120px; /* Further larger for desktops */
+    height: 120px;
   }
 }
 .product-image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: 4px; /* Slight inner border-radius */
 }
+
+/* Styling for the q-icon placeholder when no image */
+.q-table .q-icon[name="inventory_2"] {
+  color: var(--color-text-primary) !important;
+  opacity: 0.4;
+  font-size: 48px !important; /* Ensure consistent size */
+}
+
+/* Image Upload Card */
 .image-upload-card {
   min-height: 200px;
   cursor: pointer;
+  border-radius: 12px; /* Consistent with q-card */
+  border: 1px solid var(--color-border);
+  box-shadow: none !important; /* Remove default Quasar card shadow, manage with global.scss */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--color-background-elevated);
+
+  &:hover {
+    border-color: var(--color-primary); /* Highlight on hover */
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+  }
+
+  .body--dark & {
+    border-color: var(--color-border-dark);
+    background-color: var(--color-background-elevated-dark);
+    &:hover {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+    }
+  }
 }
+
 .upload-placeholder {
   display: flex;
   flex-direction: column;
@@ -312,7 +351,18 @@ onMounted(fetchData)
   min-height: 200px;
   padding: 20px;
   text-align: center;
+  font-family: var(--font-family-body);
+  color: var(--color-text-primary);
+  opacity: 0.7; /* Subdued text */
+
+  .q-icon {
+    font-size: 64px !important; /* Larger icon */
+    color: var(--color-text-primary) !important;
+    opacity: 0.5;
+    margin-bottom: 8px;
+  }
 }
+
 .image-preview {
   position: relative;
   display: flex;
@@ -325,10 +375,20 @@ onMounted(fetchData)
   max-width: 100%;
   max-height: 200px;
   object-fit: contain;
+  border-radius: 8px; /* Consistent border-radius for preview image */
 }
 .remove-btn {
   position: absolute;
   top: 10px;
   right: 10px;
+  background-color: rgba(var(--color-text-dark-rgb), 0.8); /* Semi-transparent white background */
+  color: var(--color-negative) !important; /* Use negative color for close icon */
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+
+  &:hover {
+    background-color: var(--color-negative);
+    color: white !important;
+  }
 }
 </style>

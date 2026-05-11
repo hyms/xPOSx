@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using XPos.Domain.Interfaces;
-using XPos.Domain.Models;
+using XPos.Domain.Dtos;
 
 namespace XPos.Api.Controllers;
 
@@ -11,56 +11,31 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class SaleReturnsController : ControllerBase
 {
-    private readonly ISaleReturnRepository _repository;
     private readonly IReturnService _returnService;
 
-    public SaleReturnsController(ISaleReturnRepository repository, IReturnService returnService) 
+    public SaleReturnsController(IReturnService returnService) 
     { 
-        _repository = repository; 
         _returnService = returnService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _repository.GetAllAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _returnService.GetAllSaleReturnsAsync());
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var result = await _repository.GetByIdAsync(id);
+        var result = await _returnService.GetSaleReturnByIdAsync(id);
         return result == null ? NotFound() : Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(SaleReturn saleReturn)
+    public async Task<IActionResult> Create(CreateSaleReturnDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            saleReturn.UserId = userId;
-            saleReturn.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(saleReturn.Ref))
-        {
-            saleReturn.Ref = $"SR-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _returnService.CreateSaleReturnAsync(saleReturn);
-        return CreatedAtAction(nameof(GetById), new { id }, saleReturn);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, SaleReturn saleReturn)
-    {
-        if (id != saleReturn.Id) return BadRequest();
-        
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            saleReturn.UpdatedBy = userId;
-        }
-
-        return await _repository.UpdateAsync(saleReturn) ? NoContent() : NotFound();
+        var id = await _returnService.CreateSaleReturnAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpDelete("{id}")]
@@ -68,7 +43,7 @@ public class SaleReturnsController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _repository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _returnService.DeleteSaleReturnAsync(id, userId) ? NoContent() : NotFound();
     }
 }
 
@@ -77,56 +52,31 @@ public class SaleReturnsController : ControllerBase
 [Route("api/[controller]")]
 public class PurchaseReturnsController : ControllerBase
 {
-    private readonly IPurchaseReturnRepository _repository;
     private readonly IReturnService _returnService;
 
-    public PurchaseReturnsController(IPurchaseReturnRepository repository, IReturnService returnService) 
+    public PurchaseReturnsController(IReturnService returnService) 
     { 
-        _repository = repository; 
         _returnService = returnService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _repository.GetAllAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _returnService.GetAllPurchaseReturnsAsync());
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var result = await _repository.GetByIdAsync(id);
+        var result = await _returnService.GetPurchaseReturnByIdAsync(id);
         return result == null ? NotFound() : Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(PurchaseReturn purchaseReturn)
+    public async Task<IActionResult> Create(CreatePurchaseReturnDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            purchaseReturn.UserId = userId;
-            purchaseReturn.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(purchaseReturn.Ref))
-        {
-            purchaseReturn.Ref = $"PR-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _returnService.CreatePurchaseReturnAsync(purchaseReturn);
-        return CreatedAtAction(nameof(GetById), new { id }, purchaseReturn);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, PurchaseReturn purchaseReturn)
-    {
-        if (id != purchaseReturn.Id) return BadRequest();
-        
-        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            purchaseReturn.UpdatedBy = userId;
-        }
-
-        return await _repository.UpdateAsync(purchaseReturn) ? NoContent() : NotFound();
+        var id = await _returnService.CreatePurchaseReturnAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpDelete("{id}")]
@@ -134,6 +84,6 @@ public class PurchaseReturnsController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _repository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _returnService.DeletePurchaseReturnAsync(id, userId) ? NoContent() : NotFound();
     }
 }

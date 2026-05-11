@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using XPos.Domain.Interfaces;
+using XPos.Domain.Dtos;
 using XPos.Domain.Models;
 
 namespace XPos.Api.Controllers;
@@ -11,56 +12,42 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class PurchasesController : ControllerBase
 {
-    private readonly IPurchaseRepository _purchaseRepository;
     private readonly IPurchaseService _purchaseService;
     
-    public PurchasesController(IPurchaseRepository purchaseRepository, IPurchaseService purchaseService) 
+    public PurchasesController(IPurchaseService purchaseService) 
     { 
-        _purchaseRepository = purchaseRepository; 
         _purchaseService = purchaseService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] PagingParams pagingParams) => Ok(await _purchaseRepository.GetAllAsync(pagingParams));
+    public async Task<IActionResult> GetAll([FromQuery] PagingParams pagingParams) => Ok(await _purchaseService.GetAllAsync(pagingParams));
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var purchase = await _purchaseRepository.GetByIdAsync(id);
+        var purchase = await _purchaseService.GetByIdAsync(id);
         return purchase == null ? NotFound() : Ok(purchase);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Purchase purchase)
+    public async Task<IActionResult> Create(CreatePurchaseDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            purchase.UserId = userId;
-            purchase.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(purchase.Ref))
-        {
-            purchase.Ref = $"PR-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _purchaseService.CreatePurchaseAsync(purchase);
-        return CreatedAtAction(nameof(GetById), new { id }, purchase);
+        var id = await _purchaseService.CreatePurchaseAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, Purchase purchase)
+    public async Task<IActionResult> Update(long id, UpdatePurchaseDto dto)
     {
-        if (id != purchase.Id) return BadRequest();
+        if (id != dto.Id) return BadRequest();
         
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            purchase.UpdatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        return await _purchaseRepository.UpdateAsync(purchase) ? NoContent() : NotFound();
+        return await _purchaseService.UpdatePurchaseAsync(dto, userId) ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id}")]
@@ -68,6 +55,6 @@ public class PurchasesController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _purchaseRepository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _purchaseService.DeletePurchaseAsync(id, userId) ? NoContent() : NotFound();
     }
 }

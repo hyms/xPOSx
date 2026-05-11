@@ -11,7 +11,7 @@
                     @click="toggleLeftDrawer"
                 />
 
-                <q-toolbar-title class="text-weight-bold">
+                <q-toolbar-title class="text-weight-bold" :style="{ fontFamily: 'var(--font-family-display)' }">
                     <q-icon name="point_of_sale" size="md" class="q-mr-sm" />
                     <span class="gt-xs">xPOSx Admin</span>
                 </q-toolbar-title>
@@ -142,6 +142,7 @@
             :width="280"
             :breakpoint="500"
             :class="$q.dark.isActive ? 'bg-dark' : 'bg-grey-1'"
+            style="transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background-color: var(--color-background-elevated);" 
         >
             <q-scroll-area class="fit">
                 <q-list padding>
@@ -521,62 +522,64 @@ onMounted(() => {
 
 <style lang="scss">
 .pos-cta-btn {
-    background: var(--q-primary);
-    color: white !important;
-    box-shadow: 0 4px 14px 0 rgba(var(--q-primary-rgb), 0.39);
+    background: var(--color-primary);
+    color: var(--color-text-dark) !important;
+    box-shadow: 0 6px 16px 0 rgba(var(--color-primary-rgb), 0.45);
     border-radius: 50px !important;
     margin: 12px !important;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 
     .q-icon,
     .q-item__section--main {
-        color: white !important;
+        color: var(--color-text-dark) !important;
     }
 
     &:hover {
-        box-shadow: 0 6px 20px rgba(var(--q-primary-rgb), 0.23);
-        transform: translateY(-1px) !important;
+        box-shadow: 0 8px 24px rgba(var(--color-primary-rgb), 0.35);
+        transform: translateY(-2px) scale(1.01);
     }
 }
 
 .active-item {
-    color: var(--q-primary) !important;
-    background: rgba(var(--q-primary-rgb), 0.1);
-    font-weight: bold;
+    color: var(--color-primary) !important;
+    background: rgba(var(--color-primary-rgb), 0.1);
+    font-weight: 700;
+    transition: all 0.2s ease-in-out;
 
     .q-item__section--main {
-        color: var(--q-primary);
+        color: var(--color-primary);
     }
 
     .q-icon {
-        color: var(--q-primary);
+        color: var(--color-primary);
     }
 
     .body--dark & {
-        color: #fff !important;
+        color: var(--color-text-dark) !important;
         background: rgba(255, 255, 255, 0.1);
 
         .q-item__section--main {
-            color: #fff;
+            color: var(--color-text-dark);
         }
 
         .q-icon {
-            color: #fff;
+            color: var(--color-text-dark);
         }
     }
 }
 
 .q-drawer {
     .q-item {
-        border-radius: 50px; /* Pill shape */
-        margin: 4px 12px; /* Margin on all sides */
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        color: #64748b; /* Slate 500 for inactive items */
+        border-radius: 8px; /* Slightly less rounded pills */
+        margin: 6px 10px; /* Adjusted margin */
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--color-text-light); /* Light mode text color */
         font-weight: 500;
 
         &:hover {
-            background: rgba(0, 0, 0, 0.04);
-            transform: translateX(4px); /* Micro-interaction */
-            color: #0f172a; /* Darker on hover */
+            background: rgba(var(--color-primary-rgb), 0.08);
+            transform: translateX(3px); /* Subtle micro-interaction */
+            color: var(--color-primary); /* Primary color on hover */
         }
     }
 
@@ -587,14 +590,14 @@ onMounted(() => {
 
     .body--dark & {
         .q-item {
-            color: #94a3b8; /* Slate 400 */
+            color: var(--color-text-dark); /* Dark mode text color */
         }
         .q-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #f8fafc;
+            background: rgba(var(--color-primary-rgb), 0.15);
+            color: var(--color-primary);
         }
         .q-expansion-item {
-            color: #94a3b8;
+            color: var(--color-text-dark);
         }
     }
 }
@@ -605,13 +608,13 @@ onMounted(() => {
 
 // Global dark mode adjustments
 .body--dark {
-    background: #121212;
-    color: #fff;
+    background: var(--color-background) !important;
+    color: var(--color-text-dark) !important;
 
     .q-layout,
     .q-header,
     .q-footer {
-        background: #1d1d1d;
+        background: var(--color-background) !important;
     }
 }
 </style>

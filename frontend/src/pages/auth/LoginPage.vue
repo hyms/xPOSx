@@ -1,9 +1,9 @@
 <template>
   <q-page class="flex flex-center bg-grey-2">
     <q-card style="width: 400px; max-width: 90vw;">
-      <q-card-section class="bg-primary text-white text-center q-pa-lg">
-        <div class="text-h4">xPOSx</div>
-        <div class="text-subtitle2">Panel de Administración</div>
+      <q-card-section class="text-white text-center q-pa-lg" :style="{ backgroundColor: 'var(--color-primary)' }">
+        <div class="text-h4" :style="{ fontFamily: 'var(--font-family-display)' }">xPOSx</div>
+        <div class="text-subtitle2" :style="{ fontFamily: 'var(--font-family-body)' }">Panel de Administración</div>
       </q-card-section>
 
       <q-card-section class="q-pa-lg">

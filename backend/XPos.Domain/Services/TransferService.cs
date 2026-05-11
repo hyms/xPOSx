@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 
+using XPos.Domain.Dtos;
+
 namespace XPos.Domain.Services;
 
 public class TransferService : ITransferService
@@ -26,8 +28,43 @@ public class TransferService : ITransferService
         _unitConversionService = unitConversionService;
     }
 
-    public async Task<long> CreateTransferAsync(Transfer transfer)
+    public async Task<IEnumerable<TransferReadDto>> GetAllAsync(string? filter = null)
     {
+        return await _transferRepository.GetAllAsync(filter);
+    }
+
+    public async Task<Transfer?> GetByIdAsync(long id)
+    {
+        return await _transferRepository.GetByIdAsync(id);
+    }
+
+    public async Task<long> CreateTransferAsync(CreateTransferDto dto, long userId)
+    {
+        var transfer = new Transfer
+        {
+            Date = dto.Date,
+            FromWarehouseId = dto.FromWarehouseId,
+            ToWarehouseId = dto.ToWarehouseId,
+            TaxRate = dto.TaxRate,
+            Discount = dto.Discount,
+            Shipping = dto.Shipping,
+            Status = dto.Status,
+            Notes = dto.Notes,
+            UserId = userId,
+            CreatedBy = userId,
+            Ref = $"TR-{DateTime.Now:yyyyMMddHHmmss}",
+            Details = dto.Details.Select(d => new TransferDetail
+            {
+                ProductId = d.ProductId,
+                Cost = d.Cost,
+                Quantity = d.Quantity,
+                Total = d.Cost * d.Quantity
+            }).ToList()
+        };
+
+        transfer.Items = transfer.Details.Count;
+        transfer.GrandTotal = transfer.Details.Sum(d => d.Total) + transfer.Shipping;
+
         _uow.BeginTransaction();
         try
         {
@@ -36,19 +73,11 @@ public class TransferService : ITransferService
 
             foreach (var detail in transfer.Details)
             {
-                Unit? unit = null;
-                if (detail.PurchaseUnitId.HasValue)
-                {
-                    unit = await _unitRepository.GetByIdAsync(detail.PurchaseUnitId.Value);
-                }
-
-                var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
-
                 // Subtract from origin
-                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.FromWarehouseId, -baseQuantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.FromWarehouseId, -detail.Quantity);
 
                 // Add to destination
-                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.ToWarehouseId, baseQuantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.ToWarehouseId, detail.Quantity);
             }
 
             _uow.Commit();
@@ -59,5 +88,68 @@ public class TransferService : ITransferService
             _uow.Rollback();
             throw;
         }
+    }
+
+    public async Task<bool> UpdateTransferAsync(UpdateTransferDto dto, long userId)
+    {
+        var existing = await _transferRepository.GetByIdAsync(dto.Id);
+        if (existing == null) return false;
+
+        var transfer = new Transfer
+        {
+            Id = dto.Id,
+            Date = dto.Date,
+            FromWarehouseId = dto.FromWarehouseId,
+            ToWarehouseId = dto.ToWarehouseId,
+            TaxRate = dto.TaxRate,
+            Discount = dto.Discount,
+            Shipping = dto.Shipping,
+            Status = dto.Status,
+            Notes = dto.Notes,
+            UpdatedBy = userId,
+            Details = dto.Details.Select(d => new TransferDetail
+            {
+                TransferId = dto.Id,
+                ProductId = d.ProductId,
+                Cost = d.Cost,
+                Quantity = d.Quantity,
+                Total = d.Cost * d.Quantity
+            }).ToList()
+        };
+
+        transfer.Items = transfer.Details.Count;
+        transfer.GrandTotal = transfer.Details.Sum(d => d.Total) + transfer.Shipping;
+
+        _uow.BeginTransaction();
+        try
+        {
+            // Reverse old stock
+            foreach (var detail in existing.Details)
+            {
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, existing.FromWarehouseId, detail.Quantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, existing.ToWarehouseId, -detail.Quantity);
+            }
+
+            // Apply new stock
+            foreach (var detail in transfer.Details)
+            {
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.FromWarehouseId, -detail.Quantity);
+                await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.ToWarehouseId, detail.Quantity);
+            }
+
+            var result = await _transferRepository.UpdateAsync(transfer);
+            _uow.Commit();
+            return result;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteTransferAsync(long id, long userId)
+    {
+        return await _transferRepository.DeleteAsync(id, userId);
     }
 }

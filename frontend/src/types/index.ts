@@ -411,6 +411,7 @@ export interface Voucher {
   voucherNumber: string;
   cae: string;
   caeExpiration: string;
+  issuedAt?: string;
 }
 
 export interface SaleReturnReadDto {

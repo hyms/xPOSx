@@ -20,7 +20,7 @@ public class QuotationRepository : IQuotationRepository
     {
         using var connection = CreateConnection();
         const string sql = @"
-            SELECT q.id, q.ref, q.date, q.grand_total as GrandTotal, q.status,
+            SELECT q.id, q.ref, q.date::timestamp as Date, q.grand_total as GrandTotal, q.status,
                    c.name as ClientName, w.name as WarehouseName
             FROM quotations q
             JOIN clients c ON q.client_id = c.id

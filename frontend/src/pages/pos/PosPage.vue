@@ -1,5 +1,5 @@
 <template>
-  <q-page class="pos-page bg-grey-2">
+  <q-page class="pos-page" :style="{ backgroundColor: 'var(--color-background)' }">
     <div class="row full-height no-wrap">
       <!-- Products Section -->
       <div class="col-grow column q-pa-sm">
@@ -9,9 +9,9 @@
             <q-input
               v-model="search"
               placeholder="Buscar producto o Código (F2)..."
-              filled
+              outlined
               dense
-              bg-color="white"
+              bg-color="transparent"
               class="pos-search-input"
               @keyup.enter="handleBarcodeScan"
             >
@@ -28,9 +28,9 @@
               option-label="name"
               option-value="id"
               label="Categoría"
-              filled
+              outlined
               dense
-              bg-color="white"
+              bg-color="transparent"
               clearable
               emit-value
               map-options
@@ -52,13 +52,13 @@
                   :ratio="1"
                   class="bg-grey-3"
                 >
-                  <div class="absolute-bottom text-subtitle2 text-center bg-black-50 q-pa-xs">
-                    ${{ product.price.toFixed(2) }}
+                  <div class="absolute-bottom text-subtitle2 text-center q-pa-xs" :style="{ backgroundColor: 'rgba(var(--color-background-dark-rgb), 0.6)', color: 'var(--color-text-dark)' }">
+                    {{ formatCurrency(product.price) }}
                   </div>
                 </q-img>
                 <q-card-section class="q-pa-sm text-center">
-                  <div class="text-caption text-weight-bold ellipsis">{{ product.name }}</div>
-                  <div class="text-grey-7" style="font-size: 10px">Stock: {{ getStock(product.id!) }}</div>
+                  <div class="text-caption text-weight-bold ellipsis" :style="{ fontFamily: 'var(--font-family-body)' }">{{ product.name }}</div>
+                  <div class="text-grey-7" style="font-size: 10px" :style="{ fontFamily: 'var(--font-family-body)' }">Stock: {{ getStock(product.id!) }}</div>
                 </q-card-section>
               </q-card>
             </div>
@@ -67,8 +67,8 @@
       </div>
 
       <!-- Cart Section -->
-      <div class="pos-cart column bg-white shadow-2 q-pa-sm" style="width: 400px">
-        <div class="text-h6 q-mb-md flex items-center">
+      <div class="pos-cart column shadow-2 q-pa-sm" :style="{ backgroundColor: 'var(--color-background-elevated)', borderLeft: '1px solid var(--color-border)' }" style="width: 400px">
+        <div class="text-h6 q-mb-md flex items-center" :style="{ fontFamily: 'var(--font-family-display)' }">
           <q-icon name="shopping_cart" color="primary" class="q-mr-sm" />
           Carrito
           <q-space />
@@ -79,6 +79,7 @@
             color="negative"
             @click="clearCart"
             aria-label="Vaciar carrito"
+            class="q-btn--flat"
           >
             <q-tooltip>Vaciar carrito</q-tooltip>
           </q-btn>
@@ -113,36 +114,36 @@
 
         <q-scroll-area class="col q-mb-md">
           <div v-if="cart.length === 0" class="full-height flex flex-center text-grey-6 q-pa-md text-center">
-            <div>
-              <q-icon name="add_shopping_cart" size="64px" class="q-mb-sm opacity-50" />
-              <div class="text-subtitle1">El carrito está vacío</div>
-              <div class="text-caption">Selecciona productos para comenzar</div>
+            <div :style="{ fontFamily: 'var(--font-family-body)' }">
+              <q-icon name="add_shopping_cart" size="64px" class="q-mb-sm opacity-50" :style="{ color: 'var(--color-text-primary)', opacity: 0.4 }" />
+              <div class="text-subtitle1" :style="{ color: 'var(--color-text-primary)', opacity: 0.6 }">El carrito está vacío</div>
+              <div class="text-caption" :style="{ color: 'var(--color-text-primary)', opacity: 0.5 }">Selecciona productos para comenzar</div>
             </div>
           </div>
           <q-list v-else separator>
             <q-item v-for="(item, index) in cart" :key="item.productId" class="q-px-sm">
               <q-item-section>
-                <q-item-label class="text-weight-medium">{{ getProductName(item.productId) }}</q-item-label>
-                <q-item-label caption class="text-tabular-nums">${{ item.price.toFixed(2) }} x {{ item.quantity }}</q-item-label>
+                <q-item-label class="text-weight-medium" :style="{ fontFamily: 'var(--font-family-body)' }">{{ getProductName(item.productId) }}</q-item-label>
+                <q-item-label caption class="text-tabular-nums" :style="{ fontFamily: 'var(--font-family-body)' }">{{ formatCurrency(item.price) }} x {{ item.quantity }}</q-item-label>
               </q-item-section>
               <q-item-section side>
                 <div class="row items-center no-wrap q-gutter-x-xs">
                   <q-btn
                     size="sm"
                     round
-                    unelevated
+                    flat
                     color="primary"
                     icon="remove"
                     @click="decrementQty(index)"
                     aria-label="Disminuir cantidad"
                   />
-                  <div class="q-mx-sm text-weight-bold text-subtitle1 text-tabular-nums" style="min-width: 20px; text-align: center;">
+                  <div class="q-mx-sm text-weight-bold text-subtitle1 text-tabular-nums" :style="{ minWidth: '20px', textAlign: 'center', fontFamily: 'var(--font-family-body)' }">
                     {{ item.quantity }}
                   </div>
                   <q-btn
                     size="sm"
                     round
-                    unelevated
+                    flat
                     color="primary"
                     icon="add"
                     @click="incrementQty(index)"
@@ -164,12 +165,12 @@
           </q-list>
         </q-scroll-area>
 
-        <q-separator />
+        <q-separator :style="{ backgroundColor: 'var(--color-border)' }" />
 
         <div class="q-py-md">
-          <div class="row justify-between text-subtitle1 q-mb-sm">
+          <div class="row justify-between text-subtitle1 q-mb-sm" :style="{ fontFamily: 'var(--font-family-body)' }">
             <span>Subtotal:</span>
-            <span class="text-tabular-nums">${{ subtotal.toFixed(2) }}</span>
+            <span class="text-tabular-nums">{{ formatCurrency(subtotal) }}</span>
           </div>
           
           <div class="row q-col-gutter-sm q-mb-sm">
@@ -184,17 +185,17 @@
              </div>
           </div>
 
-          <q-separator class="q-my-sm" />
-          <div class="row justify-between text-h5 text-weight-bolder text-primary">
+          <q-separator class="q-my-sm" :style="{ backgroundColor: 'var(--color-border)' }"/>
+          <div class="row justify-between text-h5 text-weight-bolder" :style="{ fontFamily: 'var(--font-family-display)', color: 'var(--color-primary)' }">
             <span>Total:</span>
-            <span class="text-tabular-nums">${{ total.toFixed(2) }}</span>
+            <span class="text-tabular-nums">{{ formatCurrency(total) }}</span>
           </div>
         </div>
 
         <q-btn
           label="PAGAR AHORA"
-          color="accent"
-          class="full-width text-weight-bold"
+          color="primary"
+          class="full-width text-weight-bold q-btn--elevated"
           size="lg"
           unelevated
           @click="showCheckoutDialog = true"
@@ -207,18 +208,18 @@
     <!-- Checkout Dialog -->
     <q-dialog v-model="showCheckoutDialog" persistent>
       <q-card style="width: 500px">
-        <q-card-section class="bg-primary text-white">
-          <div class="text-h6">Finalizar Venta</div>
+        <q-card-section :style="{ backgroundColor: 'var(--color-primary)', color: 'var(--color-text-dark)' }">
+          <div class="text-h6" :style="{ fontFamily: 'var(--font-family-display)' }">Finalizar Venta</div>
         </q-card-section>
 
         <q-card-section class="q-pa-lg">
-          <div class="text-h4 text-center q-mb-lg text-primary text-weight-bold">
-            Total: ${{ total.toFixed(2) }}
+          <div class="text-h4 text-center q-mb-lg" :style="{ fontFamily: 'var(--font-family-display)', color: 'var(--color-primary)' }">
+            Total: {{ formatCurrency(total) }}
           </div>
           
           <div class="row q-col-gutter-md">
             <div class="col-12">
-              <q-input v-model="formData.notes" label="Notas de la Venta (Opcional)" type="textarea" autogrow filled dense class="q-mb-md" />
+              <q-input v-model="formData.notes" label="Notas de la Venta (Opcional)" type="textarea" autogrow outlined dense class="q-mb-md" />
             </div>
             <div class="col-12">
               <q-input
@@ -234,14 +235,14 @@
             </div>
             
             <div class="col-12 flex q-gutter-sm justify-center q-mb-md">
-                <q-btn v-for="amt in quickAmounts" :key="amt" :label="`$${amt}`" color="secondary" outline @click="setQuickAmount(amt)" />
-                <q-btn label="Exacto" color="secondary" outline @click="setQuickAmount(total)" />
+                <q-btn v-for="amt in quickAmounts" :key="amt" :label="formatCurrency(amt)" color="primary" outline @click="setQuickAmount(amt)" />
+                <q-btn :label="`Exacto (${formatCurrency(total)})`" color="primary" outline @click="setQuickAmount(total)" />
             </div>
 
             <div class="col-12">
-              <div class="row justify-between text-h6">
+              <div class="row justify-between text-h6" :style="{ fontFamily: 'var(--font-family-body)' }">
                 <span>Cambio:</span>
-                <span :class="change < 0 ? 'text-negative' : 'text-positive'">${{ change.toFixed(2) }}</span>
+                <span :class="change < 0 ? 'text-negative' : 'text-positive'">{{ formatCurrency(change) }}</span>
               </div>
             </div>
           </div>
@@ -279,8 +280,11 @@ import type { Client } from '@/types'
 import { saleService } from '@/services/sale.service';
 import type { Sale, SaleDetail } from '@/types'
 
+import { useCurrency } from '@/composables/useCurrency';
+
 const $q = useQuasar()
 const router = useRouter()
+const { formatCurrency } = useCurrency();
 
 
 const search = ref('')
@@ -318,7 +322,7 @@ const calculateTotals = () => {
 const filteredProducts = computed(() => {
   return allProducts.value.filter((p: Product) => {
     const matchesSearch = p.name.toLowerCase().includes(search.value.toLowerCase()) || 
-                         (p.code && p.code.toLowerCase().includes(search.value.toLowerCase()))
+                           (p.code && p.code.toLowerCase().includes(search.value.toLowerCase()))
     const matchesCategory = !selectedCategory.value || p.categoryId === selectedCategory.value
     return matchesSearch && matchesCategory
   })
@@ -479,7 +483,7 @@ const submitSale = async () => {
 
     $q.dialog({
       title: 'Venta Exitosa',
-      message: `Venta realizada con éxito.\nTotal: $${total.value.toFixed(2)}\nCambio: $${change.value.toFixed(2)}`,
+      message: `Venta realizada con éxito.\nTotal: ${formatCurrency(total.value)}\nCambio: ${formatCurrency(change.value)}`,
       persistent: true,
       ok: { label: 'Imprimir Comprobante', color: 'primary', unelevated: true },
       cancel: { label: 'Cerrar', flat: true, color: 'grey' }
@@ -511,17 +515,41 @@ onUnmounted(() => {
   height: calc(100vh - 50px);
 }
 .product-card {
-  transition: transform 0.2s;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px; /* Consistent card border-radius */
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background-elevated);
+
   &:hover {
-    transform: scale(1.02);
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     z-index: 1;
   }
+  .body--dark & {
+    border-color: var(--color-border-dark);
+    background-color: var(--color-background-elevated-dark);
+    &:hover {
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+  }
 }
-.bg-black-50 {
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+
+.pos-search-input {
+  .q-field__control {
+    background-color: var(--color-background-elevated) !important;
+    border-color: var(--color-border) !important;
+    .body--dark & {
+      background-color: var(--color-background-elevated-dark) !important;
+      border-color: var(--color-border-dark) !important;
+    }
+  }
+  .q-field__marginal {
+    color: var(--color-text-primary) !important;
+  }
 }
+
 .pos-cart {
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--color-border);
 }
 </style>

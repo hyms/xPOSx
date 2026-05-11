@@ -10,24 +10,22 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class SalesController : ControllerBase
 {
-    private readonly ISaleRepository _saleRepository;
     private readonly ISaleService _saleService;
     
-    public SalesController(ISaleRepository saleRepository, ISaleService saleService) 
+    public SalesController(ISaleService saleService) 
     { 
-        _saleRepository = saleRepository; 
         _saleService = saleService;
     }
 
     [Authorize(Policy = "sales_view")]
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] PagingParams pagingParams) => Ok(await _saleRepository.GetAllAsync(pagingParams));
+    public async Task<IActionResult> GetAll([FromQuery] PagingParams pagingParams) => Ok(await _saleService.GetAllAsync(pagingParams));
 
     [Authorize(Policy = "sales_view")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var sale = await _saleRepository.GetByIdAsync(id);
+        var sale = await _saleService.GetByIdAsync(id);
         return sale == null ? NotFound() : Ok(sale);
     }
 
@@ -36,18 +34,9 @@ public class SalesController : ControllerBase
     public async Task<IActionResult> Create(Sale sale)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            sale.UserId = userId;
-            sale.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(sale.Ref))
-        {
-            sale.Ref = $"SL-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _saleService.CreateSaleAsync(sale);
+        var id = await _saleService.CreateSaleAsync(sale, userId);
         return CreatedAtAction(nameof(GetById), new { id }, sale);
     }
 
@@ -57,6 +46,6 @@ public class SalesController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _saleRepository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _saleService.DeleteSaleAsync(id, userId) ? NoContent() : NotFound();
     }
 }

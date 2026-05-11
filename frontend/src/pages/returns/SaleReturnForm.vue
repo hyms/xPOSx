@@ -237,7 +237,7 @@ const onSubmit = async () => {
   try {
     const payload = { ...formData }
     if(voucher.voucherType && voucher.voucherNumber && voucher.cae){
-        (payload as any).voucher = { ...voucher, issuedAt: new Date().toISOString().substr(0, 10) }
+        (payload as any).voucher = { ...voucher, issuedAt: voucher.issuedAt || new Date().toISOString().substr(0, 10) }
     }
     const res = await returnService.createSaleReturn(payload as SaleReturn)
     const returnId = res.data?.id || 1

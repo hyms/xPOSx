@@ -33,13 +33,32 @@ public class SaleService : ISaleService
         _unitConversionService = unitConversionService;
     }
 
-    public async Task<long> CreateSaleAsync(Sale sale)
+    public async Task<PagedResult<SaleReadDto>> GetAllAsync(PagingParams pagingParams)
     {
+        return await _saleRepository.GetAllAsync(pagingParams);
+    }
+
+    public async Task<Sale?> GetByIdAsync(long id)
+    {
+        return await _saleRepository.GetByIdAsync(id);
+    }
+
+    public async Task<long> CreateSaleAsync(Sale sale, long userId)
+    {
+        // Business logic previously in Controller
+        sale.UserId = userId;
+        sale.CreatedBy = userId;
+
+        if (string.IsNullOrEmpty(sale.Ref))
+        {
+            sale.Ref = $"SL-{DateTime.Now:yyyyMMddHHmmss}";
+        }
+
         // 1. Iniciar la transacción
         _uow.BeginTransaction();
         try
         {
-            // 2. Crear la Venta (el repositorio solo guarda la tabla Sales y SaleDetails)
+            // 2. Crear la Venta
             var saleId = await _saleRepository.CreateAsync(sale);
             sale.Id = saleId;
 
@@ -76,7 +95,7 @@ public class SaleService : ISaleService
                     Ref = "PAY-" + sale.Ref,
                     SaleId = saleId,
                     Amount = sale.PaidAmount,
-                    Reglement = "Cash", // Esto podría venir del DTO de entrada en el futuro
+                    Reglement = "Cash",
                     CreatedBy = sale.CreatedBy
                 };
                 await _paymentRepository.CreateSalePaymentAsync(paymentDto);
@@ -88,9 +107,13 @@ public class SaleService : ISaleService
         }
         catch
         {
-            // Si algo falla (inventario, pago, base de datos), revierte TODO.
             _uow.Rollback();
             throw;
         }
+    }
+
+    public async Task<bool> DeleteSaleAsync(long id, long userId)
+    {
+        return await _saleRepository.DeleteAsync(id, userId);
     }
 }

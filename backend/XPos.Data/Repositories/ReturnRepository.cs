@@ -19,7 +19,7 @@ public class SaleReturnRepository : ISaleReturnRepository
     public async Task<IEnumerable<SaleReturnReadDto>> GetAllAsync()
     {
         const string sql = @"
-            SELECT sr.id, sr.ref, sr.date, sr.grand_total as GrandTotal, sr.status, sr.payment_status as PaymentStatus, sr.voucher_id as VoucherId,
+            SELECT sr.id, sr.ref, sr.date::timestamp as Date, sr.grand_total as GrandTotal, sr.status, sr.payment_status as PaymentStatus, 
                    c.name as ClientName, w.name as WarehouseName
             FROM sale_returns sr
             JOIN clients c ON sr.client_id = c.id
@@ -117,7 +117,7 @@ public class PurchaseReturnRepository : IPurchaseReturnRepository
     public async Task<IEnumerable<PurchaseReturnReadDto>> GetAllAsync()
     {
         const string sql = @"
-            SELECT pr.id, pr.ref, pr.date, pr.grand_total as GrandTotal, pr.status, pr.payment_status as PaymentStatus, pr.voucher_id as VoucherId,
+            SELECT pr.id, pr.ref, pr.date::timestamp as Date, pr.grand_total as GrandTotal, pr.status, pr.payment_status as PaymentStatus, 
                    p.name as ProviderName, w.name as WarehouseName
             FROM purchase_returns pr
             JOIN providers p ON pr.provider_id = p.id

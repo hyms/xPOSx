@@ -5,5 +5,8 @@ namespace XPos.Domain.Interfaces;
 
 public interface ISaleService
 {
-    Task<long> CreateSaleAsync(Sale sale);
+    Task<PagedResult<SaleReadDto>> GetAllAsync(PagingParams pagingParams);
+    Task<Sale?> GetByIdAsync(long id);
+    Task<long> CreateSaleAsync(Sale sale, long userId);
+    Task<bool> DeleteSaleAsync(long id, long userId);
 }

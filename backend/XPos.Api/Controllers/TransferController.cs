@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using XPos.Domain.Interfaces;
-using XPos.Domain.Models;
+using XPos.Domain.Dtos;
 
 namespace XPos.Api.Controllers;
 
@@ -11,50 +11,42 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class TransfersController : ControllerBase
 {
-    private readonly ITransferRepository _transferRepository;
     private readonly ITransferService _transferService;
     
-    public TransfersController(ITransferRepository transferRepository, ITransferService transferService) 
+    public TransfersController(ITransferService transferService) 
     { 
-        _transferRepository = transferRepository; 
         _transferService = transferService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? filter = null) => Ok(await _transferRepository.GetAllAsync(filter));
+    public async Task<IActionResult> GetAll([FromQuery] string? filter = null) => Ok(await _transferService.GetAllAsync(filter));
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var transfer = await _transferRepository.GetByIdAsync(id);
+        var transfer = await _transferService.GetByIdAsync(id);
         return transfer == null ? NotFound() : Ok(transfer);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Transfer transfer)
+    public async Task<IActionResult> Create(CreateTransferDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            transfer.UserId = userId;
-            transfer.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(transfer.Ref))
-        {
-            transfer.Ref = $"TR-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _transferService.CreateTransferAsync(transfer);
-        return CreatedAtAction(nameof(GetById), new { id }, transfer);
+        var id = await _transferService.CreateTransferAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, Transfer transfer)
+    public async Task<IActionResult> Update(long id, UpdateTransferDto dto)
     {
-        if (id != transfer.Id) return BadRequest();
-        transfer.UpdatedBy = long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : 0;
-        return await _transferRepository.UpdateAsync(transfer) ? Ok(transfer) : NotFound();
+        if (id != dto.Id) return BadRequest();
+        
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        long.TryParse(userIdStr, out long userId);
+
+        return await _transferService.UpdateTransferAsync(dto, userId) ? Ok() : NotFound();
     }
 
     [HttpDelete("{id}")]
@@ -62,6 +54,6 @@ public class TransfersController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _transferRepository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _transferService.DeleteTransferAsync(id, userId) ? NoContent() : NotFound();
     }
 }

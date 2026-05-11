@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using XPos.Domain.Interfaces;
-using XPos.Domain.Models;
+using XPos.Domain.Dtos;
 
 namespace XPos.Api.Controllers;
 
@@ -11,50 +11,38 @@ namespace XPos.Api.Controllers;
 [Route("api/[controller]")]
 public class QuotationsController : ControllerBase
 {
-    private readonly IQuotationRepository _repository;
-    public QuotationsController(IQuotationRepository repository) { _repository = repository; }
+    private readonly IQuotationService _service;
+    public QuotationsController(IQuotationService service) { _service = service; }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _repository.GetAllAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var result = await _repository.GetByIdAsync(id);
+        var result = await _service.GetByIdAsync(id);
         return result == null ? NotFound() : Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Quotation quotation)
+    public async Task<IActionResult> Create(CreateQuotationDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            quotation.UserId = userId;
-            quotation.CreatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        if (string.IsNullOrEmpty(quotation.Ref))
-        {
-            quotation.Ref = $"QUO-{DateTime.Now:yyyyMMddHHmmss}";
-        }
-
-        var id = await _repository.CreateAsync(quotation);
-        return CreatedAtAction(nameof(GetById), new { id }, quotation);
+        var id = await _service.CreateAsync(dto, userId);
+        return CreatedAtAction(nameof(GetById), new { id }, id);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(long id, Quotation quotation)
+    public async Task<IActionResult> Update(long id, UpdateQuotationDto dto)
     {
-        if (id != quotation.Id) return BadRequest();
+        if (id != dto.Id) return BadRequest();
         
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (long.TryParse(userIdStr, out long userId))
-        {
-            quotation.UpdatedBy = userId;
-        }
+        long.TryParse(userIdStr, out long userId);
 
-        return await _repository.UpdateAsync(quotation) ? NoContent() : NotFound();
+        return await _service.UpdateAsync(dto, userId) ? Ok() : NotFound();
     }
 
     [HttpDelete("{id}")]
@@ -62,6 +50,6 @@ public class QuotationsController : ControllerBase
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         long.TryParse(userIdStr, out long userId);
-        return await _repository.DeleteAsync(id, userId) ? NoContent() : NotFound();
+        return await _service.DeleteAsync(id, userId) ? NoContent() : NotFound();
     }
 }
