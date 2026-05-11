@@ -48,18 +48,18 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
 rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
     ./docker-compose.yml \
     ./docker-compose.prod.yml \
-    ubuntu@"$SERVER_ADDRESS":~/urbapf_deploy/
+    ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 
 if [ -f xPOSx-backend.tar ]; then
     rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
         xPOSx-backend.tar \
-        ubuntu@"$SERVER_ADDRESS":~/urbapf_deploy/
+        ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 fi
 
 if [ -f xPOSx-frontend.tar ]; then
     rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
         xPOSx-frontend.tar \
-        ubuntu@"$SERVER_ADDRESS":~/urbapf_deploy/
+        ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 fi
 
 # 4. Despliegue en el servidor

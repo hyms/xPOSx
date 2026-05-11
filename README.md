@@ -17,20 +17,20 @@ Se divide en las siguientes capas (proyectos):
 *Gestión de Base de Datos:* Las migraciones de base de datos se manejan mediante **FluentMigrator**, permitiendo el control de versiones del esquema desde código C#.
 
 ### Frontend (Vue 3 + Quasar)
-La interfaz de usuario es una Single Page Application (SPA) construida con:
+La interfaz de usuario es una Single Page Application (SPA) moderna y refinada construida con:
 *   **Vue 3** (Composition API con `<script setup>`).
-*   **Quasar Framework** para una biblioteca rica de componentes UI (Material Design) y grillas responsivas.
-*   **Vite** como bundler ultrarrápido.
-*   **Pinia** para la gestión del estado global (ej. sesión de usuario, almacén activo).
-*   **TypeScript** para tipado estricto en todo el frontend.
-
-El código fuente está modularizado, con alias de rutas (`@/`) para importaciones limpias y servicios dedicados para la comunicación con la API. Además, la generación de comprobantes y reportes en PDF se realiza directamente en el cliente (client-side) usando `jsPDF`.
+*   **Quasar Framework** con un diseño personalizado basado en **Roboto**, alto contraste y estética **Glassmorphism**.
+*   **Vite** como bundler ultrarrápido con HMR optimizado.
+*   **Pinia** para la gestión del estado global.
+*   **TypeScript** con una arquitectura de tipos modular.
+*   **SCSS Global**: Sistema de diseño basado en variables CSS para consistencia visual absoluta.
 
 ---
 
 ## 🚀 Módulos Principales Implementados
 
-*   **Punto de Venta (POS)**: Interfaz ágil para cajeros.
+*   **Punto de Venta (POS)**: Interfaz táctil de alto rendimiento con animaciones fluidas y gestión de carrito avanzada.
+*   **Impresión Térmica de Alta Calidad**: Componentes de impresión (`*Print.vue`) optimizados para ticketeras térmicas de 80mm.
 *   **Ventas y Devoluciones**: Registro detallado con generación de comprobantes fiscales (Vouchers) dinámicos.
 *   **Compras y Devoluciones de Compras**: Gestión de abastecimiento con proveedores y actualización de costos.
 *   **Inventario**: Control multi-almacén, transferencias, ajustes, categorías y alertas de stock bajo.
@@ -43,12 +43,9 @@ El código fuente está modularizado, con alias de rutas (`@/`) para importacion
 
 ## 🛠️ Requisitos Previos
 
-*   **Docker** y **Docker Compose** (Recomendado para levantar todo el entorno fácilmente).
-*   *Para desarrollo local (sin Docker):*
-    *   .NET 10 SDK
-    *   Node.js (v18 o superior)
-    *   PostgreSQL (v15 o superior)
-    *   pnpm (Recomendado para el frontend)
+*   **Docker** y **Docker Compose** (Recomendado).
+*   *Para desarrollo local:*
+    *   .NET 10 SDK, Node.js (v18+), PostgreSQL (v15+), **pnpm**.
 
 ---
 
@@ -76,12 +73,3 @@ El proyecto incluye archivos `docker-compose` para simplificar la ejecución.
     *   **Backend API (Swagger UI):** `http://localhost:5000/swagger`
 
 ---
-
-## 🧪 Notas de Desarrollo
-
-*   **Aliases del Frontend:** Se ha configurado el alias `@` para apuntar a `/frontend/src`. Para importar componentes, usa `import MiComponente from '@/components/MiComponente.vue'`.
-*   **Transacciones Backend:** Cualquier operación que modifique múltiples entidades (ej. Inventario + Finanzas) DEBE ser gestionada a través de un `DomainService` utilizando `IUnitOfWork.BeginTransaction()`. No guardar directamente desde el controlador.
-*   **Tipos TS Modulares:** Los tipos TypeScript están agrupados por dominio dentro de `frontend/src/types/` (ej. `auth.ts`, `inventory.ts`) y se re-exportan desde `frontend/src/types/index.ts`.
-
----
-*Documentación generada tras la migración exitosa a Clean Architecture.*
