@@ -36,6 +36,10 @@ export interface ProfitLossReportDto {
 }
 
 export interface DashboardSummaryDto {
+  sales: number
+  purchases: number
+  expenses: number
+  revenue: number
   todaySales: number
   todaySalesCount: number
   monthlySales: number

@@ -2,6 +2,7 @@ export interface QuotationDetail {
   productId: number
   productVariantId?: number
   saleUnitId?: number
+  name?: string
   price: number
   taxNet?: number
   taxMethod?: string
