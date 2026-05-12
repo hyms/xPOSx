@@ -22,22 +22,21 @@ TARGET=${1:-all}
 echo "Deploying target: $TARGET to $SERVER_ADDRESS"
 
 # Limpiar tars locales
-rm -f xPOSx-backend.tar xPOSx-frontend.tar
+rm -f xposx-backend.tar xposx-frontend.tar
 
 # 2. Build local
 if [ "$TARGET" == "all" ] || [ "$TARGET" == "backend" ]; then
     echo "--- Building Backend ---"
-    docker build -t xPOSx-backend:local -f ./backend/Dockerfile ./backend
-    docker save -o xPOSx-backend.tar xPOSx-backend:local
+    docker build -t xposx-backend:local -f ./backend/Dockerfile ./backend
+    docker save -o xposx-backend.tar xposx-backend:local
 fi
 
 if [ "$TARGET" == "all" ] || [ "$TARGET" == "frontend" ]; then
     echo "--- Building Frontend ---"
-    
     # Build with NO CACHE to force latest changes
-    docker build --no-cache \
-        -t xPOSx-frontend:local -f ./frontend/Dockerfile ./frontend
-    docker save -o xPOSx-frontend.tar xPOSx-frontend:local
+    # Now using relative URL /api because Nginx will proxy it
+    docker build --build-arg VITE_API_URL="/api" -t xposx-frontend:local -f ./frontend/Dockerfile ./frontend
+    docker save -o xposx-frontend.tar xposx-frontend:local
 fi
 
 # 3. Transferir al servidor
@@ -50,15 +49,15 @@ rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHos
     ./docker-compose.prod.yml \
     ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 
-if [ -f xPOSx-backend.tar ]; then
+if [ -f xposx-backend.tar ]; then
     rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-        xPOSx-backend.tar \
+        xposx-backend.tar \
         ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 fi
 
-if [ -f xPOSx-frontend.tar ]; then
+if [ -f xposx-frontend.tar ]; then
     rsync -avzP -e "ssh -i \"$PEM_PATH\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-        xPOSx-frontend.tar \
+        xposx-frontend.tar \
         ubuntu@"$SERVER_ADDRESS":~/xposx_deploy/
 fi
 
@@ -69,11 +68,11 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
     cd ~/xposx_deploy
 
     echo "Loading images..."
-    if [ -f xPOSx-backend.tar ]; then
-        docker load -i xPOSx-backend.tar
+    if [ -f xposx-backend.tar ]; then
+        docker load -i xposx-backend.tar
     fi
-    if [ -f xPOSx-frontend.tar ]; then
-        docker load -i xPOSx-frontend.tar
+    if [ -f xposx-frontend.tar ]; then
+        docker load -i xposx-frontend.tar
     fi
 
     echo "Restarting services..."
@@ -88,6 +87,6 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
 EOF
 
 # Cleanup local
-rm -f xPOSx-backend.tar xPOSx-frontend.tar
+rm -f xposx-backend.tar xposx-frontend.tar
 
 echo "Deployment complete!"
