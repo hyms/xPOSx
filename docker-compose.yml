@@ -3,39 +3,49 @@ services:
     image: postgres:16-alpine
     container_name: xpos-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB:-xpos_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-xpos_db}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - xpos-network
 
   backend:
     build:
       context: ./backend
-      target: dev
     container_name: xpos-backend
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/src
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-      - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Jwt__ExpireDays=${JWT_EXPIRE_DAYS}
+      - ConnectionStrings__DefaultConnection=Host=db;Database=${POSTGRES_DB:-xpos_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - xpos-network
 
   frontend:
     build:
       context: ./frontend
-      target: dev
     container_name: xpos-frontend
     ports:
       - "5173:5173"
@@ -46,6 +56,12 @@ services:
       - VITE_API_URL=http://localhost:5000/api
     depends_on:
       - backend
+    networks:
+      - xpos-network
+
+networks:
+  xpos-network:
+    driver: bridge
 
 volumes:
   pgdata:

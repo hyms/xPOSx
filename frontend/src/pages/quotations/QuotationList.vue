@@ -8,9 +8,37 @@
         :columns="columns"
         row-key="id"
         :loading="loading"
-      >
+        >
       <template v-slot:top-right>
-        <q-btn color="primary" label="Nueva Cotización" icon="add" to="/quotations/create" />
+        <q-btn color="primary" label="Nueva" icon="add" to="/quotations/create" class="full-width-xs" />
+      </template>
+
+      <template v-slot:item="props">
+        <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
+          <q-card flat bordered>
+            <q-card-section>
+              <div class="row items-center justify-between">
+                <div class="text-subtitle2 text-weight-bold">{{ props.row.ref }}</div>
+                <div class="text-caption text-grey">{{ props.row.date.split('T')[0] }}</div>
+              </div>
+              <div class="q-mt-sm text-caption text-grey">Cliente: {{ props.row.clientName }}</div>
+              <div class="row q-mt-sm items-center justify-between">
+                <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense size="sm">
+                  {{ props.row.status }}
+                </q-chip>
+                <div class="text-subtitle1 text-weight-bolder text-primary">
+                  {{ formatCurrency(props.row.grandTotal) }}
+                </div>
+              </div>
+            </q-card-section>
+            <q-separator />
+            <q-card-actions align="right">
+              <q-btn flat round color="primary" icon="visibility" size="sm" @click="viewQuotation(props.row.id)" />
+              <q-btn flat round color="accent" icon="receipt" size="sm" @click="printQuotation(props.row.id)" />
+              <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDeleteQuotation(props.row)" />
+            </q-card-actions>
+          </q-card>
+        </div>
       </template>
 
       <template v-slot:body-cell-grandTotal="props">

@@ -11,24 +11,60 @@
       @request="onRequest"
       binary-state-sort
       :rows-per-page-options="[10, 20, 50, 100]"
-    >
+      >
       <template v-slot:top-right>
-        <q-input
-          borderless dense debounce="300"
-          v-model="filter"
-          placeholder="Buscar"
-          class="q-mr-md"
-        >
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-        <q-btn
-          color="primary"
-          icon="add"
-          label="Nueva Compra"
-          to="/purchases/create"
-        />
+        <div class="row q-gutter-sm items-center full-width-xs">
+          <q-input
+            dense debounce="300"
+            v-model="filter"
+            placeholder="Buscar"
+            class="col-grow"
+          >
+            <template v-slot:append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+          <q-btn
+            color="primary"
+            icon="add"
+            label="Nueva"
+            to="/purchases/create"
+            class="full-width-xs mobile-only-mt"
+          />
+        </div>
+      </template>
+
+      <template v-slot:item="props">
+        <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
+          <q-card flat bordered>
+            <q-card-section>
+              <div class="row items-center justify-between">
+                <div class="text-subtitle2 text-weight-bold">{{ props.row.ref }}</div>
+                <div class="text-caption text-grey">{{ new Date(props.row.date).toLocaleDateString() }}</div>
+              </div>
+              <div class="q-mt-sm text-caption text-grey">Proveedor: {{ props.row.providerName }}</div>
+              <div class="row q-mt-sm items-center justify-between">
+                <div>
+                  <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense size="sm">
+                    {{ props.row.status }}
+                  </q-chip>
+                  <q-chip :color="getPaymentStatusColor(props.row.paymentStatus)" text-color="white" dense size="sm">
+                    {{ props.row.paymentStatus }}
+                  </q-chip>
+                </div>
+                <div class="text-subtitle1 text-weight-bolder text-primary">
+                  {{ formatCurrency(props.row.grandTotal) }}
+                </div>
+              </div>
+            </q-card-section>
+            <q-separator />
+            <q-card-actions align="right">
+              <q-btn flat round color="primary" icon="visibility" size="sm" @click="viewPurchase(props.row.id)" />
+              <q-btn flat round color="accent" icon="receipt" size="sm" @click="printPurchaseVoucher(props.row.id)" />
+              <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDeleteAction(props.row)" />
+            </q-card-actions>
+          </q-card>
+        </div>
       </template>
 
       <template v-slot:body-cell-status="props">
@@ -77,9 +113,11 @@ import { purchaseService } from '@/services/purchase.service'
 import type { PurchaseReadDto, PagingParams } from '@/types'
 import { useConfirm } from '@/composables/useConfirm'
 import { useRouter } from 'vue-router'
+import { useCurrency } from '@/composables/useCurrency'
 
 const $q = useQuasar()
 const router = useRouter()
+const { formatCurrency } = useCurrency()
 const { confirmDelete } = useConfirm()
 
 const purchases = ref<PurchaseReadDto[]>([])

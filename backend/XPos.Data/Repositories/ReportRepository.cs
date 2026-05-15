@@ -20,7 +20,7 @@ public class ReportRepository : IReportRepository
     public async Task<IEnumerable<SalesReportDto>> GetSalesReportAsync(DateTime? startDate, DateTime? endDate, long? warehouseId)
     {
         string sql = @"
-            SELECT s.date, s.ref, c.name as ClientName, w.name as WarehouseName, s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.payment_status as PaymentStatus
+            SELECT s.date::timestamp as ""Date"", s.ref as ""Ref"", c.name as ""ClientName"", w.name as ""WarehouseName"", s.grand_total as ""GrandTotal"", s.paid_amount as ""PaidAmount"", s.payment_status as ""PaymentStatus""
             FROM sales s
             JOIN clients c ON s.client_id = c.id
             JOIN warehouses w ON s.warehouse_id = w.id
@@ -38,7 +38,7 @@ public class ReportRepository : IReportRepository
     public async Task<IEnumerable<PurchaseReportDto>> GetPurchaseReportAsync(DateTime? startDate, DateTime? endDate, long? warehouseId)
     {
         string sql = @"
-            SELECT p.date, p.ref, pr.name as ProviderName, w.name as WarehouseName, p.grand_total as GrandTotal, p.paid_amount as PaidAmount, p.status
+            SELECT p.date::timestamp as ""Date"", p.ref as ""Ref"", pr.name as ""ProviderName"", w.name as ""WarehouseName"", p.grand_total as ""GrandTotal"", p.paid_amount as ""PaidAmount"", p.status as ""Status""
             FROM purchases p
             JOIN providers pr ON p.provider_id = pr.id
             JOIN warehouses w ON p.warehouse_id = w.id
@@ -169,12 +169,12 @@ public class ReportRepository : IReportRepository
     public async Task<IEnumerable<ProductMovementReportDto>> GetProductMovementsReportAsync(long productId)
     {
         string sql = @"
-            SELECT date, ref, 'Sale' as Type, quantity, warehouse_name as WarehouseName
+            SELECT date::timestamp as ""Date"", ref as ""Ref"", 'Sale' as ""Type"", quantity as ""Quantity"", warehouse_name as ""WarehouseName""
             FROM (SELECT s.date, s.ref, sd.quantity, w.name as warehouse_name FROM sale_details sd JOIN sales s ON sd.sale_id = s.id JOIN warehouses w ON s.warehouse_id = w.id WHERE sd.product_id = @productId AND s.deleted_at IS NULL) as movements
             UNION ALL
-            SELECT date, ref, 'Purchase' as Type, quantity, warehouse_name as WarehouseName
+            SELECT date::timestamp as ""Date"", ref as ""Ref"", 'Purchase' as ""Type"", quantity as ""Quantity"", warehouse_name as ""WarehouseName""
             FROM (SELECT p.date, p.ref, pd.quantity, w.name as warehouse_name FROM purchase_details pd JOIN purchases p ON pd.purchase_id = p.id JOIN warehouses w ON p.warehouse_id = w.id WHERE pd.product_id = @productId AND p.deleted_at IS NULL) as movements
-            ORDER BY date DESC";
+            ORDER BY ""Date"" DESC";
         return await _uow.Connection.QueryAsync<ProductMovementReportDto>(sql, new { productId }, _uow.Transaction);
     }
 
@@ -199,9 +199,10 @@ public class ReportRepository : IReportRepository
     public async Task<IEnumerable<StockAlertReportDto>> GetStockAlertsReportAsync()
     {
         string sql = @"
-            SELECT code, name, quantity, stock_alert as StockAlert
-            FROM products
-            WHERE quantity <= stock_alert AND deleted_at IS NULL";
+            SELECT p.code, p.name, pw.qty as quantity, p.stock_alert as StockAlert
+            FROM products p
+            JOIN product_warehouse pw ON p.id = pw.product_id
+            WHERE pw.qty <= p.stock_alert AND p.deleted_at IS NULL";
         
         return await _uow.Connection.QueryAsync<StockAlertReportDto>(sql, null, _uow.Transaction);
     }
@@ -213,17 +214,17 @@ public class ReportRepository : IReportRepository
 
         // 1. Union All queries for Sales, Purchases, Transfers, Adjustments, Returns
         sqlBuilder.Append(@"
-            SELECT s.date, s.ref, 'Sale' as Type, s.grand_total as Total, w.name as WarehouseName, u.username as UserName 
+            SELECT s.date::timestamp as ""Date"", s.ref as ""Ref"", 'Sale' as ""Type"", s.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM sales s 
             JOIN warehouses w ON s.warehouse_id = w.id 
             JOIN users u ON s.user_id = u.id WHERE s.deleted_at IS NULL
             UNION ALL
-            SELECT p.date, p.ref, 'Purchase' as Type, p.grand_total as Total, w.name as WarehouseName, u.username as UserName 
+            SELECT p.date::timestamp as ""Date"", p.ref as ""Ref"", 'Purchase' as ""Type"", p.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM purchases p 
             JOIN warehouses w ON p.warehouse_id = w.id 
             JOIN users u ON p.user_id = u.id WHERE p.deleted_at IS NULL
             UNION ALL
-            SELECT t.date, t.ref, 'Transfer' as Type, t.grand_total as Total, w.name as WarehouseName, u.username as UserName 
+            SELECT t.date::timestamp as ""Date"", t.ref as ""Ref"", 'Transfer' as ""Type"", t.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM transfers t 
             JOIN warehouses w ON t.to_warehouse_id = w.id 
             JOIN users u ON t.user_id = u.id WHERE t.deleted_at IS NULL
@@ -234,7 +235,7 @@ public class ReportRepository : IReportRepository
         // Note: product filtering would require joining sale_details/purchase_details, which complicates the UNIONs.
         // For now, focusing on User/Warehouse based activity.
         
-        sqlBuilder.Append(" ORDER BY date DESC");
+        sqlBuilder.Append(@" ORDER BY ""Date"" DESC");
 
         return await _uow.Connection.QueryAsync<ActivityReportDto>(sqlBuilder.ToString(), parameters, _uow.Transaction);
     }

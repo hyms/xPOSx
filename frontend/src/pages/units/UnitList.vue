@@ -1,6 +1,6 @@
 <template>
     <q-page padding>
-        <div class="row q-col-gutter-md">
+        <div class="row q-col-gutter-sm">
             <div class="col-12">
                 <q-table
                     title="Unidades"
@@ -8,13 +8,16 @@
                     :columns="columns"
                     row-key="id"
                     :loading="loading"
+                    :filter="filter"
                 >
                     <template v-slot:top-right>
+                        <BaseSearch @search="filter = $event" />
                         <q-btn
                             color="primary"
                             label="Nueva Unidad"
                             icon="add"
                             @click="openDialog()"
+                            class="q-ml-md"
                         />
                     </template>
 
@@ -41,66 +44,67 @@
         </div>
 
         <FormDialog
-      v-model="showDialog"
-      :title="isEdit ? 'Editar Unidad' : 'Nueva Unidad'"
-      @submit="saveUnit"
-      :saving="saving"
-    >
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.name"
-            label="Nombre"
-            lazy-rules
-            :rules="[val => !!val || 'Requerido']"
-            outlined
-            dense
-          />
-        </div>
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.shortName"
-            label="Nombre Corto"
-            lazy-rules
-            :rules="[val => !!val || 'Requerido']"
-            outlined
-            dense
-          />
-        </div>
-        <div class="col-12">
-          <q-select
-            v-model="formData.baseUnit"
-            :options="unitOptions"
-            label="Unidad Base"
-            option-value="id"
-            option-label="name"
-            emit-value
-            map-options
-            clearable
-            outlined
-            dense
-          />
-        </div>
-        <div class="col-6">
-          <q-select
-            v-model="formData.operator"
-            :options="['*', '/']"
-            label="Operador"
-            outlined
-            dense
-          />
-        </div>
-        <div class="col-6">
-          <q-input
-            v-model.number="formData.operatorValue"
-            label="Valor"
-            type="number"
-            outlined
-            dense
-          />
-        </div>
-      </div>
-    </FormDialog>
+            v-model="showDialog"
+            :title="isEdit ? 'Editar Unidad' : 'Nueva Unidad'"
+            @submit="saveUnit"
+            :saving="saving"
+        >
+            <div class="row q-col-gutter-sm">
+                <div class="col-12 col-md-6">
+                    <q-input
+                        v-model="formData.name"
+                        label="Nombre"
+                        lazy-rules
+                        :rules="[(val) => !!val || 'Requerido']"
+                        outlined
+                        dense
+                    />
+                </div>
+                <div class="col-12 col-md-6">
+                    <q-input
+                        v-model="formData.shortName"
+                        label="Nombre Corto"
+                        lazy-rules
+                        :rules="[(val) => !!val || 'Requerido']"
+                        outlined
+                        dense
+                    />
+                </div>
+                <div class="col-12">
+                    <q-select
+                        v-model="formData.baseUnit"
+                        :options="unitOptions"
+                        label="Unidad Base"
+                        option-value="id"
+                        option-label="name"
+                        emit-value
+                        map-options
+                        clearable
+                        outlined
+                        dense
+                    />
+                </div>
+                <div class="col-12 col-md-6">
+                    <q-select
+                        v-model="formData.operator"
+                        :options="['*', '/']"
+                        label="Operador"
+                        outlined
+                        dense
+                    />
+                </div>
+                <div class="col-12 col-md-6">
+                    <q-input
+                        v-model.number="formData.operatorValue"
+                        label="Valor"
+                        type="number"
+                        outlined
+                        dense
+                    />
+                </div>
+            </div>
+        </FormDialog>
+        q-col-gutter-sm
     </q-page>
 </template>
 
@@ -109,11 +113,13 @@ import { ref, onMounted, reactive, computed } from "vue";
 import { useQuasar } from "quasar";
 import { unitService } from "@/services/unit.service";
 import type { Unit } from "@/types";
-import FormDialog from '@/components/FormDialog.vue'
+import FormDialog from "@/components/FormDialog.vue";
+import BaseSearch from "@/components/base/BaseSearch.vue";
 
 const $q = useQuasar();
 const units = ref<Unit[]>([]);
 const loading = ref(true);
+const filter = ref("");
 const saving = ref(false);
 const showDialog = ref(false);
 const isEdit = ref(false);
@@ -167,7 +173,9 @@ const columns = [
     },
 ];
 
-const unitOptions = computed(() => units.value.filter((u: Unit) => !u.baseUnit));
+const unitOptions = computed(() =>
+    units.value.filter((u: Unit) => !u.baseUnit),
+);
 
 const fetchUnits = async () => {
     loading.value = true;

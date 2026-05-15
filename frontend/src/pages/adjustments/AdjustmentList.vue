@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div class="row q-col-gutter-md">
+    <div class="row q-col-gutter-sm">
       <div class="col-12">
         <q-table
           title="Ajustes de Inventario"
@@ -11,11 +11,7 @@
           :filter="filter"
         >
           <template v-slot:top-right>
-            <q-input dense debounce="300" color="primary" v-model="filter" placeholder="Buscar">
-              <template v-slot:append>
-                <q-icon name="search" />
-              </template>
-            </q-input>
+            <BaseSearch @search="filter = $event" />
             <q-btn color="primary" label="Nuevo Ajuste" icon="add" to="/adjustments/create" class="q-ml-md" />
           </template>
 
@@ -37,6 +33,7 @@ import { useQuasar } from 'quasar'
 import { adjustmentService } from '@/services/adjustment.service';
 import type { AdjustmentReadDto } from '@/types'
 import { useConfirm } from '@/composables/useConfirm'
+import BaseSearch from '@/components/base/BaseSearch.vue'
 
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()

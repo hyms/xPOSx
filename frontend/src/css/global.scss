@@ -311,3 +311,26 @@ body::-webkit-scrollbar-thumb:hover {
     padding: 12px 16px; /* Adjust padding for better readability */
   }
 }
+
+/* Responsive Helpers */
+@media (max-width: 599px) {
+  .full-width-xs {
+    width: 100% !important;
+  }
+  
+  .mobile-only-mt {
+    margin-top: 16px !important;
+  }
+
+  .q-table__grid-content {
+    padding: 8px;
+  }
+}
+
+/* Reports Page Specifics */
+.reports-page {
+  .q-tab-panel {
+    padding: 0;
+  }
+}
+

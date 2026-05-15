@@ -13,7 +13,7 @@
 
             <q-card-section>
                 <q-form @submit="onSubmit" class="q-gutter-md">
-                    <div class="row q-col-gutter-md">
+                    <div class="row q-col-gutter-sm">
                         <div class="col-12 col-md-4">
                             <q-input
                                 v-model="formData.date"

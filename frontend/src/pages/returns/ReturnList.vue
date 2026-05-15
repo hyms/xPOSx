@@ -25,31 +25,38 @@
             :columns="saleColumns"
             row-key="id"
             :loading="loadingSales"
-          >
+            >
             <template v-slot:top-right>
-              <q-btn color="primary" label="Nueva Devolución" icon="add" to="/returns/sales/create" />
+              <q-btn color="primary" label="Nueva" icon="add" to="/returns/sales/create" class="full-width-xs" />
             </template>
 
-            <template v-slot:body-cell-grandTotal="props">
-              <q-td :props="props">
-                {{ formatCurrency(props.row.grandTotal) }}
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-status="props">
-              <q-td :props="props">
-                <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense>
-                  {{ props.row.status }}
-                </q-chip>
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-actions="props">
-              <q-td :props="props">
-                <q-btn flat round color="primary" icon="visibility" @click="viewSaleReturn(props.row.id)" />
-                <q-btn flat round color="accent" icon="receipt" @click="printSaleReturnVoucher(props.row.id)" />
-                <q-btn flat round color="negative" icon="delete" @click="confirmDeleteSaleReturn(props.row)" />
-              </q-td>
+            <template v-slot:item="props">
+              <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
+                <q-card flat bordered>
+                  <q-card-section>
+                    <div class="row items-center justify-between">
+                      <div class="text-subtitle2 text-weight-bold">{{ props.row.ref }}</div>
+                      <div class="text-caption text-grey">{{ props.row.date.split('T')[0] }}</div>
+                    </div>
+                    <div class="q-mt-sm text-caption text-grey">Cliente: {{ props.row.clientName }}</div>
+                    <div class="q-mt-xs text-caption text-grey">Almacén: {{ props.row.warehouseName }}</div>
+                    <div class="row q-mt-sm items-center justify-between">
+                      <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense size="sm">
+                        {{ props.row.status }}
+                      </q-chip>
+                      <div class="text-subtitle1 text-weight-bolder text-primary">
+                        {{ formatCurrency(props.row.grandTotal) }}
+                      </div>
+                    </div>
+                  </q-card-section>
+                  <q-separator />
+                  <q-card-actions align="right">
+                    <q-btn flat round color="primary" icon="visibility" size="sm" @click="viewSaleReturn(props.row.id)" />
+                    <q-btn flat round color="accent" icon="receipt" size="sm" @click="printSaleReturnVoucher(props.row.id)" />
+                    <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDeleteSaleReturn(props.row)" />
+                  </q-card-actions>
+                </q-card>
+              </div>
             </template>
           </q-table>
         </q-tab-panel>
@@ -62,31 +69,38 @@
             :columns="purchaseColumns"
             row-key="id"
             :loading="loadingPurchases"
-          >
+            >
             <template v-slot:top-right>
-              <q-btn color="primary" label="Nueva Devolución" icon="add" to="/returns/purchases/create" />
+              <q-btn color="primary" label="Nueva" icon="add" to="/returns/purchases/create" class="full-width-xs" />
             </template>
 
-            <template v-slot:body-cell-grandTotal="props">
-              <q-td :props="props">
-                {{ formatCurrency(props.row.grandTotal) }}
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-status="props">
-              <q-td :props="props">
-                <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense>
-                  {{ props.row.status }}
-                </q-chip>
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-actions="props">
-              <q-td :props="props">
-                <q-btn flat round color="primary" icon="visibility" @click="viewPurchaseReturn(props.row.id)" />
-                <q-btn flat round color="accent" icon="receipt" @click="printPurchaseReturnVoucher(props.row.id)" />
-                <q-btn flat round color="negative" icon="delete" @click="confirmDeletePurchaseReturn(props.row)" />
-              </q-td>
+            <template v-slot:item="props">
+              <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
+                <q-card flat bordered>
+                  <q-card-section>
+                    <div class="row items-center justify-between">
+                      <div class="text-subtitle2 text-weight-bold">{{ props.row.ref }}</div>
+                      <div class="text-caption text-grey">{{ props.row.date.split('T')[0] }}</div>
+                    </div>
+                    <div class="q-mt-sm text-caption text-grey">Proveedor: {{ props.row.providerName }}</div>
+                    <div class="q-mt-xs text-caption text-grey">Almacén: {{ props.row.warehouseName }}</div>
+                    <div class="row q-mt-sm items-center justify-between">
+                      <q-chip :color="getStatusColor(props.row.status)" text-color="white" dense size="sm">
+                        {{ props.row.status }}
+                      </q-chip>
+                      <div class="text-subtitle1 text-weight-bolder text-primary">
+                        {{ formatCurrency(props.row.grandTotal) }}
+                      </div>
+                    </div>
+                  </q-card-section>
+                  <q-separator />
+                  <q-card-actions align="right">
+                    <q-btn flat round color="primary" icon="visibility" size="sm" @click="viewPurchaseReturn(props.row.id)" />
+                    <q-btn flat round color="accent" icon="receipt" size="sm" @click="printPurchaseReturnVoucher(props.row.id)" />
+                    <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDeletePurchaseReturn(props.row)" />
+                  </q-card-actions>
+                </q-card>
+              </div>
             </template>
           </q-table>
         </q-tab-panel>

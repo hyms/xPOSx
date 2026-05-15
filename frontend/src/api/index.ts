@@ -1,5 +1,4 @@
 import axios, { type AxiosInstance } from "axios";
-import router from "@/router";
 
 class ApiClient {
   private static instance: ApiClient;
@@ -7,7 +6,7 @@ class ApiClient {
 
   private constructor() {
     this.axiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_URL,
+      baseURL: process.env.VITE_API_URL || '/api',
     });
 
     this.setupInterceptors();
@@ -42,8 +41,7 @@ class ApiClient {
             localStorage.removeItem("token");
             localStorage.removeItem("username");
 
-            // Usamos el router en lugar de window.location
-            router.push("/login");
+            window.location.href = "/login";
           }
         }
         return Promise.reject(error);

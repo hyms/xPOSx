@@ -3,20 +3,20 @@ using Dapper;
 using Npgsql;
 using NpgsqlTypes;
 
-public class DateOnlyTypeHandler : SqlMapper.TypeHandler<DateOnly>
+public class DateOnlyTypeHandler : SqlMapper.TypeHandler<DateTime>
 {
-    public override DateOnly Parse(object value)
+    public override DateTime Parse(object value)
     {
-        if (value is DateTime dt) return DateOnly.FromDateTime(dt);
-        if (value is string s && DateTime.TryParse(s, out var d)) return DateOnly.FromDateTime(d);
-        if (value is DateOnly do_) return do_;
-        throw new InvalidCastException($"Cannot convert {value?.GetType()} ({value}) to DateOnly");
+        if (value is DateTime dt) return dt;
+        if (value is string s && DateTime.TryParse(s, out var d)) return d;
+        if (value is DateOnly do_) return do_.ToDateTime(TimeOnly.MinValue);
+        throw new InvalidCastException($"Cannot convert {value?.GetType()} ({value}) to DateTime");
     }
 
-    public override void SetValue(IDbDataParameter parameter, DateOnly value)
+    public override void SetValue(IDbDataParameter parameter, DateTime value)
     {
-        parameter.Value = value.ToString("yyyy-MM-dd");
-        if (parameter is NpgsqlParameter np) np.NpgsqlDbType = NpgsqlDbType.Date;
+        parameter.Value = value;
+        if (parameter is NpgsqlParameter np) np.NpgsqlDbType = NpgsqlDbType.Timestamp;
     }
 }
 

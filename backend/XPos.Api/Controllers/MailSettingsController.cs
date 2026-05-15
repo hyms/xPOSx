@@ -7,7 +7,7 @@ namespace XPos.Api.Controllers;
 
 [Authorize(Policy = "settings_edit")] // Edit permission for mail settings
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/settings/mail")]
 public class MailSettingsController : ControllerBase
 {
     private readonly IMailSettingsService _mailSettingsService;
@@ -20,7 +20,7 @@ public class MailSettingsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get() => Ok(await _mailSettingsService.GetAsync());
 
-    [HttpPost("create-or-update")]
+    [HttpPost]
     public async Task<IActionResult> CreateOrUpdate(MailSettings mailSettings)
     {
         var id = await _mailSettingsService.CreateOrUpdateAsync(mailSettings);
