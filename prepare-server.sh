@@ -89,6 +89,20 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
     sudo apt-get autoremove -y
     echo "✅ System updated and upgraded."
 
+    # 2.5 Generate Self-Signed SSL Certificate
+    echo "Checking SSL Certificates..."
+    sudo mkdir -p /etc/xpos/ssl
+    if [ ! -f /etc/xpos/ssl/xpos.crt ]; then
+        echo "Generating self-signed certificate..."
+        sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /etc/xpos/ssl/xpos.key \
+            -out /etc/xpos/ssl/xpos.crt \
+            -subj "/C=US/ST=State/L=City/O=xPOS/CN=xPOS"
+        echo "✅ Certificate generated."
+    else
+        echo "✅ Certificate already exists."
+    fi
+
     echo "--- Remote script finished ---"
 
     if [ "$NEEDS_RELOG_DOCKER" = true ]; then
