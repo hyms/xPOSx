@@ -104,7 +104,6 @@
                 </div>
             </div>
         </FormDialog>
-        q-col-gutter-sm
     </q-page>
 </template>
 

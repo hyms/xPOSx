@@ -12,10 +12,22 @@
                     @request="fetchItems"
                 >
                     <template #top-right>
-                        <BaseSearch
-                            @search="fetchItems({ pagination, filter: $event })"
-                            class="full-width-xs"
-                        />
+                        <div class="row items-center no-wrap">
+                            <BaseSearch
+                                @search="fetchItems({ pagination, filter: $event })"
+                                class="full-width-xs"
+                            />
+                            <q-btn
+                                flat
+                                round
+                                color="primary"
+                                icon="qr_code_scanner"
+                                class="q-ml-sm"
+                                @click="openScanner('search')"
+                            >
+                                <q-tooltip>Escanear código</q-tooltip>
+                            </q-btn>
+                        </div>
                         <BaseButton
                             label="Nuevo Producto"
                             icon="add"
@@ -73,11 +85,10 @@
             @submit="saveProduct"
             :saving="saving"
             full-width
-            q-col-gutter-sm
         >
             <!-- Sección 1: Información Básica -->
             <div class="text-subtitle1 text-primary q-mb-xs">
-                Información Básica q-col-gutter-smq-col-gutter-smq-col-gutter-sm
+                Información Básica
             </div>
             <div class="row q-col-gutter-sm q-mb-md">
                 <div class="col-12 col-md-6">
@@ -94,7 +105,17 @@
                         label="Código"
                         lazy-rules
                         :rules="[(val) => !!val || 'Requerido']"
-                    />
+                    >
+                        <template v-slot:append>
+                            <q-icon
+                                name="qr_code_scanner"
+                                class="cursor-pointer"
+                                @click="openScanner('form')"
+                            >
+                                <q-tooltip>Escanear código</q-tooltip>
+                            </q-icon>
+                        </template>
+                    </BaseInput>
                 </div>
                 <div class="col-12 col-md-6">
                     <q-select
@@ -184,7 +205,19 @@
                 </div>
 
                 <div class="col-12 col-md-4">
-                    <div class="text-subtitle2 q-mb-sm">Imagen referencial</div>
+                    <div class="row items-center justify-between q-mb-sm">
+                        <div class="text-subtitle2">Imagen referencial</div>
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            color="primary"
+                            icon="photo_camera"
+                            @click="showCamera = true"
+                        >
+                            <q-tooltip>Usar cámara</q-tooltip>
+                        </q-btn>
+                    </div>
                     <q-card bordered flat class="image-upload-card">
                         <div v-if="formData.image" class="image-preview">
                             <img :src="formData.image" alt="Product image" />
@@ -222,6 +255,19 @@
                 </div>
             </div>
         </FormDialog>
+
+        <!-- Scanner Dialog -->
+        <BarcodeScannerDialog
+            v-model="showScanner"
+            @detect="handleScan"
+            :title="scannerTarget === 'search' ? 'Escanear para buscar' : 'Escanear código de producto'"
+        />
+
+        <!-- Camera Dialog -->
+        <CameraDialog
+            v-model="showCamera"
+            @captured="handleCapture"
+        />
     </q-page>
 </template>
 
@@ -234,11 +280,14 @@ import { unitService } from "@/services/unit.service";
 import type { Product, Category, Unit } from "@/types";
 import { useTable } from "@/composables/useTable";
 import { useCurrency } from "@/composables/useCurrency";
+import { useBarcodeScanner } from "@/composables/useBarcodeScanner";
 import BaseSearch from "@/components/base/BaseSearch.vue";
 import BaseTable from "@/components/base/BaseTable.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
 import FormDialog from "@/components/FormDialog.vue";
+import BarcodeScannerDialog from "@/components/BarcodeScannerDialog.vue";
+import CameraDialog from "@/components/CameraDialog.vue";
 
 const $q = useQuasar();
 const { formatCurrency } = useCurrency();
@@ -252,9 +301,48 @@ const categories = ref<Category[]>([]);
 const units = ref<Unit[]>([]);
 const saving = ref(false);
 const showDialog = ref(false);
+const showScanner = ref(false);
+const showCamera = ref(false);
+const scannerTarget = ref<'search' | 'form'>('search');
 const isEdit = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const filter = ref("");
+
+// Physical Scanner for Product List
+useBarcodeScanner({
+    onScan: (code) => {
+        if (showDialog.value) {
+            // Si el diálogo está abierto, registramos el código en el formulario
+            formData.code = code;
+            $q.notify({
+                message: "Código capturado",
+                color: "positive",
+                icon: "qr_code",
+                timeout: 800
+            });
+        } else {
+            // Si no, buscamos en la tabla
+            fetchItems({ pagination, filter: code });
+        }
+    }
+});
+
+const openScanner = (target: 'search' | 'form') => {
+    scannerTarget.value = target;
+    showScanner.value = true;
+};
+
+const handleScan = (code: string) => {
+    if (scannerTarget.value === 'search') {
+        fetchItems({ pagination, filter: code });
+    } else {
+        formData.code = code;
+    }
+};
+
+const handleCapture = (dataUrl: string) => {
+    formData.image = dataUrl;
+};
 
 const formData = reactive<Product & { image?: string }>({
     name: "",
@@ -343,10 +431,15 @@ const fetchData = async () => {
     }
 };
 
-const openDialog = (product?: Product) => {
+const openDialog = (product?: any) => {
     if (product) {
         isEdit.value = true;
-        Object.assign(formData, { ...product });
+        // Map data ensuring IDs are correctly assigned even if they come from nested objects
+        Object.assign(formData, { 
+            ...product,
+            categoryId: product.categoryId || product.category_id || product.category?.id,
+            unitId: product.unitId || product.unit_id || product.unit?.id
+        });
     } else {
         isEdit.value = false;
         Object.assign(formData, {

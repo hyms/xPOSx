@@ -4,7 +4,6 @@
             <q-card-section>
                 <div class="text-h6">
                     {{ isEdit ? "Ver Compra" : "Registrar Compra" }}
-                    q-col-gutter-sm
                 </div>
             </q-card-section>
 
@@ -78,7 +77,6 @@
                             />
                         </div>
                     </div>
-                    q-col-gutter-sm
                     <!-- Purchase Details Table -->
                     <div class="app-table-container">
                         <q-table

@@ -30,7 +30,6 @@
                             class="q-ml-md"
                         />
                     </template>
-                    q-col-gutter-sm
                     <template v-slot:item="props">
                         <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
                             <q-card flat bordered>

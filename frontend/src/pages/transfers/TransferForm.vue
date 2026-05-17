@@ -59,7 +59,6 @@
                                 :readonly="isEdit"
                             />
                         </div>
-                        q-col-gutter-sm
                         <!-- Product Selection -->
                         <div class="col-12">
                             <q-select

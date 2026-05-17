@@ -51,7 +51,6 @@
                                 :readonly="isEdit"
                             />
                         </div>
-                        q-col-gutter-smq-col-gutter-sm
                     </div>
 
                     <!-- Product Search -->

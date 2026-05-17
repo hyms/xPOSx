@@ -8,7 +8,6 @@
                             ? "Ver Devolución de Compra"
                             : "Registrar Devolución de Compra"
                     }}
-                    q-col-gutter-smq-col-gutter-sm
                 </div>
             </q-card-section>
 
@@ -80,7 +79,6 @@
                             />
                         </div>
                     </div>
-                    q-col-gutter-sm
                     <!-- Details Table -->
                     <div class="app-table-container">
                         <q-table

@@ -179,7 +179,6 @@
             </div>
         </FormDialog>
     </q-page>
-    q-col-gutter-sm
 </template>
 
 <script setup lang="ts">

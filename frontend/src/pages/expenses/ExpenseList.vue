@@ -287,7 +287,6 @@
                 </div>
             </div>
         </FormDialog>
-        q-col-gutter-sm
         <!-- Category Dialog -->
         <FormDialog
             v-model="showCategoryDialog"

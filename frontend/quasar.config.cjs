@@ -85,8 +85,9 @@ module.exports = configure(function (/* ctx */) {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
     devServer: {
-      // https: true,
+      https: true,
       port: 5173,
+      host: '0.0.0.0', // Allow access from mobile/external IP
       open: false, // opens browser window automatically
       proxy: {
         // proxy all requests starting with /api to the backend

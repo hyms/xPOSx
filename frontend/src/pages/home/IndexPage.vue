@@ -13,7 +13,6 @@
                             {{ summary.todaySalesCount }} transacciones
                         </div>
                     </q-card-section>
-                    q-col-gutter-smq-col-gutter-sm
                 </q-card>
             </div>
             <div class="col-12 col-md-3">

@@ -23,7 +23,6 @@
                             class="q-ml-md full-width-xs mobile-only-mt"
                         />
                     </template>
-                    q-col-gutter-sm
                     <template v-slot:body-cell-status="props">
                         <q-td :props="props">
                             <q-badge :color="getStatusColor(props.value)">

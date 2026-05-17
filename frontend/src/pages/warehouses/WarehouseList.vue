@@ -49,7 +49,6 @@
             :title="isEdit ? 'Editar Almacén' : 'Nuevo Almacén'"
             @submit="saveWarehouse"
             :saving="saving"
-            q-col-gutter-sm
         >
             <div class="row q-col-gutter-sm">
                 <div class="col-12 col-md-6">
@@ -98,7 +97,6 @@
             </div>
         </FormDialog>
     </q-page>
-    q-col-gutter-sm
 </template>
 
 <script setup lang="ts">

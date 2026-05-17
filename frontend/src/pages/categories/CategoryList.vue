@@ -48,7 +48,6 @@
             :title="isEdit ? 'Editar Categoría' : 'Nueva Categoría'"
             @submit="saveCategory"
             :saving="saving"
-            q-col-gutter-sm
         >
             <q-input
                 v-model="formData.code"
