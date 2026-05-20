@@ -8,12 +8,12 @@ public class Purchase
     public DateTime Date { get; set; }
     public long ProviderId { get; set; }
     public long WarehouseId { get; set; }
-    public double? TaxRate { get; set; }
-    public double? TaxNet { get; set; }
-    public double? Discount { get; set; }
-    public double? Shipping { get; set; }
-    public double GrandTotal { get; set; }
-    public double PaidAmount { get; set; }
+    public decimal? TaxRate { get; set; }
+    public decimal? TaxNet { get; set; }
+    public decimal? Discount { get; set; }
+    public decimal? Shipping { get; set; }
+    public decimal GrandTotal { get; set; }
+    public decimal PaidAmount { get; set; }
     public string Status { get; set; } = "received";
     public string PaymentStatus { get; set; } = "unpaid";
     public string? Notes { get; set; }
@@ -38,13 +38,13 @@ public class PurchaseDetail
     public long ProductId { get; set; }
     public long? ProductVariantId { get; set; }
     public long? PurchaseUnitId { get; set; }
-    public double Cost { get; set; }
-    public double? TaxNet { get; set; }
+    public decimal Cost { get; set; }
+    public decimal? TaxNet { get; set; }
     public string? TaxMethod { get; set; }
-    public double? Discount { get; set; }
+    public decimal? Discount { get; set; }
     public string? DiscountMethod { get; set; }
-    public double Total { get; set; }
-    public double Quantity { get; set; }
+    public decimal Total { get; set; }
+    public decimal Quantity { get; set; }
     
     // Audit fields
     public DateTime? CreatedAt { get; set; }
@@ -60,9 +60,9 @@ public class PurchaseReadDto
     public DateTime Date { get; set; }
     public string ProviderName { get; set; } = string.Empty;
     public string WarehouseName { get; set; } = string.Empty;
-    public double GrandTotal { get; set; }
-    public double PaidAmount { get; set; }
-    public double DueAmount => GrandTotal - PaidAmount;
+    public decimal GrandTotal { get; set; }
+    public decimal PaidAmount { get; set; }
+    public decimal DueAmount => GrandTotal - PaidAmount;
     public string Status { get; set; } = string.Empty;
     public string PaymentStatus { get; set; } = string.Empty;
     public long? VoucherId { get; set; }

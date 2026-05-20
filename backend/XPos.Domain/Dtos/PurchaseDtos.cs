@@ -5,9 +5,10 @@ public class CreatePurchaseDto
     public DateTime Date { get; set; }
     public long ProviderId { get; set; }
     public long WarehouseId { get; set; }
-    public double TaxRate { get; set; }
-    public double Discount { get; set; }
-    public double Shipping { get; set; }
+    public decimal TaxRate { get; set; }
+    public decimal Discount { get; set; }
+    public decimal Shipping { get; set; }
+    public decimal PaidAmount { get; set; }
     public string Status { get; set; } = "received";
     public string PaymentStatus { get; set; } = "unpaid";
     public string? Notes { get; set; }
@@ -18,8 +19,8 @@ public class CreatePurchaseDto
 public class CreatePurchaseDetailDto
 {
     public long ProductId { get; set; }
-    public double Cost { get; set; }
-    public double Quantity { get; set; }
+    public decimal Cost { get; set; }
+    public decimal Quantity { get; set; }
     public long? PurchaseUnitId { get; set; }
 }
 

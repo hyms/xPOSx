@@ -36,6 +36,7 @@
                     :subtotal="subtotal"
                     :total="total"
                     :form-data="formData"
+                    :is-searching-client="isSearchingClient"
                     @clear-cart="clearCart"
                     @fetch-stocks="fetchStocks"
                     @increment="incrementQty"
@@ -43,6 +44,8 @@
                     @remove="removeFromCart"
                     @calculate-totals="calculateTotals"
                     @checkout="openCheckout"
+                    @search-client="(nit, cb) => searchClientByNit(nit).then(() => cb(true)).catch(() => cb(false))"
+                    @register-client="(data, cb) => quickRegisterClient(data).then(() => cb())"
                     v-model:clientId="formData.clientId"
                     v-model:warehouseId="formData.warehouseId"
                     v-model:taxRate="formData.taxRate"
@@ -99,6 +102,7 @@
                             :subtotal="subtotal"
                             :total="total"
                             :form-data="formData"
+                            :is-searching-client="isSearchingClient"
                             checkout-label="PAGAR"
                             @clear-cart="clearCart"
                             @fetch-stocks="fetchStocks"
@@ -107,6 +111,8 @@
                             @remove="removeFromCart"
                             @calculate-totals="calculateTotals"
                             @checkout="openCheckout"
+                            @search-client="(nit, cb) => searchClientByNit(nit).then(() => cb(true)).catch(() => cb(false))"
+                            @register-client="(data, cb) => quickRegisterClient(data).then(() => cb())"
                             v-model:clientId="formData.clientId"
                             v-model:warehouseId="formData.warehouseId"
                             v-model:taxRate="formData.taxRate"
@@ -132,6 +138,8 @@
             :change="change"
             :quick-amounts="quickAmounts"
             :saving="saving"
+            :is-invoice-blocked="isInvoiceBlocked"
+            :sin-limit="SIN_LIMIT"
             @calculate-change="calculateChange"
             @set-quick-amount="setQuickAmount"
             @submit="submitSale"
@@ -179,10 +187,10 @@ const {
     search, selectedCategory, categories, warehouses, clients,
     cart, showCheckoutDialog, showCartMobile, showScanner, showScanResultDialog,
     lastScannedProduct, paidAmount, change, saving, formData, quickAmounts,
-    subtotal, total, filteredProducts,
+    subtotal, total, filteredProducts, isSearchingClient, isInvoiceBlocked, SIN_LIMIT,
     calculateTotals, setQuickAmount, handleBarcodeScan, getProductName, getStock,
     fetchData, fetchStocks, addToCart, incrementQty, decrementQty, removeFromCart,
-    clearCart, calculateChange, submitSale, openCheckout
+    clearCart, calculateChange, submitSale, openCheckout, searchClientByNit, quickRegisterClient
 } = usePosLogic();
 
 // Physical Barcode Scanner Logic

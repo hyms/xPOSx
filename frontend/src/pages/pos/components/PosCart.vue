@@ -19,17 +19,29 @@
         </div>
 
         <div class="q-gutter-y-sm q-mb-md">
-            <q-select
-                v-model="clientId"
-                :options="clients"
-                option-label="name"
-                option-value="id"
-                label="Cliente"
-                dense
-                outlined
-                emit-value
-                map-options
-            />
+            <div class="row q-col-gutter-xs">
+                <div class="col-5">
+                    <q-input
+                        v-model="formData.clientNit"
+                        label="NIT / CI"
+                        dense
+                        outlined
+                        :loading="isSearchingClient"
+                        @keyup.enter="onNitSearch"
+                        @blur="onNitSearch"
+                    />
+                </div>
+                <div class="col-7">
+                    <q-input
+                        v-model="formData.clientName"
+                        label="Razón Social"
+                        dense
+                        outlined
+                        readonly
+                        class="bg-grey-2"
+                    />
+                </div>
+            </div>
 
             <q-select
                 v-model="warehouseId"
@@ -114,11 +126,47 @@
             @click="$emit('checkout')"
             :disable="cart.length === 0 || !clientId || !warehouseId"
         />
+
+        <!-- Quick Register Client Dialog -->
+        <q-dialog v-model="showRegisterDialog" persistent>
+            <q-card style="width: 400px">
+                <q-card-section class="bg-primary text-white">
+                    <div class="text-h6">Nuevo Cliente</div>
+                </q-card-section>
+
+                <q-card-section class="q-gutter-md">
+                    <p>El NIT <strong>{{ quickClientForm.nitCi }}</strong> no está registrado.</p>
+                    <q-input
+                        v-model="quickClientForm.name"
+                        ref="newNameInput"
+                        label="Nombre / Razón Social"
+                        outlined
+                        autofocus
+                        @keyup.enter="onSaveQuickClient"
+                    />
+                    <q-input
+                        v-model="quickClientForm.email"
+                        label="Email (Opcional)"
+                        outlined
+                    />
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancelar" v-close-popup />
+                    <q-btn
+                        label="Registrar"
+                        color="primary"
+                        @click="onSaveQuickClient"
+                        :disable="!quickClientForm.name"
+                    />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useCurrency } from "@/composables/useCurrency";
 import type { Client, Warehouse, SaleDetail } from "@/types";
 
@@ -135,16 +183,52 @@ const props = withDefaults(defineProps<{
     showHeader?: boolean;
     checkoutLabel?: string;
     checkoutSize?: string;
+    isSearchingClient?: boolean;
 }>(), {
     showHeader: true,
     checkoutLabel: 'PAGAR AHORA',
-    checkoutSize: 'lg'
+    checkoutSize: 'lg',
+    isSearchingClient: false
 });
 
 const emit = defineEmits([
     'update:clientId', 'update:warehouseId', 'update:taxRate', 'update:discount', 'update:shipping',
-    'clear-cart', 'fetch-stocks', 'increment', 'decrement', 'remove', 'calculate-totals', 'checkout'
+    'clear-cart', 'fetch-stocks', 'increment', 'decrement', 'remove', 'calculate-totals', 'checkout',
+    'search-client', 'register-client'
 ]);
+
+const showRegisterDialog = ref(false);
+const newNameInput = ref<any>(null);
+const quickClientForm = ref({
+    nitCi: '',
+    name: '',
+    email: ''
+});
+
+const onNitSearch = () => {
+    const nit = props.formData.clientNit?.trim();
+    if (!nit || nit === "0") {
+        emit('update:clientId', props.clients.find(c => c.nitCi === "0")?.id || 0);
+        props.formData.clientName = "SIN NOMBRE";
+        return;
+    }
+    emit('search-client', nit, (found: boolean) => {
+        if (!found) {
+            quickClientForm.value = { nitCi: nit, name: '', email: '' };
+            showRegisterDialog.value = true;
+            nextTick(() => {
+                setTimeout(() => newNameInput.value?.focus(), 100);
+            });
+        }
+    });
+};
+
+const onSaveQuickClient = () => {
+    if (!quickClientForm.value.name) return;
+    emit('register-client', quickClientForm.value, () => {
+        showRegisterDialog.value = false;
+    });
+};
 
 const clientId = computed({
     get: () => props.formData.clientId,

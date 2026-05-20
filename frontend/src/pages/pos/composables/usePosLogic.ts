@@ -33,15 +33,23 @@ export function usePosLogic() {
     const paidAmount = ref(0);
     const change = ref(0);
     const saving = ref(false);
+    const isSearchingClient = ref(false);
 
     const formData = reactive({
         clientId: 0,
+        clientNit: "0",
+        clientName: "SIN NOMBRE",
         warehouseId: 0,
         date: new Date().toISOString().split("T")[0],
         taxRate: 0,
         discount: 0,
         shipping: 0,
         notes: "",
+    });
+
+    const SIN_LIMIT = 1000;
+    const isInvoiceBlocked = computed(() => {
+        return (formData.clientNit === "0" || !formData.clientNit) && total.value > SIN_LIMIT;
     });
 
     const quickAmounts = [10, 20, 50, 100];
@@ -88,13 +96,18 @@ export function usePosLogic() {
         calculateChange();
     };
 
+    const updateCartItem = (item: SaleDetail, quantity: number) => {
+        item.quantity = quantity;
+        item.total = item.quantity * item.price;
+        calculateTotals();
+    };
+
     const addToCart = (product: Product) => {
         const existing = cart.value.find(
             (item: SaleDetail) => item.productId === product.id,
         );
         if (existing) {
-            existing.quantity++;
-            existing.total = existing.quantity * existing.price;
+            updateCartItem(existing, existing.quantity + 1);
         } else {
             cart.value.push({
                 productId: product.id!,
@@ -102,9 +115,8 @@ export function usePosLogic() {
                 price: product.price,
                 total: product.price,
             });
+            calculateTotals();
         }
-        paidAmount.value = total.value;
-        calculateChange();
     };
 
     const handleBarcodeScan = () => {
@@ -185,24 +197,20 @@ export function usePosLogic() {
     };
 
     const incrementQty = (index: number) => {
-        cart.value[index].quantity++;
-        cart.value[index].total =
-            cart.value[index].quantity * cart.value[index].price;
-        paidAmount.value = total.value;
+        const item = cart.value[index];
+        updateCartItem(item, item.quantity + 1);
     };
 
     const decrementQty = (index: number) => {
-        if (cart.value[index].quantity > 1) {
-            cart.value[index].quantity--;
-            cart.value[index].total =
-                cart.value[index].quantity * cart.value[index].price;
-            paidAmount.value = total.value;
+        const item = cart.value[index];
+        if (item.quantity > 1) {
+            updateCartItem(item, item.quantity - 1);
         }
     };
 
     const removeFromCart = (index: number) => {
         cart.value.splice(index, 1);
-        paidAmount.value = total.value;
+        calculateTotals();
     };
 
     const clearCart = () => {
@@ -260,16 +268,59 @@ export function usePosLogic() {
         showCheckoutDialog.value = true;
     };
 
+    const searchClientByNit = async (nit: string) => {
+        if (!nit || nit === "0") {
+            formData.clientId = clients.value.find(c => c.nitCi === "0")?.id || 0;
+            formData.clientNit = "0";
+            formData.clientName = "SIN NOMBRE";
+            return;
+        }
+
+        isSearchingClient.value = true;
+        try {
+            const res = await clientService.searchByNit(nit);
+            if (res.data) {
+                formData.clientId = res.data.id!;
+                formData.clientNit = res.data.nitCi;
+                formData.clientName = res.data.name;
+            } else {
+                // Not found, will be handled by the UI to open the modal
+                throw new Error("Not found");
+            }
+        } catch (error) {
+            throw error; // Let the component handle opening the modal
+        } finally {
+            isSearchingClient.value = false;
+        }
+    };
+
+    const quickRegisterClient = async (clientData: Partial<Client>) => {
+        try {
+            const res = await clientService.create(clientData as Client);
+            const newClient = res.data;
+            clients.value.push(newClient);
+            formData.clientId = newClient.id!;
+            formData.clientNit = newClient.nitCi;
+            formData.clientName = newClient.name;
+            return newClient;
+        } catch (error) {
+            $q.notify({ color: "negative", message: "Error al registrar cliente" });
+            throw error;
+        }
+    };
+
     return {
         // State
         search, selectedCategory, categories, allProducts, warehouses, clients, stocks,
         cart, showCheckoutDialog, showCartMobile, showScanner, showScanResultDialog,
         lastScannedProduct, paidAmount, change, saving, formData, quickAmounts,
+        isSearchingClient, isInvoiceBlocked, SIN_LIMIT,
         // Computed
         subtotal, total, filteredProducts,
         // Methods
         calculateTotals, setQuickAmount, handleBarcodeScan, getProductName, getStock,
         fetchData, fetchStocks, addToCart, incrementQty, decrementQty, removeFromCart,
-        clearCart, calculateChange, submitSale, openCheckout
+        clearCart, calculateChange, submitSale, openCheckout,
+        searchClientByNit, quickRegisterClient
     };
 }

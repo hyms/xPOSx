@@ -7,7 +7,7 @@ namespace XPos.Domain.Services;
 /// </summary>
 public class UnitConversionService
 {
-    public double CalculateBaseQuantity(double quantity, Unit? unit)
+    public decimal CalculateBaseQuantity(decimal quantity, Unit? unit)
     {
         if (unit == null || string.IsNullOrWhiteSpace(unit.Operator))
             return quantity;

@@ -9,7 +9,7 @@ public class PaymentSaleDto
     public DateTime Date { get; set; }
     public string Ref { get; set; } = string.Empty;
     public long SaleId { get; set; }
-    public double Amount { get; set; }
+    public decimal Amount { get; set; }
     public string Reglement { get; set; } = string.Empty;
     public long? CreatedBy { get; set; }
 }
@@ -20,7 +20,7 @@ public class PaymentPurchaseDto
     public DateTime Date { get; set; }
     public string Ref { get; set; } = string.Empty;
     public long PurchaseId { get; set; }
-    public double Amount { get; set; }
+    public decimal Amount { get; set; }
     public string Reglement { get; set; } = string.Empty;
     public long? CreatedBy { get; set; }
 }

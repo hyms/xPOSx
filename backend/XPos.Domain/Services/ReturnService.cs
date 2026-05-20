@@ -15,6 +15,7 @@ public class ReturnService : IReturnService
     private readonly IUnitRepository _unitRepository;
     private readonly UnitConversionService _unitConversionService;
     private readonly IVoucherRepository _voucherRepository;
+    private readonly IPaymentRepository _paymentRepository;
 
     public ReturnService(
         IUnitOfWork uow,
@@ -23,7 +24,8 @@ public class ReturnService : IReturnService
         IInventoryRepository inventoryRepository,
         IUnitRepository unitRepository,
         UnitConversionService unitConversionService,
-        IVoucherRepository voucherRepository)
+        IVoucherRepository voucherRepository,
+        IPaymentRepository paymentRepository)
     {
         _uow = uow;
         _saleReturnRepository = saleReturnRepository;
@@ -32,6 +34,7 @@ public class ReturnService : IReturnService
         _unitRepository = unitRepository;
         _unitConversionService = unitConversionService;
         _voucherRepository = voucherRepository;
+        _paymentRepository = paymentRepository;
     }
 
     public async Task<IEnumerable<SaleReturnReadDto>> GetAllSaleReturnsAsync()
@@ -76,6 +79,21 @@ public class ReturnService : IReturnService
             foreach (var detail in saleReturn.Details)
             {
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, saleReturn.WarehouseId, detail.Quantity);
+            }
+
+            if (saleReturn.PaidAmount > 0)
+            {
+                var paymentDto = new PaymentSaleDto
+                {
+                    UserId = saleReturn.UserId,
+                    Date = saleReturn.Date,
+                    Ref = "PAY-" + saleReturn.Ref,
+                    SaleId = saleReturn.Id, 
+                    Amount = -saleReturn.PaidAmount,
+                    Reglement = "Cash",
+                    CreatedBy = saleReturn.CreatedBy
+                };
+                await _paymentRepository.CreateSalePaymentAsync(paymentDto);
             }
 
             _uow.Commit();
@@ -135,6 +153,21 @@ public class ReturnService : IReturnService
             foreach (var detail in purchaseReturn.Details)
             {
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchaseReturn.WarehouseId, -detail.Quantity);
+            }
+
+            if (purchaseReturn.PaidAmount > 0)
+            {
+                var paymentDto = new PaymentPurchaseDto
+                {
+                    UserId = purchaseReturn.UserId,
+                    Date = purchaseReturn.Date,
+                    Ref = "PAY-" + purchaseReturn.Ref,
+                    PurchaseId = purchaseReturn.Id,
+                    Amount = -purchaseReturn.PaidAmount,
+                    Reglement = "Cash",
+                    CreatedBy = purchaseReturn.CreatedBy
+                };
+                await _paymentRepository.CreatePurchasePaymentAsync(paymentDto);
             }
 
             _uow.Commit();

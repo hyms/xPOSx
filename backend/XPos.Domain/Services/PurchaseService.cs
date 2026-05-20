@@ -86,6 +86,8 @@ public class PurchaseService : IPurchaseService
         }
 
         purchase.GrandTotal = purchase.Details.Sum(d => d.Total) - (purchase.Discount ?? 0) + (purchase.Shipping ?? 0);
+        purchase.PaidAmount = dto.PaidAmount;
+
 
         _uow.BeginTransaction();
         try
@@ -111,6 +113,21 @@ public class PurchaseService : IPurchaseService
                 var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchase.WarehouseId, baseQuantity);
                 await _productRepository.UpdateCostAsync(detail.ProductId, detail.Cost);
+            }
+
+            if (purchase.PaymentStatus == "paid" && purchase.PaidAmount > 0)
+            {
+                var paymentDto = new PaymentPurchaseDto
+                {
+                    UserId = purchase.UserId,
+                    Date = purchase.Date,
+                    Ref = "PAY-" + purchase.Ref,
+                    PurchaseId = purchase.Id,
+                    Amount = purchase.PaidAmount,
+                    Reglement = "Cash",
+                    CreatedBy = purchase.CreatedBy
+                };
+                await _paymentRepository.CreatePurchasePaymentAsync(paymentDto);
             }
 
             _uow.Commit();

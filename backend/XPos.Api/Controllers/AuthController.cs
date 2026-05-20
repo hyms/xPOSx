@@ -34,20 +34,53 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Usuario o contraseña incorrectos" });
         }
 
-        var role = await _roleRepository.GetByIdAsync(user.Role);
+        var role = await _roleRepository.GetByIdAsync(user.RoleId ?? 0);
         var permissions = role?.Permissions.Select(p => p.Name) ?? Enumerable.Empty<string>();
 
-        var token = GenerateJwtToken(user, permissions);
+        var warehouseIds = await _userRepository.GetUserWarehouseIdsAsync(user.Id);
+        var activeWarehouseId = user.DefaultWarehouseId ?? warehouseIds.FirstOrDefault();
+        var hasAllAccess = permissions.Contains("warehouses_all_access");
+
+        var token = GenerateJwtToken(user, permissions, warehouseIds, activeWarehouseId, hasAllAccess);
 
         return Ok(new AuthResponseDto
         {
             Token = token,
             Username = user.Username,
-            Permissions = permissions
+            Permissions = permissions,
+            ActiveWarehouseId = activeWarehouseId
         });
     }
 
-    private string GenerateJwtToken(XPos.Domain.Models.User user, IEnumerable<string> permissions)
+    [HttpPost("switch-warehouse/{warehouseId}")]
+    public async Task<IActionResult> SwitchWarehouse(long warehouseId)
+    {
+        var userIdString = User.FindFirst("id")?.Value;
+        if (!long.TryParse(userIdString, out var userId)) return Unauthorized();
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null || !user.IsActive) return Unauthorized();
+
+        var role = await _roleRepository.GetByIdAsync(user.RoleId ?? 0);
+        var permissions = role?.Permissions.Select(p => p.Name) ?? Enumerable.Empty<string>();
+        
+        bool hasAccess = permissions.Contains("warehouses_all_access");
+        if (!hasAccess)
+        {
+            var allowedWarehouses = await _userRepository.GetUserWarehouseIdsAsync(userId);
+            hasAccess = allowedWarehouses.Contains(warehouseId);
+        }
+
+        if (!hasAccess) return Forbid("No tiene acceso a este almacén.");
+        
+        var warehouseIds = await _userRepository.GetUserWarehouseIdsAsync(userId);
+
+        var token = GenerateJwtToken(user, permissions, warehouseIds, warehouseId, hasAccess);
+
+        return Ok(new { token });
+    }
+
+    private string GenerateJwtToken(XPos.Domain.Models.User user, IEnumerable<string> permissions, IEnumerable<long> warehouseIds, long? activeWarehouseId, bool hasAllAccess)
     {
         var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
@@ -59,7 +92,10 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
             new Claim("id", user.Id.ToString()),
-            new Claim(ClaimTypes.Role, user.Role.ToString())
+            new Claim(ClaimTypes.Role, (user.RoleId ?? 0).ToString()),
+            new Claim("has_all_warehouses_access", hasAllAccess.ToString().ToLower()),
+            new Claim("allowed_warehouses", string.Join(",", warehouseIds)),
+            new Claim("active_warehouse_id", activeWarehouseId?.ToString() ?? "")
         };
 
         foreach (var permission in permissions)

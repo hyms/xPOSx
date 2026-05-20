@@ -25,7 +25,7 @@ public class Expense
     public long ExpenseCategoryId { get; set; }
     public long WarehouseId { get; set; }
     public string Details { get; set; } = string.Empty;
-    public double Amount { get; set; }
+    public decimal Amount { get; set; }
     
     // Audit fields
     public DateTime? CreatedAt { get; set; }
@@ -48,5 +48,5 @@ public class ExpenseReadDto
     public string CategoryName { get; set; } = string.Empty;
     public string WarehouseName { get; set; } = string.Empty;
     public string Details { get; set; } = string.Empty;
-    public double Amount { get; set; }
+    public decimal Amount { get; set; }
 }

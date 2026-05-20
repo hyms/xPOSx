@@ -12,4 +12,5 @@ public interface IUserRepository
     Task<bool> UpdatePasswordAsync(long id, string newPassword);
     Task<bool> DeleteAsync(long id);
     Task<bool> ToggleUserStatusAsync(long id);
+    Task<IEnumerable<long>> GetUserWarehouseIdsAsync(long userId);
 }

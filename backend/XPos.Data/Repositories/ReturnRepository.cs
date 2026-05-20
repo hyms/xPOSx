@@ -1,46 +1,72 @@
 using Dapper;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 using System.Data;
+using System.Text;
 
 namespace XPos.Data.Repositories;
 
 public class SaleReturnRepository : ISaleReturnRepository
 {
     private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUserService;
 
-    public SaleReturnRepository(IUnitOfWork uow)
+    public SaleReturnRepository(IUnitOfWork uow, ICurrentUserService currentUserService)
     {
         _uow = uow;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<SaleReturnReadDto>> GetAllAsync()
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder(@"
             SELECT sr.id, sr.ref, sr.date::timestamp as Date, sr.grand_total as GrandTotal, sr.status, sr.payment_status as PaymentStatus, 
                    c.name as ClientName, w.name as WarehouseName
             FROM sale_returns sr
             JOIN clients c ON sr.client_id = c.id
             JOIN warehouses w ON sr.warehouse_id = w.id
             WHERE sr.deleted_at IS NULL
-            ORDER BY sr.date DESC";
-        return await _uow.Connection.QueryAsync<SaleReturnReadDto>(sql, null, _uow.Transaction);
+            ");
+        var parameters = new DynamicParameters();
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND sr.warehouse_id = @activeWarehouseId");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        sqlBuilder.Append(" ORDER BY sr.date DESC");
+
+        return await _uow.Connection.QueryAsync<SaleReturnReadDto>(sqlBuilder.ToString(), parameters, _uow.Transaction);
     }
 
     public async Task<SaleReturn?> GetByIdAsync(long id)
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = @"
             SELECT sr.*, v.id as VoucherId, v.* 
             FROM sale_returns sr 
             LEFT JOIN vouchers v ON sr.voucher_id = v.id 
             WHERE sr.id = @id AND sr.deleted_at IS NULL";
         
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
+
+        if (!hasAllAccess)
+        {
+            sql += " AND sr.warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
         var saleReturns = await _uow.Connection.QueryAsync<SaleReturn, Voucher, SaleReturn>(
             sql, 
             (sr, v) => { sr.Voucher = v; return sr; }, 
-            new { id }, 
+            parameters, 
             splitOn: "VoucherId", 
             transaction: _uow.Transaction);
             
@@ -81,21 +107,44 @@ public class SaleReturnRepository : ISaleReturnRepository
 
     public async Task<bool> UpdateAsync(SaleReturn saleReturn)
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = @"
             UPDATE sale_returns SET 
                 status = @Status, 
                 payment_status = @PaymentStatus, 
                 notes = @Notes, 
                 updated_at = CURRENT_TIMESTAMP, 
                 updated_by = @UpdatedBy 
-            WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, saleReturn, _uow.Transaction) > 0;
+            WHERE id = @Id AND deleted_at IS NULL";
+        
+        var parameters = new DynamicParameters(saleReturn);
+
+        if (!hasAllAccess)
+        {
+            sql += " AND warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sql, parameters, _uow.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id, long userId)
     {
-        const string sql = "UPDATE sale_returns SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @userId WHERE id = @id";
-        return await _uow.Connection.ExecuteAsync(sql, new { id, userId }, _uow.Transaction) > 0;
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = "UPDATE sale_returns SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @userId WHERE id = @id AND deleted_at IS NULL";
+        var parameters = new DynamicParameters(new { id, userId });
+
+        if (!hasAllAccess)
+        {
+            sql += " AND warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sql, parameters, _uow.Transaction) > 0;
     }
 
     public async Task UpdateVoucherIdAsync(long saleReturnId, long voucherId)
@@ -108,37 +157,64 @@ public class SaleReturnRepository : ISaleReturnRepository
 public class PurchaseReturnRepository : IPurchaseReturnRepository
 {
     private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUserService;
 
-    public PurchaseReturnRepository(IUnitOfWork uow)
+    public PurchaseReturnRepository(IUnitOfWork uow, ICurrentUserService currentUserService)
     {
         _uow = uow;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<PurchaseReturnReadDto>> GetAllAsync()
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder(@"
             SELECT pr.id, pr.ref, pr.date::timestamp as Date, pr.grand_total as GrandTotal, pr.status, pr.payment_status as PaymentStatus, 
                    p.name as ProviderName, w.name as WarehouseName
             FROM purchase_returns pr
             JOIN providers p ON pr.provider_id = p.id
             JOIN warehouses w ON pr.warehouse_id = w.id
             WHERE pr.deleted_at IS NULL
-            ORDER BY pr.date DESC";
-        return await _uow.Connection.QueryAsync<PurchaseReturnReadDto>(sql, null, _uow.Transaction);
+            ");
+        var parameters = new DynamicParameters();
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND pr.warehouse_id = @activeWarehouseId");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        sqlBuilder.Append(" ORDER BY pr.date DESC");
+
+        return await _uow.Connection.QueryAsync<PurchaseReturnReadDto>(sqlBuilder.ToString(), parameters, _uow.Transaction);
     }
 
     public async Task<PurchaseReturn?> GetByIdAsync(long id)
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = @"
             SELECT pr.*, v.id as VoucherId, v.* 
             FROM purchase_returns pr 
             LEFT JOIN vouchers v ON pr.voucher_id = v.id 
             WHERE pr.id = @id AND pr.deleted_at IS NULL";
         
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
+
+        if (!hasAllAccess)
+        {
+            sql += " AND pr.warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
         var purchaseReturns = await _uow.Connection.QueryAsync<PurchaseReturn, Voucher, PurchaseReturn>(
             sql, 
             (pr, v) => { pr.Voucher = v; return pr; }, 
-            new { id }, 
+            parameters, 
             splitOn: "VoucherId", 
             transaction: _uow.Transaction);
             
@@ -179,21 +255,44 @@ public class PurchaseReturnRepository : IPurchaseReturnRepository
 
     public async Task<bool> UpdateAsync(PurchaseReturn purchaseReturn)
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = @"
             UPDATE purchase_returns SET 
                 status = @Status, 
                 payment_status = @PaymentStatus, 
                 notes = @Notes, 
                 updated_at = CURRENT_TIMESTAMP, 
                 updated_by = @UpdatedBy 
-            WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, purchaseReturn, _uow.Transaction) > 0;
+            WHERE id = @Id AND deleted_at IS NULL";
+        
+        var parameters = new DynamicParameters(purchaseReturn);
+
+        if (!hasAllAccess)
+        {
+            sql += " AND warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sql, parameters, _uow.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id, long userId)
     {
-        const string sql = "UPDATE purchase_returns SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @userId WHERE id = @id";
-        return await _uow.Connection.ExecuteAsync(sql, new { id, userId }, _uow.Transaction) > 0;
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        string sql = "UPDATE purchase_returns SET deleted_at = CURRENT_TIMESTAMP, deleted_by = @userId WHERE id = @id AND deleted_at IS NULL";
+        var parameters = new DynamicParameters(new { id, userId });
+
+        if (!hasAllAccess)
+        {
+            sql += " AND warehouse_id = @activeWarehouseId";
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sql, parameters, _uow.Transaction) > 0;
     }
 
     public async Task UpdateVoucherIdAsync(long purchaseReturnId, long voucherId)

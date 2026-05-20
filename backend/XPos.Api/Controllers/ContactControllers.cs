@@ -15,6 +15,7 @@ public class ClientsController : ControllerBase
 
     [HttpGet] public async Task<IActionResult> GetAll() => Ok(await _clientRepository.GetAllAsync());
     [HttpGet("{id}")] public async Task<IActionResult> GetById(long id) { var client = await _clientRepository.GetByIdAsync(id); return client == null ? NotFound() : Ok(client); }
+    [HttpGet("search/{nit}")] public async Task<IActionResult> GetByNit(string nit) { var client = await _clientRepository.GetByNitAsync(nit); return client == null ? NotFound() : Ok(client); }
     [HttpPost] public async Task<IActionResult> Create(Client client) { var id = await _clientRepository.CreateAsync(client); client.Id = id; return CreatedAtAction(nameof(GetById), new { id }, client); }
     [HttpPut("{id}")] public async Task<IActionResult> Update(long id, Client client) { if (id != client.Id) return BadRequest(); return await _clientRepository.UpdateAsync(client) ? NoContent() : NotFound(); }
     [HttpDelete("{id}")] public async Task<IActionResult> Delete(long id) => await _clientRepository.DeleteAsync(id) ? NoContent() : NotFound();

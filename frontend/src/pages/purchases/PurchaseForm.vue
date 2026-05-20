@@ -64,6 +64,7 @@
                                 option-label="name"
                                 return-object
                                 :readonly="isEdit"
+                                class="col"
                             />
                         </div>
                         <div class="col-12 col-md-2">
@@ -75,6 +76,19 @@
                                 :disable="!selectedProduct || isEdit"
                                 class="full-width"
                             />
+                        </div>
+                        <div class="col-12 flex justify-end q-mt-sm">
+                            <q-btn
+                                flat
+                                round
+                                dense
+                                color="primary"
+                                icon="add"
+                                @click="openQuickAddProduct"
+                                :disable="isEdit"
+                            >
+                                <q-tooltip>Nuevo Producto Rápido</q-tooltip>
+                            </q-btn>
                         </div>
                     </div>
                     <!-- Purchase Details Table -->
@@ -320,6 +334,173 @@
                 </q-card-actions>
             </q-form>
         </q-card>
+
+        <!-- Quick Add Product Dialog -->
+        <q-dialog v-model="quickAddProduct.show" persistent backdrop-filter="blur(4px)">
+            <q-card style="width: 600px; max-width: 90vw; border-radius: 15px" class="glass-dialog">
+                <q-card-section class="bg-primary text-white row items-center q-pb-none">
+                    <div class="text-h6">Nuevo Producto Rápido</div>
+                    <q-space />
+                    <q-btn icon="close" flat round dense v-close-popup />
+                </q-card-section>
+
+                <q-form @submit.prevent="saveQuickAddProduct">
+                    <q-card-section class="q-gutter-y-sm">
+                        <q-input
+                            v-model="quickAddProduct.form.name"
+                            label="Nombre del Producto"
+                            outlined
+                            dense
+                            autofocus
+                            lazy-rules
+                            :rules="[val => !!val || 'Requerido']"
+                        />
+                        <q-input
+                            v-model="quickAddProduct.form.code"
+                            label="Código (Opcional)"
+                            outlined
+                            dense
+                        />
+                        <div class="row no-wrap items-center">
+                            <q-select
+                                v-model="quickAddProduct.form.categoryId"
+                                :options="categories"
+                                label="Categoría"
+                                option-value="id"
+                                option-label="name"
+                                emit-value
+                                map-options
+                                lazy-rules
+                                :rules="[val => !!val || 'Requerido']"
+                                outlined
+                                dense
+                                class="col"
+                            />
+                            <q-btn
+                                flat
+                                round
+                                dense
+                                color="primary"
+                                icon="add"
+                                class="q-ml-xs"
+                                @click="openQuickAdd('category')"
+                            >
+                                <q-tooltip>Nueva Categoría</q-tooltip>
+                            </q-btn>
+                        </div>
+                        <div class="row no-wrap items-center">
+                            <q-select
+                                v-model="quickAddProduct.form.unitId"
+                                :options="units"
+                                label="Unidad"
+                                option-value="id"
+                                option-label="name"
+                                emit-value
+                                map-options
+                                lazy-rules
+                                :rules="[val => !!val || 'Requerido']"
+                                outlined
+                                dense
+                                class="col"
+                            />
+                            <q-btn
+                                flat
+                                round
+                                dense
+                                color="primary"
+                                icon="add"
+                                class="q-ml-xs"
+                                @click="openQuickAdd('unit')"
+                            >
+                                <q-tooltip>Nueva Unidad</q-tooltip>
+                            </q-btn>
+                        </div>
+                        <q-input
+                            v-model.number="quickAddProduct.form.cost"
+                            label="Costo"
+                            type="number"
+                            step="0.01"
+                            prefix="$"
+                            outlined
+                            dense
+                        />
+                        <q-input
+                            v-model.number="quickAddProduct.form.price"
+                            label="Precio de Venta"
+                            type="number"
+                            step="0.01"
+                            prefix="$"
+                            outlined
+                            dense
+                        />
+                    </q-card-section>
+
+                    <q-card-actions align="right" class="q-pa-md">
+                        <q-btn flat label="Cancelar" color="grey" v-close-popup />
+                        <q-btn
+                            unelevated
+                            label="Guardar Producto"
+                            color="primary"
+                            type="submit"
+                            :loading="quickAddProduct.saving"
+                            :disable="!quickAddProduct.form.name || !quickAddProduct.form.categoryId || !quickAddProduct.form.unitId"
+                        />
+                    </q-card-actions>
+                </q-form>
+            </q-card>
+        </q-dialog>
+
+        <!-- Quick Add Category/Unit Dialog -->
+        <q-dialog v-model="quickAdd.show" persistent backdrop-filter="blur(4px)">
+            <q-card style="width: 350px; max-width: 90vw; border-radius: 15px" class="glass-dialog">
+                <q-card-section class="bg-primary text-white row items-center q-pb-none">
+                    <div class="text-h6">Nueva {{ quickAdd.type === 'category' ? 'Categoría' : 'Unidad' }}</div>
+                    <q-space />
+                    <q-btn icon="close" flat round dense v-close-popup />
+                </q-card-section>
+
+                <q-form @submit.prevent="saveQuickAdd">
+                    <q-card-section class="q-pt-md q-gutter-y-sm">
+                        <q-input
+                            v-model="quickAdd.form.name"
+                            :label="quickAdd.type === 'category' ? 'Nombre de Categoría' : 'Nombre de Unidad'"
+                            autofocus
+                            @keyup.enter="saveQuickAdd"
+                            :rules="[val => !!val || 'Requerido']"
+                            outlined
+                            dense
+                        />
+                        <q-input
+                            v-if="quickAdd.type === 'unit'"
+                            v-model="quickAdd.form.shortName"
+                            label="Nombre Corto"
+                            :rules="[val => !!val || 'Requerido']"
+                            outlined
+                            dense
+                        />
+                        <q-input
+                            v-if="quickAdd.type === 'category'"
+                            v-model="quickAdd.form.code"
+                            label="Código (Opcional)"
+                            outlined
+                            dense
+                        />
+                    </q-card-section>
+
+                    <q-card-actions align="right" class="q-pa-md">
+                        <q-btn flat label="Cancelar" color="grey" v-close-popup />
+                        <q-btn
+                            unelevated
+                            label="Guardar"
+                            color="primary"
+                            type="submit"
+                            :loading="quickAdd.saving"
+                            :disable="!quickAdd.form.name || (quickAdd.type === 'unit' && !quickAdd.form.shortName)"
+                        />
+                    </q-card-actions>
+                </q-form>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -331,7 +512,9 @@ import { purchaseService } from "@/services/purchase.service";
 import { providerService } from "@/services/provider.service";
 import { warehouseService } from "@/services/warehouse.service";
 import { productService } from "@/services/product.service";
-import type { Purchase, PurchaseDetail, Product, Voucher } from "@/types";
+import { categoryService } from "@/services/category.service";
+import { unitService } from "@/services/unit.service";
+import type { Purchase, PurchaseDetail, Product, Voucher, Category, Unit } from "@/types";
 
 import { useCurrency } from "@/composables/useCurrency";
 
@@ -345,6 +528,35 @@ const warehouseOptions = ref<any[]>([]);
 const productOptions = ref<any[]>([]);
 let allProducts: Product[] = [];
 const selectedProduct = ref<Product | null>(null);
+
+const categories = ref<Category[]>([]);
+const units = ref<Unit[]>([]);
+
+// Quick Add Product state
+const quickAddProduct = reactive({
+    show: false,
+    saving: false,
+    form: {
+        name: '',
+        code: '',
+        categoryId: undefined as number | undefined,
+        unitId: undefined as number | undefined,
+        cost: 0,
+        price: 0,
+    }
+});
+
+// Quick Add Category/Unit state
+const quickAdd = reactive({
+    show: false,
+    type: 'category' as 'category' | 'unit',
+    saving: false,
+    form: {
+        name: '',
+        shortName: '',
+        code: ''
+    }
+});
 
 const formData = reactive<Partial<Purchase> & { details: PurchaseDetail[] }>({
     ref: `PR-${Date.now()}`,
@@ -391,6 +603,71 @@ const detailsColumns = [
     { name: "total", label: "Total", field: "total", align: "right" as const },
     { name: "actions", label: "", field: "actions", align: "center" as const },
 ];
+
+const openQuickAddProduct = () => {
+    quickAddProduct.form = { 
+        name: '', code: '', categoryId: undefined, unitId: undefined, cost: 0, price: 0 
+    };
+    quickAddProduct.show = true;
+};
+
+const saveQuickAddProduct = async () => {
+    quickAddProduct.saving = true;
+    try {
+        const newProduct = await productService.create({
+            ...quickAddProduct.form,
+            isActive: true, // Default to active
+            notSelling: false, // Default to selling
+            stockAlert: 0, // Default
+            image: '', // Default
+        } as Product);
+
+        // Add to allProducts and select it
+        allProducts.push(newProduct.data);
+        selectedProduct.value = newProduct.data;
+        addProductToPurchase(); // Add to current purchase immediately
+        
+        $q.notify({ color: 'positive', message: 'Producto creado y añadido a la compra' });
+        quickAddProduct.show = false;
+    } catch (error) {
+        $q.notify({ color: 'negative', message: 'Error al crear producto' });
+    } finally {
+        quickAddProduct.saving = false;
+    }
+};
+
+const openQuickAdd = (type: 'category' | 'unit') => {
+    quickAdd.type = type;
+    quickAdd.form = { name: '', shortName: '', code: '' };
+    quickAdd.show = true;
+};
+
+const saveQuickAdd = async () => {
+    quickAdd.saving = true;
+    try {
+        if (quickAdd.type === 'category') {
+            const res = await categoryService.create({ 
+                name: quickAdd.form.name, 
+                code: quickAdd.form.code || `CAT-${Date.now()}` 
+            } as any);
+            categories.value.push(res.data);
+            quickAddProduct.form.categoryId = res.data.id;
+        } else {
+            const res = await unitService.create({ 
+                name: quickAdd.form.name, 
+                shortName: quickAdd.form.shortName 
+            } as any);
+            units.value.push(res.data);
+            quickAddProduct.form.unitId = res.data.id;
+        }
+        quickAdd.show = false;
+        $q.notify({ color: 'positive', message: 'Registro exitoso' });
+    } catch (error) {
+        $q.notify({ color: 'negative', message: 'Error al registrar' });
+    } finally {
+        quickAdd.saving = false;
+    }
+};
 
 const updateTotals = () => {
     subTotal.value = formData.details.reduce(
@@ -499,10 +776,12 @@ const onSubmit = async () => {
 };
 
 onMounted(async () => {
-    const [providersRes, warehousesRes, productsRes] = await Promise.all([
+    const [providersRes, warehousesRes, productsRes, categoriesRes, unitsRes] = await Promise.all([
         providerService.getAll(),
         warehouseService.getAll(),
         productService.getAll(),
+        categoryService.getAll(),
+        unitService.getAll(),
     ]);
     providerOptions.value = providersRes.data.map((p) => ({
         label: p.name,
@@ -513,6 +792,8 @@ onMounted(async () => {
         value: w.id,
     }));
     allProducts = productsRes.data;
+    categories.value = categoriesRes.data;
+    units.value = unitsRes.data;
 
     // Check if we are in edit mode
     const purchaseId = Number(router.currentRoute.value.params.id);
@@ -544,3 +825,11 @@ onMounted(async () => {
     }
 });
 </script>
+
+<style lang="scss" scoped>
+.glass-dialog {
+    background: rgba(var(--color-background-elevated-rgb), 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>

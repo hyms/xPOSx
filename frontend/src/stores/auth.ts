@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       try {
         const response = await api.post('/auth/login', credentials)
-        const { token, username, permissions } = response.data
+        const { token, username, permissions, activeWarehouseId } = response.data
         
         this.token = token
         this.username = username
@@ -35,6 +35,12 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', token)
         localStorage.setItem('username', username)
         localStorage.setItem('permissions', JSON.stringify(permissions))
+        if (activeWarehouseId) {
+          localStorage.setItem('active_warehouse_id', String(activeWarehouseId))
+          const { useWarehouseStore } = await import('./warehouse')
+          const warehouseStore = useWarehouseStore()
+          warehouseStore.activeWarehouseId = activeWarehouseId
+        }
         
         return true
       } catch (error) {
@@ -52,6 +58,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token')
       localStorage.removeItem('username')
       localStorage.removeItem('permissions')
+      localStorage.removeItem('active_warehouse_id')
     }
   }
 })

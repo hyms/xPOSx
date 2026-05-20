@@ -4,6 +4,7 @@ using Npgsql;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 using System.Data;
+using System.Text;
 
 namespace XPos.Data.Repositories;
 
@@ -91,38 +92,88 @@ public class UnitRepository : IUnitRepository
 public class ProductRepository : IProductRepository
 {
     private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUserService;
 
-    public ProductRepository(IUnitOfWork uow)
+    public ProductRepository(IUnitOfWork uow, ICurrentUserService currentUserService)
     {
         _uow = uow;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder(@"
             SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
                    p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
-                   (SELECT SUM(qty) FROM product_warehouse pw WHERE pw.product_id = p.id) as stock,
+                   (SELECT COALESCE(SUM(pw.qty), 0) FROM product_warehouse pw WHERE pw.product_id = p.id AND pw.warehouse_id = @activeWarehouseId) as stock,
                    c.id, c.code, c.name,
                    u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
             LEFT JOIN units u ON p.unit_id = u.id 
-            WHERE p.deleted_at IS NULL";
+            WHERE p.deleted_at IS NULL");
         
-        return await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sql, 
+        var parameters = new DynamicParameters();
+        parameters.Add("activeWarehouseId", activeWarehouseId);
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND p.id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+        }
+
+        var products = await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sqlBuilder.ToString(), 
             (p, c, u) => { p.Category = c; p.Unit = u; return p; }, 
-            splitOn: "id,id", transaction: _uow.Transaction);
+            parameters, splitOn: "id,id", transaction: _uow.Transaction);
+
+        // The stock subquery already filters by activeWarehouseId. If hasAllAccess is true, 
+        // the stock is still for the active warehouse, but the product list is global.
+        // If we want a global sum of stock, we'd remove the warehouse_id filter from the subquery
+        // based on hasAllAccess, but for now, we assume stock shown is always for the active warehouse.
+
+        return products;
     }
 
     public async Task<Product?> GetByIdAsync(long id)
     {
-        const string sql = "SELECT * FROM products WHERE id = @id AND deleted_at IS NULL";
-        return await _uow.Connection.QueryFirstOrDefaultAsync<Product>(sql, new { id }, _uow.Transaction);
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder(@"
+            SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
+                   p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   (SELECT COALESCE(SUM(pw.qty), 0) FROM product_warehouse pw WHERE pw.product_id = p.id AND pw.warehouse_id = @activeWarehouseId) as stock,
+                   c.id, c.code, c.name,
+                   u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN units u ON p.unit_id = u.id 
+            WHERE p.id = @id AND p.deleted_at IS NULL");
+        
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
+        parameters.Add("activeWarehouseId", activeWarehouseId);
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND p.id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+        }
+
+        var product = (await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sqlBuilder.ToString(), 
+            (p, c, u) => { p.Category = c; p.Unit = u; return p; }, 
+            parameters, splitOn: "id,id", transaction: _uow.Transaction)).FirstOrDefault();
+
+        return product;
     }
 
     public async Task<long> CreateAsync(Product product)
     {
+        // Products are conceptually global, and their stock is warehouse-specific.
+        // This method only creates the product entry, not its initial stock in any warehouse.
+        // Initial stock creation (if any) would be handled via inventory operations after product creation.
+
         const string sql = @"
             INSERT INTO products (code, name, cost, price, category_id, unit_id, unit_sale_id, unit_purchase_id, tax_net, tax_method, note, stock_alert, is_variant, not_selling, is_active, image, created_at) 
             VALUES (@Code, @Name, @Cost, @Price, @CategoryId, @UnitId, @UnitSaleId, @UnitPurchaseId, @TaxNet, @TaxMethod, @Note, @StockAlert, @IsVariant, @NotSelling, @IsActive, @Image, CURRENT_TIMESTAMP) 
@@ -132,31 +183,81 @@ public class ProductRepository : IProductRepository
 
     public async Task<bool> UpdateAsync(Product product)
     {
-        const string sql = @"
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder(@"
             UPDATE products SET 
                 code = @Code, name = @Name, cost = @Cost, price = @Price, category_id = @CategoryId, 
                 unit_id = @UnitId, unit_sale_id = @UnitSaleId, unit_purchase_id = @UnitPurchaseId, 
                 tax_net = @TaxNet, tax_method = @TaxMethod, note = @Note, stock_alert = @StockAlert, 
                 is_variant = @IsVariant, not_selling = @NotSelling, is_active = @IsActive, 
                 image = @Image, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, product, _uow.Transaction) > 0;
+            WHERE id = @Id");
+        
+        var parameters = new DynamicParameters(product);
+
+        // For product updates, ensure the product being updated is visible/accessible to the user
+        // The check is implicit because the frontend should only display products available in the active warehouse
+        // Or if the user has all-access, they can update any product.
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sqlBuilder.ToString(), parameters, _uow.Transaction) > 0;
     }
 
-    public async Task<bool> UpdateCostAsync(long productId, double newCost)
+    public async Task<bool> UpdateCostAsync(long productId, decimal newCost)
     {
-        const string sql = "UPDATE products SET cost = @Cost WHERE id = @Id";
-        return await _uow.Connection.ExecuteAsync(sql, new { Cost = newCost, Id = productId }, _uow.Transaction) > 0;
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder("UPDATE products SET cost = @Cost WHERE id = @Id");
+        var parameters = new DynamicParameters(new { Cost = newCost, Id = productId });
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sqlBuilder.ToString(), parameters, _uow.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id)
     {
-        const string sql = "UPDATE products SET deleted_at = CURRENT_TIMESTAMP WHERE id = @id";
-        return await _uow.Connection.ExecuteAsync(sql, new { id }, _uow.Transaction) > 0;
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder("UPDATE products SET deleted_at = CURRENT_TIMESTAMP WHERE id = @id");
+        var parameters = new DynamicParameters(new { id });
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.ExecuteAsync(sqlBuilder.ToString(), parameters, _uow.Transaction) > 0;
     }
 
     public async Task<IEnumerable<Product>> GetByCategoryAsync(long categoryId)
     {
-        return await _uow.Connection.QueryAsync<Product>("SELECT * FROM products WHERE category_id = @categoryId AND deleted_at IS NULL", new { categoryId }, _uow.Transaction);
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
+        var sqlBuilder = new StringBuilder("SELECT * FROM products WHERE category_id = @categoryId AND deleted_at IS NULL");
+        var parameters = new DynamicParameters();
+        parameters.Add("categoryId", categoryId);
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND id IN (SELECT DISTINCT product_id FROM product_warehouse WHERE warehouse_id = @activeWarehouseId)");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
+
+        return await _uow.Connection.QueryAsync<Product>(sqlBuilder.ToString(), parameters, _uow.Transaction);
     }
 }

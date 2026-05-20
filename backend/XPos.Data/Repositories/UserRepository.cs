@@ -33,7 +33,7 @@ public class UserRepository : IUserRepository
                 r.id AS Id, 
                 r.name AS Name 
             FROM users u
-            LEFT JOIN roles r ON u.role = r.id";
+            LEFT JOIN roles r ON u.role_id = r.id";
         
         return await connection.QueryAsync<User, Role, User>(
             sql,
@@ -63,8 +63,8 @@ public class UserRepository : IUserRepository
     {
         using var connection = CreateConnection();
         const string sql = @"
-            INSERT INTO users (username, password, email, first_name, last_name, role, is_active, created_at)
-            VALUES (@Username, @Password, @Email, @FirstName, @LastName, @Role, @IsActive, @CreatedAt)
+            INSERT INTO users (username, password, email, first_name, last_name, role_id, is_active, default_warehouse_id, created_at)
+            VALUES (@Username, @Password, @Email, @FirstName, @LastName, @RoleId, @IsActive, @DefaultWarehouseId, @CreatedAt)
             RETURNING id";
         
         user.Password = BC.HashPassword(user.Password);
@@ -81,8 +81,9 @@ public class UserRepository : IUserRepository
                 email = @Email, 
                 first_name = @FirstName, 
                 last_name = @LastName, 
-                role = @Role, 
+                role_id = @RoleId, 
                 is_active = @IsActive, 
+                default_warehouse_id = @DefaultWarehouseId,
                 updated_at = @UpdatedAt
             WHERE id = @Id";
         user.UpdatedAt = DateTime.UtcNow;
@@ -113,5 +114,12 @@ public class UserRepository : IUserRepository
         const string sql = "UPDATE users SET is_active = NOT is_active, updated_at = @UpdatedAt WHERE id = @Id";
         var rowsAffected = await connection.ExecuteAsync(sql, new { UpdatedAt = DateTime.UtcNow, Id = id });
         return rowsAffected > 0;
+    }
+
+    public async Task<IEnumerable<long>> GetUserWarehouseIdsAsync(long userId)
+    {
+        using var connection = CreateConnection();
+        const string sql = "SELECT warehouse_id FROM user_warehouse WHERE user_id = @UserId";
+        return await connection.QueryAsync<long>(sql, new { UserId = userId });
     }
 }

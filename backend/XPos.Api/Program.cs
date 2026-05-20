@@ -11,15 +11,18 @@ using XPos.Data.Migrations;
 using XPos.Data.Repositories;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Services;
+using XPos.Api.Services;
 
 SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
 SqlMapper.AddTypeHandler(new DateTimeOffsetTypeHandler());
+DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
@@ -48,10 +51,13 @@ builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 // Database Connection
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Current User Context
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<XPos.Domain.Interfaces.ICurrentUserService, XPos.Api.Services.CurrentUserService>();
+
 // Core Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IWarehouseRepository, WarehouseRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IProviderRepository, ProviderRepository>();
@@ -84,13 +90,11 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IQuotationService, QuotationService>();
 
 // Admin Settings Repositories
-builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
 builder.Services.AddScoped<IMailSettingsRepository, MailSettingsRepository>();
 builder.Services.AddScoped<IPaymentGatewaySettingsRepository, PaymentGatewaySettingsRepository>();
 builder.Services.AddScoped<ISmsSettingsRepository, SmsSettingsRepository>();
 
 // Admin Settings Services
-builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IMailSettingsService, MailSettingsService>();
 builder.Services.AddScoped<IPaymentGatewaySettingsService, PaymentGatewaySettingsService>();
 builder.Services.AddScoped<ISmsSettingsService, SmsSettingsService>();

@@ -2,19 +2,18 @@
     <q-page padding>
         <div class="row q-col-gutter-sm">
             <div class="col-12 app-table-container">
-                <BaseTable
+                <q-table
                     title="Productos"
                     :rows="products"
                     :columns="columns"
                     row-key="id"
                     :loading="loading"
-                    :pagination="pagination"
-                    @request="fetchItems"
+                    :filter="filter"
                 >
                     <template #top-right>
                         <div class="row items-center no-wrap">
                             <BaseSearch
-                                @search="fetchItems({ pagination, filter: $event })"
+                                @search="filter = $event"
                                 class="full-width-xs"
                             />
                             <q-btn
@@ -42,10 +41,11 @@
                                 v-if="props.row.image"
                                 class="product-image-container"
                             >
-                                <img
-                                    :src="props.row.image"
-                                    class="product-image"
-                                />
+                                 <img
+                                     :src="props.row.image"
+                                     class="product-image"
+                                     loading="lazy"
+                                 />
                             </div>
                             <q-icon
                                 v-else
@@ -74,7 +74,7 @@
                             />
                         </q-td>
                     </template>
-                </BaseTable>
+                </q-table>
             </div>
         </div>
 
@@ -118,32 +118,61 @@
                     </BaseInput>
                 </div>
                 <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.categoryId"
-                        :options="categories"
-                        label="Categoría"
-                        option-value="id"
-                        option-label="name"
-                        emit-value
-                        map-options
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
+                    <div class="row no-wrap items-center">
+                        <q-select
+                            v-slot:default
+                            v-model="formData.categoryId"
+                            :options="categories"
+                            label="Categoría"
+                            option-value="id"
+                            option-label="name"
+                            emit-value
+                            map-options
+                            lazy-rules
+                            :rules="[(val) => !!val || 'Requerido']"
+                            outlined
+                            dense
+                            class="col"
+                        />
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            color="primary"
+                            icon="add"
+                            class="q-ml-xs q-mb-md"
+                            @click="openQuickAdd('category')"
+                        >
+                            <q-tooltip>Nueva Categoría</q-tooltip>
+                        </q-btn>
+                    </div>
                 </div>
                 <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.unitId"
-                        :options="units"
-                        label="Unidad"
-                        option-value="id"
-                        option-label="name"
-                        emit-value
-                        map-options
-                        outlined
-                        dense
-                    />
+                    <div class="row no-wrap items-center">
+                        <q-select
+                            v-model="formData.unitId"
+                            :options="units"
+                            label="Unidad"
+                            option-value="id"
+                            option-label="name"
+                            emit-value
+                            map-options
+                            outlined
+                            dense
+                            class="col"
+                        />
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            color="primary"
+                            icon="add"
+                            class="q-ml-xs"
+                            @click="openQuickAdd('unit')"
+                        >
+                            <q-tooltip>Nueva Unidad</q-tooltip>
+                        </q-btn>
+                    </div>
                 </div>
             </div>
 
@@ -268,6 +297,50 @@
             v-model="showCamera"
             @captured="handleCapture"
         />
+
+        <!-- Quick Add Dialogs -->
+        <q-dialog v-model="quickAdd.show" persistent backdrop-filter="blur(4px)">
+            <q-card style="width: 350px; border-radius: 15px" class="glass-dialog">
+                <q-card-section class="bg-primary text-white row items-center q-pb-none">
+                    <div class="text-h6">Nueva {{ quickAdd.type === 'category' ? 'Categoría' : 'Unidad' }}</div>
+                    <q-space />
+                    <q-btn icon="close" flat round dense v-close-popup />
+                </q-card-section>
+
+                <q-card-section class="q-pt-md q-gutter-y-sm">
+                    <BaseInput
+                        v-model="quickAdd.form.name"
+                        :label="quickAdd.type === 'category' ? 'Nombre de Categoría' : 'Nombre de Unidad'"
+                        autofocus
+                        @keyup.enter="saveQuickAdd"
+                        :rules="[val => !!val || 'Requerido']"
+                    />
+                    <BaseInput
+                        v-if="quickAdd.type === 'unit'"
+                        v-model="quickAdd.form.shortName"
+                        label="Nombre Corto"
+                        :rules="[val => !!val || 'Requerido']"
+                    />
+                    <BaseInput
+                        v-if="quickAdd.type === 'category'"
+                        v-model="quickAdd.form.code"
+                        label="Código (Opcional)"
+                    />
+                </q-card-section>
+
+                <q-card-actions align="right" class="q-pa-md">
+                    <q-btn flat label="Cancelar" color="grey" v-close-popup />
+                    <q-btn
+                        unelevated
+                        label="Guardar"
+                        color="primary"
+                        :loading="quickAdd.saving"
+                        @click="saveQuickAdd"
+                        :disable="!quickAdd.form.name || (quickAdd.type === 'unit' && !quickAdd.form.shortName)"
+                    />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -308,6 +381,51 @@ const isEdit = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const filter = ref("");
 
+// Quick Add State
+const quickAdd = reactive({
+    show: false,
+    type: 'category' as 'category' | 'unit',
+    saving: false,
+    form: {
+        name: '',
+        shortName: '',
+        code: ''
+    }
+});
+
+const openQuickAdd = (type: 'category' | 'unit') => {
+    quickAdd.type = type;
+    quickAdd.form = { name: '', shortName: '', code: '' };
+    quickAdd.show = true;
+};
+
+const saveQuickAdd = async () => {
+    quickAdd.saving = true;
+    try {
+        if (quickAdd.type === 'category') {
+            const res = await categoryService.create({ 
+                name: quickAdd.form.name, 
+                code: quickAdd.form.code || `CAT-${Date.now()}` 
+            } as any);
+            categories.value.push(res.data);
+            formData.categoryId = res.data.id;
+        } else {
+            const res = await unitService.create({ 
+                name: quickAdd.form.name, 
+                shortName: quickAdd.form.shortName 
+            } as any);
+            units.value.push(res.data);
+            formData.unitId = res.data.id;
+        }
+        quickAdd.show = false;
+        $q.notify({ color: 'positive', message: 'Registro exitoso' });
+    } catch (error) {
+        $q.notify({ color: 'negative', message: 'Error al registrar' });
+    } finally {
+        quickAdd.saving = false;
+    }
+};
+
 // Physical Scanner for Product List
 useBarcodeScanner({
     onScan: (code) => {
@@ -322,7 +440,7 @@ useBarcodeScanner({
             });
         } else {
             // Si no, buscamos en la tabla
-            fetchItems({ pagination, filter: code });
+            filter.value = code;
         }
     }
 });
@@ -334,7 +452,7 @@ const openScanner = (target: 'search' | 'form') => {
 
 const handleScan = (code: string) => {
     if (scannerTarget.value === 'search') {
-        fetchItems({ pagination, filter: code });
+        filter.value = code;
     } else {
         formData.code = code;
     }
@@ -648,5 +766,10 @@ onMounted(fetchData);
         background-color: var(--color-negative);
         color: white !important;
     }
+}
+.glass-dialog {
+    background: rgba(var(--color-background-elevated-rgb), 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 </style>

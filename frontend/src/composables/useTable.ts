@@ -22,12 +22,13 @@ export function useTable<T>(endpoint: string) {
         params: { page, limit: rowsPerPage, sortBy, descending, filter }
       });
 
-      data.value = Array.isArray(response.data) ? response.data : response.data.items || [];
+      const isArray = Array.isArray(response.data);
+      data.value = isArray ? response.data : response.data.items || [];
       pagination.value = {
         ...pagination.value,
         page,
         rowsPerPage,
-        rowsNumber: Array.isArray(response.data) ? response.data.length : response.data.total || 0
+        rowsNumber: isArray ? undefined : (response.data.total || 0)
       };
     } finally {
       loading.value = false;

@@ -11,14 +11,19 @@ namespace XPos.Data.Repositories;
 public class PurchaseRepository : IPurchaseRepository
 {
     private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUserService;
 
-    public PurchaseRepository(IUnitOfWork uow)
+    public PurchaseRepository(IUnitOfWork uow, ICurrentUserService currentUserService)
     {
         _uow = uow;
+        _currentUserService = currentUserService;
     }
 
     public async Task<PagedResult<PurchaseReadDto>> GetAllAsync(PagingParams pagingParams)
     {
+        var activeWarehouseId = _currentUserService.ActiveWarehouseId;
+        var hasAllAccess = _currentUserService.HasAllWarehousesAccess;
+
         var sqlBuilder = new StringBuilder(@"
             FROM purchases p
             JOIN providers pr ON p.provider_id = pr.id
@@ -27,6 +32,12 @@ public class PurchaseRepository : IPurchaseRepository
         ");
 
         var parameters = new DynamicParameters();
+
+        if (!hasAllAccess)
+        {
+            sqlBuilder.Append(" AND p.warehouse_id = @activeWarehouseId");
+            parameters.Add("activeWarehouseId", activeWarehouseId);
+        }
 
         if (!string.IsNullOrWhiteSpace(pagingParams.Filter))
         {

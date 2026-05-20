@@ -15,4 +15,5 @@ public class PagingParams
     public string? SortBy { get; set; } = "date";
     public bool SortDescending { get; set; } = true;
     public string? Filter { get; set; }
+    public long? WarehouseId { get; set; }
 }

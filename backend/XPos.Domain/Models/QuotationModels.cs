@@ -8,11 +8,11 @@ public class Quotation
     public string Ref { get; set; } = string.Empty;
     public long ClientId { get; set; }
     public long WarehouseId { get; set; }
-    public double? TaxRate { get; set; }
-    public double? TaxNet { get; set; }
-    public double? Discount { get; set; }
-    public double? Shipping { get; set; }
-    public double GrandTotal { get; set; }
+    public decimal? TaxRate { get; set; }
+    public decimal? TaxNet { get; set; }
+    public decimal? Discount { get; set; }
+    public decimal? Shipping { get; set; }
+    public decimal GrandTotal { get; set; }
     public string Status { get; set; } = "pending";
     public string? Notes { get; set; }
     
@@ -34,13 +34,13 @@ public class QuotationDetail
     public long ProductId { get; set; }
     public long? ProductVariantId { get; set; }
     public long? SaleUnitId { get; set; }
-    public double Price { get; set; }
-    public double? TaxNet { get; set; }
+    public decimal Price { get; set; }
+    public decimal? TaxNet { get; set; }
     public string? TaxMethod { get; set; }
-    public double? Discount { get; set; }
+    public decimal? Discount { get; set; }
     public string? DiscountMethod { get; set; }
-    public double Total { get; set; }
-    public double Quantity { get; set; }
+    public decimal Total { get; set; }
+    public decimal Quantity { get; set; }
 }
 
 public class QuotationReadDto
@@ -50,6 +50,6 @@ public class QuotationReadDto
     public DateTime Date { get; set; }
     public string ClientName { get; set; } = string.Empty;
     public string WarehouseName { get; set; } = string.Empty;
-    public double GrandTotal { get; set; }
+    public decimal GrandTotal { get; set; }
     public string Status { get; set; } = string.Empty;
 }

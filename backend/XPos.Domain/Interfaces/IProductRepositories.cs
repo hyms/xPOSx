@@ -26,7 +26,7 @@ public interface IProductRepository
     Task<Product?> GetByIdAsync(long id);
     Task<long> CreateAsync(Product product);
     Task<bool> UpdateAsync(Product product);
-    Task<bool> UpdateCostAsync(long productId, double newCost);
+    Task<bool> UpdateCostAsync(long productId, decimal newCost);
     Task<bool> DeleteAsync(long id);
     Task<IEnumerable<Product>> GetByCategoryAsync(long categoryId);
 }

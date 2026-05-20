@@ -250,17 +250,31 @@
                     />
                 </div>
                 <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="expenseForm.expenseCategoryId"
-                        :options="categoryOptions"
-                        label="Categoría"
-                        emit-value
-                        map-options
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
+                    <div class="row no-wrap items-center">
+                        <q-select
+                            v-model="expenseForm.expenseCategoryId"
+                            :options="categoryOptions"
+                            label="Categoría"
+                            emit-value
+                            map-options
+                            lazy-rules
+                            :rules="[(val) => !!val || 'Requerido']"
+                            outlined
+                            dense
+                            class="col"
+                        />
+                        <q-btn
+                            flat
+                            round
+                            dense
+                            color="primary"
+                            icon="add"
+                            class="q-ml-xs q-mb-md"
+                            @click="openCategoryDialog()"
+                        >
+                            <q-tooltip>Nueva Categoría</q-tooltip>
+                        </q-btn>
+                    </div>
                 </div>
                 <div class="col-12 col-md-6">
                     <q-select
@@ -537,15 +551,21 @@ const openCategoryDialog = (category?: ExpenseCategory) => {
 const saveCategory = async () => {
     saving.value = true;
     try {
+        let res;
         if (isEditCategory.value) {
             await expenseService.updateCategory(categoryForm.id!, categoryForm);
             $q.notify({ color: "positive", message: "Categoría actualizada" });
         } else {
-            await expenseService.createCategory(categoryForm);
+            res = await expenseService.createCategory(categoryForm);
             $q.notify({ color: "positive", message: "Categoría creada" });
         }
         showCategoryDialog.value = false;
-        fetchCategories();
+        await fetchCategories();
+        
+        // Auto-select if called from expense dialog
+        if (!isEditCategory.value && showExpenseDialog.value && res?.data) {
+            expenseForm.expenseCategoryId = res.data;
+        }
     } catch (error) {
         $q.notify({ color: "negative", message: "Error al guardar categoría" });
     } finally {

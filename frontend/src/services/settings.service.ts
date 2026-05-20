@@ -41,16 +41,18 @@ async function fetchSettings() {
   }
   isLoading.value = true;
   try {
-    const [settingsResponse, currencyResponse] = await Promise.all([
-      api.get<Setting>('/settings'), // Changed to single Setting object
-      api.get<CurrencySetting>('/settings/currency') // Corrected endpoint
-    ]);
-    settingsData.value = settingsResponse.data; // Assign directly
-    currencySettings.value = currencyResponse.data;
+    const settingsResponse = await api.get<any>('/settings');
+    settingsData.value = settingsResponse.data;
+    if (settingsResponse.data) {
+      currencySettings.value = {
+        id: settingsResponse.data.id,
+        code: settingsResponse.data.currencyCode || 'BOB',
+        symbol: settingsResponse.data.currencySymbol || 'Bs'
+      };
+    }
     isLoaded.value = true;
   } catch (error) {
     console.error("Error fetching settings:", error);
-    // Handle error appropriately, maybe show a notification
   } finally {
     isLoading.value = false;
   }

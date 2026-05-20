@@ -54,6 +54,7 @@ export default route(function ({ store /*, ssrContext */ }) {
           { path: 'purchases/create', component: () => import('../pages/purchases/PurchaseForm.vue'), meta: { permission: 'purchases_create' } },
           { path: 'purchases/:id', component: () => import('../pages/purchases/PurchaseForm.vue'), meta: { permission: 'purchases_view' } },
           { path: 'expenses', component: () => import('../pages/expenses/ExpenseList.vue'), meta: { permission: 'expenses_view' } },
+          { path: 'expense-categories', component: () => import('../pages/expense-categories/ExpenseCategoryList.vue'), meta: { permission: 'expense_categories_view' } },
           { path: 'returns', component: () => import('../pages/returns/ReturnList.vue'), meta: { permission: 'returns_view' } },
           { path: 'returns/sales/create', component: () => import('../pages/returns/SaleReturnForm.vue'), meta: { permission: 'returns_view' } },
           { path: 'returns/sales/:id', component: () => import('../pages/returns/SaleReturnForm.vue'), meta: { permission: 'returns_view' } },

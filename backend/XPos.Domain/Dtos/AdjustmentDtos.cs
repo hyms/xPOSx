@@ -11,7 +11,7 @@ public class CreateAdjustmentDto
 public class CreateAdjustmentDetailDto
 {
     public long ProductId { get; set; }
-    public double Quantity { get; set; }
+    public decimal Quantity { get; set; }
     public string Type { get; set; } = "add";
 }
 

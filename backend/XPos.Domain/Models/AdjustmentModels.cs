@@ -7,7 +7,7 @@ public class Adjustment
     public DateTime Date { get; set; }
     public string Ref { get; set; } = string.Empty;
     public long WarehouseId { get; set; }
-    public double Items { get; set; }
+    public decimal Items { get; set; }
     public string? Notes { get; set; }
     
     // Audit fields
@@ -27,7 +27,7 @@ public class AdjustmentDetail
     public long AdjustmentId { get; set; }
     public long ProductId { get; set; }
     public long? ProductVariantId { get; set; }
-    public double Quantity { get; set; }
+    public decimal Quantity { get; set; }
     public string Type { get; set; } = "add"; // "add" or "sub"
     
     // Audit fields
@@ -43,5 +43,5 @@ public class AdjustmentReadDto
     public string Ref { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public string WarehouseName { get; set; } = string.Empty;
-    public double Items { get; set; }
+    public decimal Items { get; set; }
 }

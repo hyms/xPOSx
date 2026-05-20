@@ -60,7 +60,7 @@ public class AdjustmentService : IAdjustmentService
 
             foreach (var detail in adjustment.Details)
             {
-                double quantityChange = detail.Type == "add" ? detail.Quantity : -detail.Quantity;
+                decimal quantityChange = detail.Type == "add" ? detail.Quantity : -detail.Quantity;
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, adjustment.WarehouseId, quantityChange);
             }
 
@@ -103,14 +103,14 @@ public class AdjustmentService : IAdjustmentService
             // Reverse old stock
             foreach (var detail in existing.Details)
             {
-                double reverseQuantity = detail.Type == "add" ? -detail.Quantity : detail.Quantity;
+                decimal reverseQuantity = detail.Type == "add" ? -detail.Quantity : detail.Quantity;
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, existing.WarehouseId, reverseQuantity);
             }
 
             // Apply new stock
             foreach (var detail in adjustment.Details)
             {
-                double quantityChange = detail.Type == "add" ? detail.Quantity : -detail.Quantity;
+                decimal quantityChange = detail.Type == "add" ? detail.Quantity : -detail.Quantity;
                 await _inventoryRepository.UpdateStockAsync(detail.ProductId, adjustment.WarehouseId, quantityChange);
             }
 

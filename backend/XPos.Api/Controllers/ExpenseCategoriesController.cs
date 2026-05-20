@@ -35,6 +35,7 @@ public class ExpenseCategoriesController : ControllerBase
         }
 
         var id = await _categoryRepository.CreateAsync(category);
+        category.Id = id;
         return CreatedAtAction(nameof(GetById), new { id }, category);
     }
 

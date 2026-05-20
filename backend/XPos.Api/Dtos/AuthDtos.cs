@@ -11,4 +11,5 @@ public class AuthResponseDto
     public string Token { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public IEnumerable<string> Permissions { get; set; } = Enumerable.Empty<string>();
+    public long? ActiveWarehouseId { get; set; }
 }

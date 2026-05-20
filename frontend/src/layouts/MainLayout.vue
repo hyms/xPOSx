@@ -144,8 +144,7 @@
             :class="$q.dark.isActive ? 'bg-dark' : 'bg-grey-1'"
             style="transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background-color: var(--color-background-elevated);" 
         >
-            <q-scroll-area class="fit">
-                <q-list padding>
+            <q-list padding style="padding-bottom: 60px;">
                     <q-item clickable to="/" exact active-class="active-item">
                         <q-item-section avatar>
                             <q-icon name="dashboard" />
@@ -403,7 +402,6 @@
                         <q-item-section>Configuración</q-item-section>
                     </q-item>
                 </q-list>
-            </q-scroll-area>
 
             <div class="absolute-bottom q-ma-sm flex justify-center gt-xs">
                 <q-btn
@@ -569,6 +567,22 @@ onMounted(() => {
 }
 
 .q-drawer {
+    .scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(var(--color-primary-rgb), 0.3) transparent;
+        
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: rgba(var(--color-primary-rgb), 0.3);
+            border-radius: 3px;
+        }
+    }
+
     .q-item {
         border-radius: 8px; /* Slightly less rounded pills */
         margin: 6px 10px; /* Adjusted margin */

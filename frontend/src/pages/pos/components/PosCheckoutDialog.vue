@@ -12,6 +12,17 @@
                     Total: {{ formatCurrency(total) }}
                 </div>
 
+                <!-- SIN Restriction Warning -->
+                <q-slide-transition>
+                    <div v-if="isInvoiceBlocked" class="warning-box q-pa-sm row no-wrap items-center q-mb-md">
+                        <q-icon name="warning" color="warning" size="md" class="q-mr-sm" />
+                        <div class="text-caption text-warning leading-tight">
+                            <strong>RESTRICCIÓN SIN:</strong> El monto supera los Bs. {{ sinLimit }}.
+                            Debe registrar un NIT/CI y Razón Social válida para continuar.
+                        </div>
+                    </div>
+                </q-slide-transition>
+
                 <div class="row q-col-gutter-sm">
                     <div class="col-12">
                         <q-input v-model="notes" label="Notas de la Venta (Opcional)" type="textarea" autogrow outlined dense class="q-mb-md" />
@@ -36,7 +47,7 @@
 
             <q-card-actions align="right" class="q-pa-md">
                 <q-btn flat label="Regresar" color="primary" v-close-popup />
-                <q-btn label="CONFIRMAR VENTA" color="primary" unelevated @click="$emit('submit')" :loading="saving" :disable="paidAmount < total" />
+                <q-btn :label="isInvoiceBlocked ? 'FACTURACIÓN BLOQUEADA' : 'CONFIRMAR VENTA'" color="primary" unelevated @click="$emit('submit')" :loading="saving" :disable="paidAmount < total || isInvoiceBlocked" />
             </q-card-actions>
         </q-card>
     </q-dialog>
@@ -56,6 +67,8 @@ const props = defineProps<{
     notes: string;
     quickAmounts: number[];
     saving: boolean;
+    isInvoiceBlocked?: boolean;
+    sinLimit?: number;
 }>();
 
 const emit = defineEmits(['update:modelValue', 'update:paidAmount', 'update:notes', 'calculate-change', 'set-quick-amount', 'submit']);
@@ -75,3 +88,14 @@ const notes = computed({
     set: (val) => emit('update:notes', val)
 });
 </script>
+
+<style lang="scss" scoped>
+.warning-box {
+    background: rgba(255, 183, 0, 0.1);
+    border: 1px dashed var(--q-warning);
+    border-radius: 8px;
+}
+.leading-tight {
+    line-height: 1.25;
+}
+</style>

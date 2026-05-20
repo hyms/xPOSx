@@ -10,10 +10,12 @@ namespace XPos.Data.Repositories;
 public class SaleRepository : ISaleRepository
 {
     private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUserService;
 
-    public SaleRepository(IUnitOfWork uow)
+    public SaleRepository(IUnitOfWork uow, ICurrentUserService currentUserService)
     {
         _uow = uow;
+        _currentUserService = currentUserService;
     }
 
     public async Task<PagedResult<SaleReadDto>> GetAllAsync(PagingParams pagingParams)
@@ -36,6 +38,7 @@ public class SaleRepository : ISaleRepository
 
         var sortOrder = pagingParams.SortDescending ? "DESC" : "ASC";
 
+        var parameters = new DynamicParameters();
         var baseSql = @"
             FROM sales s
             JOIN clients c ON s.client_id = c.id
@@ -43,8 +46,19 @@ public class SaleRepository : ISaleRepository
             WHERE s.deleted_at IS NULL
             ";
 
+        // Mandatory Isolation: active_warehouse_id filter
+        if (!_currentUserService.HasAllWarehousesAccess)
+        {
+            baseSql += " AND s.warehouse_id = @ActiveWarehouseId";
+            parameters.Add("ActiveWarehouseId", _currentUserService.ActiveWarehouseId);
+        }
+        else if (pagingParams.WarehouseId.HasValue) // Admin can filter by any warehouse
+        {
+            baseSql += " AND s.warehouse_id = @WarehouseId";
+            parameters.Add("WarehouseId", pagingParams.WarehouseId.Value);
+        }
+
         var whereClauses = new List<string>();
-        var parameters = new DynamicParameters();
 
         if (!string.IsNullOrWhiteSpace(pagingParams.Filter))
         {
