@@ -38,7 +38,7 @@ export function usePosLogic() {
     const formData = reactive({
         clientId: 0,
         clientNit: "0",
-        clientName: "SIN NOMBRE",
+        clientName: "Sin nombre",
         warehouseId: 0,
         date: new Date().toISOString().split("T")[0],
         taxRate: 0,
@@ -272,7 +272,7 @@ export function usePosLogic() {
         if (!nit || nit === "0") {
             formData.clientId = clients.value.find(c => c.nitCi === "0")?.id || 0;
             formData.clientNit = "0";
-            formData.clientName = "SIN NOMBRE";
+            formData.clientName = "Sin nombre";
             return;
         }
 

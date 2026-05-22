@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace XPos.Data.Migrations;
 
-[Migration(2026051902)]
+[Migration(202605190002)]
 public class M2026051902_AddInvoiceNumberToSettings : Migration
 {
     public override void Up()

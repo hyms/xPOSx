@@ -93,7 +93,7 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
 
     echo "Restarting services with Neon DB..."
     # The variables are already in the environment from the SSH command prefix
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.neon.yml up -d --remove-orphans
+    docker compose -f docker-compose.neon.yml up -d --remove-orphans
 
     echo "Status:"
     docker compose ps

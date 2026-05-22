@@ -4,18 +4,37 @@ using XPos.Api.Controllers;
 using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.AspNetCore.Hosting;
 
 namespace XPos.Tests;
 
 public class SettingsControllerTests
 {
     private readonly Mock<ISettingRepository> _repoMock;
+    private readonly Mock<IMemoryCache> _cacheMock;
+    private readonly Mock<IWebHostEnvironment> _envMock;
     private readonly SettingsController _controller;
 
     public SettingsControllerTests()
     {
         _repoMock = new Mock<ISettingRepository>();
-        _controller = new SettingsController(_repoMock.Object);
+        _cacheMock = new Mock<IMemoryCache>();
+        _envMock = new Mock<IWebHostEnvironment>();
+
+        // Set up IMemoryCache Mock behavior for TryGetValue
+        object? outValue = null;
+        _cacheMock
+            .Setup(x => x.CreateEntry(It.IsAny<object>()))
+            .Returns(Mock.Of<ICacheEntry>());
+
+        _controller = new SettingsController(_repoMock.Object, _cacheMock.Object, _envMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+            }
+        };
     }
 
     [Fact]

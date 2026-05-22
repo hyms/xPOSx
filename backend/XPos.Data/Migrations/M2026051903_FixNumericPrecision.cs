@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace XPos.Data.Migrations;
 
-[Migration(2026051903)]
+[Migration(202605190003)]
 public class M2026051903_FixNumericPrecision : Migration
 {
     public override void Up()

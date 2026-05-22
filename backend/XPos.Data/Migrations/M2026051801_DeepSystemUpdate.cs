@@ -3,7 +3,7 @@ using System.Data;
 
 namespace XPos.Data.Migrations;
 
-[Migration(2026051801)]
+[Migration(202605180001)]
 public class M2026051801_DeepSystemUpdate : Migration
 {
     public override void Up()
@@ -18,6 +18,7 @@ public class M2026051801_DeepSystemUpdate : Migration
         Execute.Sql("UPDATE users SET role_id = role WHERE role IN (SELECT id FROM roles)");
         
         Rename.Column("role").OnTable("users").To("role_old");
+        Alter.Table("users").AlterColumn("role_old").AsInt32().Nullable();
 
         // 2. Unify Currencies into Settings (YAGNI/KISS)
         Alter.Table("settings")
@@ -332,5 +333,6 @@ public class M2026051801_DeepSystemUpdate : Migration
         Delete.Column("role_id").FromTable("users");
         Delete.Column("default_warehouse_id").FromTable("users");
         Rename.Column("role_old").OnTable("users").To("role");
+        Alter.Table("users").AlterColumn("role").AsInt32().NotNullable();
     }
 }

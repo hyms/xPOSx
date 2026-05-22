@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace XPos.Data.Migrations;
 
-[Migration(2026051901)]
+[Migration(202605190001)]
 public class M2026051901_IdentitySettings : Migration
 {
     public override void Up()

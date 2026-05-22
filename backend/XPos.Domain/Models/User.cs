@@ -9,6 +9,7 @@ public class User
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public long? RoleId { get; set; }
+    public long? Role { get => RoleId; set => RoleId = value; }
     public bool IsActive { get; set; } = true;
     public long? DefaultWarehouseId { get; set; }
     public string? Image { get; set; }

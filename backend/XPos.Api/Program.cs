@@ -57,6 +57,7 @@ builder.Services.AddScoped<XPos.Domain.Interfaces.ICurrentUserService, XPos.Api.
 
 // Core Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IWarehouseRepository, WarehouseRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();

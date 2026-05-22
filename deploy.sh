@@ -77,7 +77,7 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
 
     echo "Restarting services..."
     # docker compose up -d se encarga de recrear solo lo necesario
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+    docker compose -f docker-compose.prod.yml up -d
 
     echo "Status:"
     docker compose ps

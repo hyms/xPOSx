@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: xpos-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-xpos_db}
@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test:
         [
@@ -46,6 +46,7 @@ services:
   frontend:
     build:
       context: ./frontend
+      target: dev
     container_name: xpos-frontend
     ports:
       - "5173:5173"

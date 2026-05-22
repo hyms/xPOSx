@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+.vs
+bin/
+obj/
+*.user
+*.suo
+*.sln.docstates
+out/
+publish/

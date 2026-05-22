@@ -15,6 +15,7 @@ public class ReturnServiceTests
     private readonly Mock<IInventoryRepository> _inventoryRepoMock;
     private readonly Mock<IUnitRepository> _unitRepoMock;
     private readonly Mock<IVoucherRepository> _voucherRepoMock;
+    private readonly Mock<IPaymentRepository> _paymentRepoMock;
     private readonly ReturnService _returnService;
 
     public ReturnServiceTests()
@@ -25,6 +26,7 @@ public class ReturnServiceTests
         _inventoryRepoMock = new Mock<IInventoryRepository>();
         _unitRepoMock = new Mock<IUnitRepository>();
         _voucherRepoMock = new Mock<IVoucherRepository>();
+        _paymentRepoMock = new Mock<IPaymentRepository>();
 
         _returnService = new ReturnService(
             _uowMock.Object,
@@ -33,7 +35,8 @@ public class ReturnServiceTests
             _inventoryRepoMock.Object,
             _unitRepoMock.Object,
             new UnitConversionService(),
-            _voucherRepoMock.Object
+            _voucherRepoMock.Object,
+            _paymentRepoMock.Object
         );
     }
 

@@ -36,23 +36,27 @@
                     </template>
 
                     <template v-slot:body-cell-image="props">
-                        <q-td :props="props">
-                            <div
+                        <q-td :props="props" class="text-center">
+                            <q-avatar 
                                 v-if="props.row.image"
-                                class="product-image-container"
+                                size="48px" 
+                                class="cursor-pointer hover-scale shadow-1 rounded-borders animate-scale"
+                                @click="openPreview(props.row)"
                             >
-                                 <img
-                                     :src="props.row.image"
-                                     class="product-image"
-                                     loading="lazy"
-                                 />
-                            </div>
-                            <q-icon
+                                <img :src="props.row.image" />
+                                <q-tooltip>Click para ampliar</q-tooltip>
+                            </q-avatar>
+                            <q-avatar
                                 v-else
-                                name="inventory_2"
-                                color="grey-5"
-                                size="40px"
-                            />
+                                size="48px"
+                                class="bg-grey-2 rounded-borders"
+                            >
+                                <q-icon
+                                    name="inventory_2"
+                                    color="grey-5"
+                                    size="24px"
+                                />
+                            </q-avatar>
                         </q-td>
                     </template>
 
@@ -120,6 +124,7 @@
                 <div class="col-12 col-md-6">
                     <div class="row no-wrap items-center">
                         <q-select
+                            ref="categorySelect"
                             v-slot:default
                             v-model="formData.categoryId"
                             :options="categories"
@@ -150,6 +155,7 @@
                 <div class="col-12 col-md-6">
                     <div class="row no-wrap items-center">
                         <q-select
+                            ref="unitSelect"
                             v-model="formData.unitId"
                             :options="units"
                             label="Unidad"
@@ -285,6 +291,33 @@
             </div>
         </FormDialog>
 
+        <!-- Modal de Previsualización Glassmorphism -->
+        <q-dialog v-model="previewModal" backdrop-filter="blur(8px)">
+            <q-card class="glass-preview-card no-shadow">
+                <q-card-section class="row items-center q-pb-none">
+                    <div class="text-h6 text-white text-shadow text-bold">{{ selectedProduct?.name }}</div>
+                    <q-space />
+                    <q-btn icon="close" flat round dense v-close-popup color="white" />
+                </q-card-section>
+
+                <q-card-section class="q-pa-md">
+                    <ProgressiveImage 
+                        v-if="selectedProduct && selectedProduct.image"
+                        :src="selectedProduct.image" 
+                        :alt="selectedProduct.name"
+                        ratio="1/1"
+                    />
+                </q-card-section>
+
+                <q-card-section class="bg-black-transparent text-white text-center q-py-sm">
+                    <div class="text-subtitle2 text-grey-3">Código: {{ selectedProduct?.code }}</div>
+                    <div class="text-primary text-bold text-h6 q-mt-xs">
+                        {{ formatCurrency(selectedProduct?.price || 0) }}
+                    </div>
+                </q-card-section>
+            </q-card>
+        </q-dialog>
+
         <!-- Scanner Dialog -->
         <BarcodeScannerDialog
             v-model="showScanner"
@@ -345,7 +378,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, nextTick } from "vue";
 import { useQuasar } from "quasar";
 import { productService } from "@/services/product.service";
 import { categoryService } from "@/services/category.service";
@@ -361,6 +394,8 @@ import BaseInput from "@/components/base/BaseInput.vue";
 import FormDialog from "@/components/FormDialog.vue";
 import BarcodeScannerDialog from "@/components/BarcodeScannerDialog.vue";
 import CameraDialog from "@/components/CameraDialog.vue";
+import ProgressiveImage from "@/components/ProgressiveImage.vue";
+import { compressImage } from "@/utils/image-optimizer";
 
 const $q = useQuasar();
 const { formatCurrency } = useCurrency();
@@ -379,7 +414,17 @@ const showCamera = ref(false);
 const scannerTarget = ref<'search' | 'form'>('search');
 const isEdit = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const categorySelect = ref<any>(null);
+const unitSelect = ref<any>(null);
 const filter = ref("");
+
+const previewModal = ref(false);
+const selectedProduct = ref<any>(null);
+
+const openPreview = (product: any) => {
+    selectedProduct.value = product;
+    previewModal.value = true;
+};
 
 // Quick Add State
 const quickAdd = reactive({
@@ -419,6 +464,15 @@ const saveQuickAdd = async () => {
         }
         quickAdd.show = false;
         $q.notify({ color: 'positive', message: 'Registro exitoso' });
+        
+        // Devolver el foco al formulario (QSelect) correspondientemente
+        nextTick(() => {
+            if (quickAdd.type === 'category') {
+                categorySelect.value?.focus();
+            } else {
+                unitSelect.value?.focus();
+            }
+        });
     } catch (error) {
         $q.notify({ color: 'negative', message: 'Error al registrar' });
     } finally {
@@ -581,22 +635,28 @@ const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
-const handleFileChange = (event: Event) => {
+const handleFileChange = async (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
-        if (file.size > 2 * 1024 * 1024) {
+        try {
+            $q.loading.show({ message: 'Optimizando imagen...' });
+            // Comprimir la imagen a un tamaño máximo de 500x500px y calidad de 85%
+            const optimizedFile = await compressImage(file, 500, 500, 0.85);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                formData.image = e.target?.result as string;
+            };
+            reader.readAsDataURL(optimizedFile);
+        } catch (error) {
             $q.notify({
                 color: "negative",
-                message: "La imagen debe ser menor a 2MB",
+                message: "Error al optimizar la imagen",
             });
-            return;
+        } finally {
+            $q.loading.hide();
         }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            formData.image = e.target?.result as string;
-        };
-        reader.readAsDataURL(file);
     }
 };
 
@@ -771,5 +831,31 @@ onMounted(fetchData);
     background: rgba(var(--color-background-elevated-rgb), 0.8);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-preview-card {
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.bg-black-transparent {
+    background: rgba(0, 0, 0, 0.6);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hover-scale {
+    transition: transform 0.2s ease-in-out;
+    &:hover {
+        transform: scale(1.1);
+    }
 }
 </style>
