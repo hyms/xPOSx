@@ -107,6 +107,40 @@
                         hide-bottom-space
                     />
                 </div>
+                <div class="col-12 col-md-6">
+                    <q-select
+                        v-model="formData.defaultWarehouseId"
+                        :options="warehouseOptions"
+                        label="Almacén por Defecto"
+                        emit-value
+                        map-options
+                        outlined
+                        dense
+                        clearable
+                        hide-bottom-space
+                    />
+                </div>
+                <div class="col-12 col-md-6 flex items-center">
+                    <q-toggle
+                        v-model="formData.allWarehousesAccess"
+                        label="Acceso a Todos los Almacenes"
+                        color="primary"
+                    />
+                </div>
+                <div class="col-12 col-md-6" v-if="!formData.allWarehousesAccess">
+                    <q-select
+                        v-model="formData.warehouseIds"
+                        :options="warehouseOptions"
+                        label="Almacenes Permitidos"
+                        emit-value
+                        map-options
+                        multiple
+                        use-chips
+                        outlined
+                        dense
+                        hide-bottom-space
+                    />
+                </div>
                 <div class="col-12 col-md-6" v-if="!isEdit">
                     <BaseInput
                         v-model="formData.password"
@@ -127,6 +161,7 @@ import { useQuasar } from "quasar";
 import { userService } from "@/services/user.service";
 import type { User } from "@/types";
 import { roleService } from "@/services/role.service";
+import { warehouseService } from "@/services/warehouse.service";
 import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
@@ -142,6 +177,7 @@ const saving = ref(false);
 const showDialog = ref(false);
 const isEdit = ref(false);
 const roleOptions = ref<any[]>([]);
+const warehouseOptions = ref<any[]>([]);
 
 const formData = reactive<User>({
     username: "",
@@ -151,6 +187,9 @@ const formData = reactive<User>({
     lastName: "",
     role: 0,
     isActive: true,
+    defaultWarehouseId: null,
+    warehouseIds: [],
+    allWarehousesAccess: true,
 });
 
 const columns = [
@@ -180,6 +219,30 @@ const columns = [
         label: "Rol",
         field: (row: User) => row.roleDetails?.name,
         sortable: true,
+        align: "left" as const,
+    },
+    {
+        name: "defaultWarehouse",
+        label: "Almacén por Defecto",
+        field: (row: User) => {
+            const wh = warehouseOptions.value.find((w) => w.value === row.defaultWarehouseId);
+            return wh ? wh.label : "-";
+        },
+        sortable: true,
+        align: "left" as const,
+    },
+    {
+        name: "warehouses",
+        label: "Almacenes Permitidos",
+        field: (row: User) => {
+            if (row.allWarehousesAccess) return "Todos";
+            if (!row.warehouseIds || row.warehouseIds.length === 0) return "-";
+            return row.warehouseIds
+                .map((id) => warehouseOptions.value.find((w) => w.value === id)?.label)
+                .filter(Boolean)
+                .join(", ");
+        },
+        sortable: false,
         align: "left" as const,
     },
     {
@@ -221,10 +284,28 @@ const fetchRoles = async () => {
     }
 };
 
+const fetchWarehouses = async () => {
+    try {
+        const response = await warehouseService.getAll();
+        warehouseOptions.value = response.data.map((w) => ({
+            label: w.name,
+            value: w.id,
+        }));
+    } catch (error) {
+        console.error("Error fetching warehouses:", error);
+    }
+};
+
 const openDialog = (user?: User) => {
     if (user) {
         isEdit.value = true;
-        Object.assign(formData, { ...user, password: "" });
+        Object.assign(formData, { 
+            ...user, 
+            password: "",
+            defaultWarehouseId: user.defaultWarehouseId || null,
+            warehouseIds: user.warehouseIds || [],
+            allWarehousesAccess: user.allWarehousesAccess !== false,
+        });
     } else {
         isEdit.value = false;
         Object.assign(formData, {
@@ -235,6 +316,9 @@ const openDialog = (user?: User) => {
             lastName: "",
             role: 0,
             isActive: true,
+            defaultWarehouseId: null,
+            warehouseIds: [],
+            allWarehousesAccess: true,
         });
     }
     showDialog.value = true;
@@ -306,5 +390,6 @@ const handleToggleStatus = (user: User) => {
 onMounted(() => {
     fetchUsers();
     fetchRoles();
+    fetchWarehouses();
 });
 </script>

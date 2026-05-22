@@ -8,6 +8,9 @@ export interface User {
   role: number
   roleDetails?: Role
   isActive?: boolean
+  defaultWarehouseId?: number | null
+  warehouseIds?: number[]
+  allWarehousesAccess?: boolean
 }
 
 export interface Role {

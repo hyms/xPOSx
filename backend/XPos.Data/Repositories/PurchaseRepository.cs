@@ -50,20 +50,24 @@ public class PurchaseRepository : IPurchaseRepository
 
         var sql = new StringBuilder("SELECT p.id, p.ref, p.date::timestamp as Date, p.grand_total as GrandTotal, p.paid_amount as PaidAmount, p.status, p.payment_status as PaymentStatus, pr.name as ProviderName, w.name as WarehouseName ").Append(sqlBuilder);
 
-        if (!string.IsNullOrWhiteSpace(pagingParams.SortBy))
+        var validSortColumns = new Dictionary<string, string>
         {
-            var sortOrder = pagingParams.SortDescending ? "DESC" : "ASC";
-            // Basic sanitization to prevent SQL injection in column names
-            var sortBySafe = new string(pagingParams.SortBy.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
-            if (!string.IsNullOrWhiteSpace(sortBySafe))
-            {
-                sql.Append($" ORDER BY p.{sortBySafe} {sortOrder}");
-            }
-        }
-        else
-        {
-            sql.Append(" ORDER BY p.date DESC");
-        }
+            ["date"] = "p.date",
+            ["ref"] = "p.ref",
+            ["providerName"] = "pr.name",
+            ["warehouseName"] = "w.name",
+            ["grandTotal"] = "p.grand_total",
+            ["paidAmount"] = "p.paid_amount",
+            ["status"] = "p.status",
+            ["paymentStatus"] = "p.payment_status"
+        };
+
+        var sortBy = validSortColumns.ContainsKey(pagingParams.SortBy ?? "date") 
+            ? validSortColumns[pagingParams.SortBy ?? "date"] 
+            : "p.date";
+
+        var sortOrder = pagingParams.SortDescending ? "DESC" : "ASC";
+        sql.Append($" ORDER BY {sortBy} {sortOrder}");
 
         sql.Append(" LIMIT @PageSize OFFSET @Offset");
         parameters.Add("PageSize", pagingParams.PageSize);

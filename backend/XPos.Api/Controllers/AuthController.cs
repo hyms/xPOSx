@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
 
         var warehouseIds = await _userRepository.GetUserWarehouseIdsAsync(user.Id);
         var activeWarehouseId = user.DefaultWarehouseId ?? warehouseIds.FirstOrDefault();
-        var hasAllAccess = permissions.Contains("warehouses_all_access");
+        var hasAllAccess = user.AllWarehousesAccess;
 
         var token = GenerateJwtToken(user, permissions, warehouseIds, activeWarehouseId, hasAllAccess);
 
@@ -64,7 +64,7 @@ public class AuthController : ControllerBase
         var role = await _roleRepository.GetByIdAsync(user.RoleId ?? 0);
         var permissions = role?.Permissions.Select(p => p.Name) ?? Enumerable.Empty<string>();
         
-        bool hasAccess = permissions.Contains("warehouses_all_access");
+        bool hasAccess = user.AllWarehousesAccess;
         if (!hasAccess)
         {
             var allowedWarehouses = await _userRepository.GetUserWarehouseIdsAsync(userId);
