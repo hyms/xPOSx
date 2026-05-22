@@ -16,6 +16,7 @@ public class PurchaseService : IPurchaseService
     private readonly UnitConversionService _unitConversionService;
     private readonly IPaymentRepository _paymentRepository;
     private readonly IVoucherRepository _voucherRepository;
+    private readonly ICashShiftRepository _cashShiftRepository;
 
     public PurchaseService(
         IUnitOfWork uow,
@@ -25,7 +26,8 @@ public class PurchaseService : IPurchaseService
         IUnitRepository unitRepository,
         UnitConversionService unitConversionService,
         IPaymentRepository paymentRepository,
-        IVoucherRepository voucherRepository)
+        IVoucherRepository voucherRepository,
+        ICashShiftRepository cashShiftRepository)
     {
         _uow = uow;
         _purchaseRepository = purchaseRepository;
@@ -35,6 +37,7 @@ public class PurchaseService : IPurchaseService
         _unitConversionService = unitConversionService;
         _paymentRepository = paymentRepository;
         _voucherRepository = voucherRepository;
+        _cashShiftRepository = cashShiftRepository;
     }
 
     public async Task<PagedResult<PurchaseReadDto>> GetAllAsync(PagingParams pagingParams)
@@ -173,6 +176,51 @@ public class PurchaseService : IPurchaseService
 
     public async Task<bool> DeletePurchaseAsync(long id, long userId)
     {
-        return await _purchaseRepository.DeleteAsync(id, userId);
+        _uow.BeginTransaction();
+        try
+        {
+            var purchase = await _purchaseRepository.GetByIdAsync(id);
+            if (purchase == null)
+            {
+                _uow.Rollback();
+                return false;
+            }
+
+            // Validar si la caja/turno del almacén está cerrado para esta fecha
+            var isClosed = await _cashShiftRepository.IsWarehouseClosedForDateAsync(purchase.WarehouseId, purchase.Date);
+            if (isClosed)
+            {
+                throw new InvalidOperationException("No se puede eliminar la compra porque el turno de caja de este almacén ya está cerrado para esta fecha.");
+            }
+
+            // 1. Revertir inventario (restar del stock lo que se compró)
+            if (purchase.Details != null)
+            {
+                foreach (var detail in purchase.Details)
+                {
+                    Unit? unit = null;
+                    if (detail.PurchaseUnitId.HasValue)
+                    {
+                        unit = await _unitRepository.GetByIdAsync(detail.PurchaseUnitId.Value);
+                    }
+
+                    var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
+                    
+                    // Restar stock
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchase.WarehouseId, -baseQuantity);
+                }
+            }
+
+            // 2. Soft-delete de la compra
+            var result = await _purchaseRepository.DeleteAsync(id, userId);
+
+            _uow.Commit();
+            return result;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
     }
 }

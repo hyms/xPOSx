@@ -6,6 +6,7 @@ import { categoryService } from "@/services/category.service";
 import { warehouseService } from "@/services/warehouse.service";
 import { clientService } from "@/services/client.service";
 import { saleService } from "@/services/sale.service";
+import { cashShiftService, type CashShift, type CashRegister } from "@/services/cashShift.service";
 import { useCurrency } from "@/composables/useCurrency";
 import type { Product, Category, Warehouse, Client, Sale, SaleDetail } from "@/types";
 
@@ -34,6 +35,13 @@ export function usePosLogic() {
     const change = ref(0);
     const saving = ref(false);
     const isSearchingClient = ref(false);
+
+    // Cash Shift State
+    const activeShift = ref<CashShift | null>(null);
+    const registers = ref<CashRegister[]>([]);
+    const showOpenShiftDialog = ref(false);
+    const openShiftStartingCash = ref(0);
+    const selectedRegisterId = ref<number | null>(null);
 
     const formData = reactive({
         clientId: 0,
@@ -171,6 +179,49 @@ export function usePosLogic() {
         } catch (error) {}
     };
 
+    const checkActiveShiftAndLoadRegisters = async (warehouseId: number) => {
+        try {
+            // Fetch registers for the active warehouse
+            const rRes = await cashShiftService.getRegistersByWarehouse(warehouseId);
+            registers.value = rRes.data;
+            if (registers.value.length > 0) {
+                selectedRegisterId.value = registers.value[0].id;
+            }
+
+            // Check if there is an active shift
+            const sRes = await cashShiftService.getActiveShift();
+            activeShift.value = sRes.data;
+
+            if (!activeShift.value) {
+                showOpenShiftDialog.value = true;
+            }
+        } catch (error) {
+            console.error("Error loading cash shifts / registers", error);
+        }
+    };
+
+    const submitOpenShift = async () => {
+        if (!selectedRegisterId.value) {
+            $q.notify({ color: "warning", message: "Por favor seleccione una caja" });
+            return;
+        }
+        try {
+            const res = await cashShiftService.openShift({
+                registerId: selectedRegisterId.value,
+                startingCash: openShiftStartingCash.value
+            });
+            $q.notify({ color: "positive", message: res.data.message });
+            
+            // Re-fetch active shift
+            const sRes = await cashShiftService.getActiveShift();
+            activeShift.value = sRes.data;
+            showOpenShiftDialog.value = false;
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Error al abrir turno de caja";
+            $q.notify({ color: "negative", message: msg });
+        }
+    };
+
     const fetchData = async () => {
         try {
             const [pRes, cRes, wRes, clRes] = await Promise.all([
@@ -187,6 +238,7 @@ export function usePosLogic() {
             if (warehouses.value.length > 0) {
                 formData.warehouseId = warehouses.value[0].id!;
                 fetchStocks();
+                await checkActiveShiftAndLoadRegisters(formData.warehouseId);
             }
             if (clients.value.length > 0) {
                 formData.clientId = clients.value[0].id!;
@@ -315,12 +367,13 @@ export function usePosLogic() {
         cart, showCheckoutDialog, showCartMobile, showScanner, showScanResultDialog,
         lastScannedProduct, paidAmount, change, saving, formData, quickAmounts,
         isSearchingClient, isInvoiceBlocked, SIN_LIMIT,
+        activeShift, registers, showOpenShiftDialog, openShiftStartingCash, selectedRegisterId,
         // Computed
         subtotal, total, filteredProducts,
         // Methods
         calculateTotals, setQuickAmount, handleBarcodeScan, getProductName, getStock,
         fetchData, fetchStocks, addToCart, incrementQty, decrementQty, removeFromCart,
         clearCart, calculateChange, submitSale, openCheckout,
-        searchClientByNit, quickRegisterClient
+        searchClientByNit, quickRegisterClient, submitOpenShift, checkActiveShiftAndLoadRegisters
     };
 }

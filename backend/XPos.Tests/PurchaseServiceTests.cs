@@ -16,6 +16,7 @@ public class PurchaseServiceTests
     private readonly Mock<IUnitRepository> _unitRepoMock;
     private readonly Mock<IPaymentRepository> _paymentRepoMock;
     private readonly Mock<IVoucherRepository> _voucherRepoMock;
+    private readonly Mock<ICashShiftRepository> _cashShiftRepoMock;
     private readonly PurchaseService _purchaseService;
 
     public PurchaseServiceTests()
@@ -27,6 +28,7 @@ public class PurchaseServiceTests
         _unitRepoMock = new Mock<IUnitRepository>();
         _paymentRepoMock = new Mock<IPaymentRepository>();
         _voucherRepoMock = new Mock<IVoucherRepository>();
+        _cashShiftRepoMock = new Mock<ICashShiftRepository>();
         
         _purchaseService = new PurchaseService(
             _uowMock.Object,
@@ -36,7 +38,8 @@ public class PurchaseServiceTests
             _unitRepoMock.Object,
             new UnitConversionService(),
             _paymentRepoMock.Object,
-            _voucherRepoMock.Object
+            _voucherRepoMock.Object,
+            _cashShiftRepoMock.Object
         );
     }
 
@@ -80,6 +83,11 @@ public class PurchaseServiceTests
     [Fact]
     public async Task DeletePurchaseAsync_ShouldCallRepo()
     {
+        var purchase = new Purchase { Id = 1, WarehouseId = 10, Date = DateTime.Now, Details = new List<PurchaseDetail>() };
+        _purchaseRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(purchase);
+        _cashShiftRepoMock.Setup(x => x.IsWarehouseClosedForDateAsync(10, It.IsAny<DateTime>())).ReturnsAsync(false);
+        _purchaseRepoMock.Setup(x => x.DeleteAsync(1, 1)).ReturnsAsync(true);
+
         await _purchaseService.DeletePurchaseAsync(1, 1);
         _purchaseRepoMock.Verify(x => x.DeleteAsync(1, 1), Times.Once);
     }

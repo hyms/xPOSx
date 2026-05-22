@@ -79,6 +79,9 @@ builder.Services.AddScoped<ISettingRepository, SettingRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
 builder.Services.AddScoped<IQuotationRepository, QuotationRepository>();
+builder.Services.AddScoped<ICashRegisterRepository, CashRegisterRepository>();
+builder.Services.AddScoped<ICashShiftRepository, CashShiftRepository>();
+builder.Services.AddScoped<ICashTransactionRepository, CashTransactionRepository>();
 
 // Services
 builder.Services.AddScoped<UnitConversionService>();
@@ -89,6 +92,8 @@ builder.Services.AddScoped<IReturnService, ReturnService>();
 builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IQuotationService, QuotationService>();
+builder.Services.AddScoped<ICashShiftService, CashShiftService>();
+builder.Services.AddScoped<XPos.Api.Filters.RequireOpenShiftFilter>();
 
 // Admin Settings Repositories
 builder.Services.AddScoped<IMailSettingsRepository, MailSettingsRepository>();

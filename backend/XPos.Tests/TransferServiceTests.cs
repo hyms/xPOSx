@@ -13,6 +13,7 @@ public class TransferServiceTests
     private readonly Mock<ITransferRepository> _transferRepoMock;
     private readonly Mock<IInventoryRepository> _inventoryRepoMock;
     private readonly Mock<IUnitRepository> _unitRepoMock;
+    private readonly Mock<ICashShiftRepository> _cashShiftRepoMock;
     private readonly TransferService _transferService;
 
     public TransferServiceTests()
@@ -21,13 +22,15 @@ public class TransferServiceTests
         _transferRepoMock = new Mock<ITransferRepository>();
         _inventoryRepoMock = new Mock<IInventoryRepository>();
         _unitRepoMock = new Mock<IUnitRepository>();
+        _cashShiftRepoMock = new Mock<ICashShiftRepository>();
 
         _transferService = new TransferService(
             _uowMock.Object,
             _transferRepoMock.Object,
             _inventoryRepoMock.Object,
             _unitRepoMock.Object,
-            new UnitConversionService()
+            new UnitConversionService(),
+            _cashShiftRepoMock.Object
         );
     }
 
@@ -68,6 +71,11 @@ public class TransferServiceTests
     [Fact]
     public async Task DeleteTransferAsync_ShouldCallRepo()
     {
+        var transfer = new Transfer { Id = 1, FromWarehouseId = 10, ToWarehouseId = 20, Date = DateTime.Now, Details = new List<TransferDetail>() };
+        _transferRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(transfer);
+        _cashShiftRepoMock.Setup(x => x.IsWarehouseClosedForDateAsync(It.IsAny<long>(), It.IsAny<DateTime>())).ReturnsAsync(false);
+        _transferRepoMock.Setup(x => x.DeleteAsync(1, 1)).ReturnsAsync(true);
+
         await _transferService.DeleteTransferAsync(1, 1);
         _transferRepoMock.Verify(x => x.DeleteAsync(1, 1), Times.Once);
     }

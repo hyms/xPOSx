@@ -16,6 +16,7 @@ public class ReturnService : IReturnService
     private readonly UnitConversionService _unitConversionService;
     private readonly IVoucherRepository _voucherRepository;
     private readonly IPaymentRepository _paymentRepository;
+    private readonly ICashShiftRepository _cashShiftRepository;
 
     public ReturnService(
         IUnitOfWork uow,
@@ -25,7 +26,8 @@ public class ReturnService : IReturnService
         IUnitRepository unitRepository,
         UnitConversionService unitConversionService,
         IVoucherRepository voucherRepository,
-        IPaymentRepository paymentRepository)
+        IPaymentRepository paymentRepository,
+        ICashShiftRepository cashShiftRepository)
     {
         _uow = uow;
         _saleReturnRepository = saleReturnRepository;
@@ -35,6 +37,7 @@ public class ReturnService : IReturnService
         _unitConversionService = unitConversionService;
         _voucherRepository = voucherRepository;
         _paymentRepository = paymentRepository;
+        _cashShiftRepository = cashShiftRepository;
     }
 
     public async Task<IEnumerable<SaleReturnReadDto>> GetAllSaleReturnsAsync()
@@ -108,7 +111,44 @@ public class ReturnService : IReturnService
 
     public async Task<bool> DeleteSaleReturnAsync(long id, long userId)
     {
-        return await _saleReturnRepository.DeleteAsync(id, userId);
+        _uow.BeginTransaction();
+        try
+        {
+            var saleReturn = await _saleReturnRepository.GetByIdAsync(id);
+            if (saleReturn == null)
+            {
+                _uow.Rollback();
+                return false;
+            }
+
+            // Validar si la caja/turno del almacén está cerrado para esta fecha
+            var isClosed = await _cashShiftRepository.IsWarehouseClosedForDateAsync(saleReturn.WarehouseId, saleReturn.Date);
+            if (isClosed)
+            {
+                throw new InvalidOperationException("No se puede eliminar la devolución de venta porque el turno de caja de este almacén ya está cerrado para esta fecha.");
+            }
+
+            // 1. Revertir inventario (restar del stock los productos que el cliente había devuelto)
+            if (saleReturn.Details != null)
+            {
+                foreach (var detail in saleReturn.Details)
+                {
+                    // En SaleReturn, detail.Quantity es decimal
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, saleReturn.WarehouseId, -detail.Quantity);
+                }
+            }
+
+            // 2. Soft-delete de la devolución
+            var result = await _saleReturnRepository.DeleteAsync(id, userId);
+
+            _uow.Commit();
+            return result;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
     }
 
     public async Task<IEnumerable<PurchaseReturnReadDto>> GetAllPurchaseReturnsAsync()
@@ -182,6 +222,43 @@ public class ReturnService : IReturnService
 
     public async Task<bool> DeletePurchaseReturnAsync(long id, long userId)
     {
-        return await _purchaseReturnRepository.DeleteAsync(id, userId);
+        _uow.BeginTransaction();
+        try
+        {
+            var purchaseReturn = await _purchaseReturnRepository.GetByIdAsync(id);
+            if (purchaseReturn == null)
+            {
+                _uow.Rollback();
+                return false;
+            }
+
+            // Validar si la caja/turno del almacén está cerrado para esta fecha
+            var isClosed = await _cashShiftRepository.IsWarehouseClosedForDateAsync(purchaseReturn.WarehouseId, purchaseReturn.Date);
+            if (isClosed)
+            {
+                throw new InvalidOperationException("No se puede eliminar la devolución de compra porque el turno de caja de este almacén ya está cerrado para esta fecha.");
+            }
+
+            // 1. Revertir inventario (sumar de nuevo al stock los productos devueltos al proveedor)
+            if (purchaseReturn.Details != null)
+            {
+                foreach (var detail in purchaseReturn.Details)
+                {
+                    // En PurchaseReturn, detail.Quantity es decimal
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, purchaseReturn.WarehouseId, detail.Quantity);
+                }
+            }
+
+            // 2. Soft-delete de la devolución de compra
+            var result = await _purchaseReturnRepository.DeleteAsync(id, userId);
+
+            _uow.Commit();
+            return result;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
     }
 }

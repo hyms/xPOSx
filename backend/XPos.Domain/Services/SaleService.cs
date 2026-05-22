@@ -14,6 +14,7 @@ public class SaleService : ISaleService
     private readonly IPaymentRepository _paymentRepository;
     private readonly IUnitRepository _unitRepository;
     private readonly UnitConversionService _unitConversionService;
+    private readonly ICashShiftRepository _cashShiftRepository;
 
     public SaleService(
         IUnitOfWork uow, 
@@ -22,7 +23,8 @@ public class SaleService : ISaleService
         IInventoryRepository inventoryRepository,
         IPaymentRepository paymentRepository,
         IUnitRepository unitRepository,
-        UnitConversionService unitConversionService)
+        UnitConversionService unitConversionService,
+        ICashShiftRepository cashShiftRepository)
     {
         _uow = uow;
         _saleRepository = saleRepository;
@@ -31,6 +33,7 @@ public class SaleService : ISaleService
         _paymentRepository = paymentRepository;
         _unitRepository = unitRepository;
         _unitConversionService = unitConversionService;
+        _cashShiftRepository = cashShiftRepository;
     }
 
     public async Task<PagedResult<SaleReadDto>> GetAllAsync(PagingParams pagingParams)
@@ -114,6 +117,53 @@ public class SaleService : ISaleService
 
     public async Task<bool> DeleteSaleAsync(long id, long userId)
     {
-        return await _saleRepository.DeleteAsync(id, userId);
+        _uow.BeginTransaction();
+        try
+        {
+            var sale = await _saleRepository.GetByIdAsync(id);
+            if (sale == null)
+            {
+                _uow.Rollback();
+                return false;
+            }
+
+            if (sale.CashShiftId.HasValue)
+            {
+                var shift = await _cashShiftRepository.GetByIdAsync(sale.CashShiftId.Value);
+                if (shift != null && shift.Status == "CLOSED")
+                {
+                    throw new InvalidOperationException("No se puede eliminar la venta porque pertenece a un turno de caja cerrado.");
+                }
+            }
+
+            // 1. Devolver los productos al inventario (restaurar stock)
+            if (sale.Details != null)
+            {
+                foreach (var detail in sale.Details)
+                {
+                    Unit? unit = null;
+                    if (detail.SaleUnitId.HasValue)
+                    {
+                        unit = await _unitRepository.GetByIdAsync(detail.SaleUnitId.Value);
+                    }
+
+                    var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
+                    
+                    // Sumar de nuevo al inventario
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, sale.WarehouseId, baseQuantity);
+                }
+            }
+
+            // 2. Eliminar (soft-delete) la venta
+            var deleted = await _saleRepository.DeleteAsync(id, userId);
+            
+            _uow.Commit();
+            return deleted;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
     }
 }

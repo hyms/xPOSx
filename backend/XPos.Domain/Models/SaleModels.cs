@@ -20,6 +20,7 @@ public class Sale
     public string? ShippingStatus { get; set; }
     public string? Notes { get; set; }
     public long? VoucherId { get; set; }
+    public long? CashShiftId { get; set; }
     
     // Audit fields
     public DateTime? CreatedAt { get; set; }

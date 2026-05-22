@@ -165,6 +165,47 @@
             show-continuous-option
             title="Escanear Productos"
         />
+
+        <!-- Dialogo para Abrir Caja (Turno) -->
+        <q-dialog v-model="showOpenShiftDialog" persistent>
+            <q-card style="min-width: 350px">
+                <q-card-section class="bg-primary text-white row items-center">
+                    <q-icon name="point_of_sale" size="md" class="q-mr-sm" />
+                    <div class="text-h6">Abrir Turno de Caja</div>
+                </q-card-section>
+
+                <q-card-section class="q-pt-lg">
+                    <q-select
+                        v-model="selectedRegisterId"
+                        :options="registers"
+                        option-value="id"
+                        option-label="name"
+                        emit-value
+                        map-options
+                        label="Seleccione Caja"
+                        outlined
+                        dense
+                        class="q-mb-md"
+                        :rules="[val => !!val || 'La caja es requerida']"
+                    />
+
+                    <q-input
+                        v-model.number="openShiftStartingCash"
+                        type="number"
+                        label="Monto Inicial en Caja"
+                        outlined
+                        dense
+                        prefix="BOB "
+                        :rules="[val => val >= 0 || 'El monto inicial no puede ser negativo']"
+                    />
+                </q-card-section>
+
+                <q-card-actions align="right" class="text-primary q-pb-md q-pr-md">
+                    <q-btn flat label="Salir al Dashboard" color="grey" to="/" />
+                    <q-btn label="ABRIR TURNO" color="primary" @click="submitOpenShift" />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -188,9 +229,11 @@ const {
     cart, showCheckoutDialog, showCartMobile, showScanner, showScanResultDialog,
     lastScannedProduct, paidAmount, change, saving, formData, quickAmounts,
     subtotal, total, filteredProducts, isSearchingClient, isInvoiceBlocked, SIN_LIMIT,
+    activeShift, registers, showOpenShiftDialog, openShiftStartingCash, selectedRegisterId,
     calculateTotals, setQuickAmount, handleBarcodeScan, getProductName, getStock,
     fetchData, fetchStocks, addToCart, incrementQty, decrementQty, removeFromCart,
-    clearCart, calculateChange, submitSale, openCheckout, searchClientByNit, quickRegisterClient
+    clearCart, calculateChange, submitSale, openCheckout, searchClientByNit, quickRegisterClient,
+    submitOpenShift
 } = usePosLogic();
 
 // Physical Barcode Scanner Logic

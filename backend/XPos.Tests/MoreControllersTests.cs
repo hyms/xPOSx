@@ -161,4 +161,26 @@ public class MoreControllersTests
         var result = controller.GetSettings();
         result.Should().BeOfType<OkObjectResult>();
     }
+
+    [Fact]
+    public async Task CashRegistersController_FullCycle()
+    {
+        var repoMock = new Mock<ICashRegisterRepository>();
+        var controller = new CashRegistersController(repoMock.Object) { ControllerContext = CreateContext() };
+
+        repoMock.Setup(x => x.GetAllAsync()).ReturnsAsync(new List<CashRegister>());
+        (await controller.GetAll()).Should().BeOfType<OkObjectResult>();
+
+        repoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(new CashRegister { Id = 1 });
+        (await controller.GetById(1)).Should().BeOfType<OkObjectResult>();
+
+        repoMock.Setup(x => x.CreateAsync(It.IsAny<CashRegister>())).ReturnsAsync(1L);
+        (await controller.Create(new CashRegister { Name = "Caja Test" })).Should().BeOfType<CreatedAtActionResult>();
+
+        repoMock.Setup(x => x.UpdateAsync(It.IsAny<CashRegister>())).ReturnsAsync(true);
+        (await controller.Update(1, new CashRegister { Id = 1, Name = "Caja Test" })).Should().BeOfType<OkObjectResult>();
+
+        repoMock.Setup(x => x.DeleteAsync(1)).ReturnsAsync(true);
+        (await controller.Delete(1)).Should().BeOfType<OkObjectResult>();
+    }
 }

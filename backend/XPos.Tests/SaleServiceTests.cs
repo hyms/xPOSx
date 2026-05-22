@@ -14,6 +14,7 @@ public class SaleServiceTests
     private readonly Mock<IInventoryRepository> _inventoryRepoMock;
     private readonly Mock<IPaymentRepository> _paymentRepoMock;
     private readonly Mock<IUnitRepository> _unitRepoMock;
+    private readonly Mock<ICashShiftRepository> _cashShiftRepoMock;
     private readonly SaleService _saleService;
 
     public SaleServiceTests()
@@ -24,6 +25,7 @@ public class SaleServiceTests
         _inventoryRepoMock = new Mock<IInventoryRepository>();
         _paymentRepoMock = new Mock<IPaymentRepository>();
         _unitRepoMock = new Mock<IUnitRepository>();
+        _cashShiftRepoMock = new Mock<ICashShiftRepository>();
         
         // We can use the real UnitConversionService if it's simple enough or mock it.
         // Let's use the real one to test integration within Domain Services.
@@ -36,7 +38,8 @@ public class SaleServiceTests
             _inventoryRepoMock.Object,
             _paymentRepoMock.Object,
             _unitRepoMock.Object,
-            conversionService
+            conversionService,
+            _cashShiftRepoMock.Object
         );
     }
 
@@ -102,9 +105,64 @@ public class SaleServiceTests
     }
 
     [Fact]
-    public async Task DeleteSaleAsync_ShouldCallRepo()
+    public async Task DeleteSaleAsync_ShouldRestoreStock_WhenShiftIsOpen()
     {
-        await _saleService.DeleteSaleAsync(1, 1);
-        _saleRepoMock.Verify(x => x.DeleteAsync(1, 1), Times.Once);
+        // Arrange
+        var saleId = 1L;
+        var userId = 2L;
+        var sale = new Sale
+        {
+            Id = saleId,
+            WarehouseId = 10,
+            CashShiftId = 5L,
+            Details = new List<SaleDetail>
+            {
+                new SaleDetail { ProductId = 100, Quantity = 3, Price = 50.00m }
+            }
+        };
+
+        _saleRepoMock.Setup(x => x.GetByIdAsync(saleId)).ReturnsAsync(sale);
+        _cashShiftRepoMock.Setup(x => x.GetByIdAsync(5L)).ReturnsAsync(new CashShift { Id = 5L, Status = "OPEN" });
+        _saleRepoMock.Setup(x => x.DeleteAsync(saleId, userId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _saleService.DeleteSaleAsync(saleId, userId);
+
+        // Assert
+        result.Should().BeTrue();
+        _inventoryRepoMock.Verify(x => x.UpdateStockAsync(100, 10, 3), Times.Once); // Should restore stock (+3)
+        _saleRepoMock.Verify(x => x.DeleteAsync(saleId, userId), Times.Once);
+        _uowMock.Verify(x => x.BeginTransaction(), Times.Once);
+        _uowMock.Verify(x => x.Commit(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteSaleAsync_ShouldThrow_WhenShiftIsClosed()
+    {
+        // Arrange
+        var saleId = 1L;
+        var userId = 2L;
+        var sale = new Sale
+        {
+            Id = saleId,
+            WarehouseId = 10,
+            CashShiftId = 5L,
+            Details = new List<SaleDetail>()
+        };
+
+        _saleRepoMock.Setup(x => x.GetByIdAsync(saleId)).ReturnsAsync(sale);
+        _cashShiftRepoMock.Setup(x => x.GetByIdAsync(5L)).ReturnsAsync(new CashShift { Id = 5L, Status = "CLOSED" });
+
+        // Act
+        Func<Task> act = async () => await _saleService.DeleteSaleAsync(saleId, userId);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("No se puede eliminar la venta porque pertenece a un turno de caja cerrado.");
+        
+        _inventoryRepoMock.Verify(x => x.UpdateStockAsync(It.IsAny<long>(), It.IsAny<long>(), It.IsAny<decimal>()), Times.Never);
+        _saleRepoMock.Verify(x => x.DeleteAsync(It.IsAny<long>(), It.IsAny<long>()), Times.Never);
+        _uowMock.Verify(x => x.BeginTransaction(), Times.Once);
+        _uowMock.Verify(x => x.Rollback(), Times.Once);
     }
 }

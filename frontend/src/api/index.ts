@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
+import { Notify } from "quasar";
 
 class ApiClient {
   private static instance: ApiClient;
@@ -35,14 +36,51 @@ class ApiClient {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response && error.response.status === 401) {
-          const isLoginRequest = error.config?.url?.includes("/auth/login");
-          if (!isLoginRequest) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("username");
+        if (error.response) {
+          const status = error.response.status;
+          const message = error.response.data?.message || error.response.data?.Message || "Ocurrió un error inesperado.";
 
-            window.location.href = "/login";
+          if (status === 401) {
+            const isLoginRequest = error.config?.url?.includes("/auth/login");
+            if (!isLoginRequest) {
+              localStorage.removeItem("token");
+              localStorage.removeItem("username");
+
+              window.location.href = "/login";
+            }
+          } else if (status === 403) {
+            Notify.create({
+              color: "negative",
+              message: message || "No tienes permisos para realizar esta acción.",
+              icon: "lock",
+              position: "top-right",
+              timeout: 4000
+            });
+          } else if (status >= 400 && status < 500) {
+            Notify.create({
+              color: "warning",
+              message: message,
+              icon: "warning",
+              position: "top-right",
+              timeout: 4000
+            });
+          } else if (status >= 500) {
+            Notify.create({
+              color: "negative",
+              message: "Error interno del servidor. Por favor, intente de nuevo más tarde.",
+              icon: "report",
+              position: "top-right",
+              timeout: 5000
+            });
           }
+        } else if (error.request) {
+          Notify.create({
+            color: "negative",
+            message: "No se pudo conectar con el servidor. Verifique su conexión de red.",
+            icon: "cloud_off",
+            position: "top-right",
+            timeout: 5000
+          });
         }
         return Promise.reject(error);
       },

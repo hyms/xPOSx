@@ -13,19 +13,22 @@ public class TransferService : ITransferService
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IUnitRepository _unitRepository;
     private readonly UnitConversionService _unitConversionService;
+    private readonly ICashShiftRepository _cashShiftRepository;
 
     public TransferService(
         IUnitOfWork uow,
         ITransferRepository transferRepository,
         IInventoryRepository inventoryRepository,
         IUnitRepository unitRepository,
-        UnitConversionService unitConversionService)
+        UnitConversionService unitConversionService,
+        ICashShiftRepository cashShiftRepository)
     {
         _uow = uow;
         _transferRepository = transferRepository;
         _inventoryRepository = inventoryRepository;
         _unitRepository = unitRepository;
         _unitConversionService = unitConversionService;
+        _cashShiftRepository = cashShiftRepository;
     }
 
     public async Task<IEnumerable<TransferReadDto>> GetAllAsync(string? filter = null)
@@ -150,6 +153,53 @@ public class TransferService : ITransferService
 
     public async Task<bool> DeleteTransferAsync(long id, long userId)
     {
-        return await _transferRepository.DeleteAsync(id, userId);
+        _uow.BeginTransaction();
+        try
+        {
+            var transfer = await _transferRepository.GetByIdAsync(id);
+            if (transfer == null)
+            {
+                _uow.Rollback();
+                return false;
+            }
+
+            // Validar si la caja/turno del almacén de origen está cerrado para esta fecha
+            var isFromClosed = await _cashShiftRepository.IsWarehouseClosedForDateAsync(transfer.FromWarehouseId, transfer.Date);
+            if (isFromClosed)
+            {
+                throw new InvalidOperationException("No se puede eliminar la transferencia porque el turno de caja del almacén de origen ya está cerrado para esta fecha.");
+            }
+
+            // Validar si la caja/turno del almacén de destino está cerrado para esta fecha
+            var isToClosed = await _cashShiftRepository.IsWarehouseClosedForDateAsync(transfer.ToWarehouseId, transfer.Date);
+            if (isToClosed)
+            {
+                throw new InvalidOperationException("No se puede eliminar la transferencia porque el turno de caja del almacén de destino ya está cerrado para esta fecha.");
+            }
+
+            // 1. Revertir inventario (sumar en origen, restar en destino)
+            if (transfer.Details != null)
+            {
+                foreach (var detail in transfer.Details)
+                {
+                    // Sumar de nuevo en origen
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.FromWarehouseId, detail.Quantity);
+
+                    // Restar de destino
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, transfer.ToWarehouseId, -detail.Quantity);
+                }
+            }
+
+            // 2. Soft-delete de la transferencia
+            var result = await _transferRepository.DeleteAsync(id, userId);
+
+            _uow.Commit();
+            return result;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
     }
 }

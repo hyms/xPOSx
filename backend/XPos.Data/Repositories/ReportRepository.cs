@@ -27,7 +27,7 @@ public class ReportRepository : IReportRepository
             FROM sales s
             JOIN clients c ON s.client_id = c.id
             JOIN warehouses w ON s.warehouse_id = w.id
-            WHERE s.deleted_at IS NULL";
+            WHERE s.deleted_at IS NULL AND c.deleted_at IS NULL AND w.deleted_at IS NULL";
 
         var parameters = new DynamicParameters();
         
@@ -59,7 +59,7 @@ public class ReportRepository : IReportRepository
             FROM purchases p
             JOIN providers pr ON p.provider_id = pr.id
             JOIN warehouses w ON p.warehouse_id = w.id
-            WHERE p.deleted_at IS NULL";
+            WHERE p.deleted_at IS NULL AND pr.deleted_at IS NULL AND w.deleted_at IS NULL";
 
         var parameters = new DynamicParameters();
 
@@ -92,7 +92,7 @@ public class ReportRepository : IReportRepository
             JOIN products p ON pw.product_id = p.id
             JOIN warehouses w ON pw.warehouse_id = w.id
             JOIN categories cat ON p.category_id = cat.id
-            WHERE p.deleted_at IS NULL";
+            WHERE p.deleted_at IS NULL AND w.deleted_at IS NULL AND cat.deleted_at IS NULL";
 
         var parameters = new DynamicParameters();
 
@@ -273,10 +273,10 @@ public class ReportRepository : IReportRepository
 
         string sql = $@"
             SELECT date::timestamp as ""Date"", ref as ""Ref"", 'Sale' as ""Type"", quantity as ""Quantity"", warehouse_name as ""WarehouseName""
-            FROM (SELECT s.date, s.ref, sd.quantity, w.name as warehouse_name FROM sale_details sd JOIN sales s ON sd.sale_id = s.id JOIN warehouses w ON s.warehouse_id = w.id WHERE sd.product_id = @productId AND s.deleted_at IS NULL {warehouseFilter.Replace("warehouse_id", "s.warehouse_id")}) as movements
+            FROM (SELECT s.date, s.ref, sd.quantity, w.name as warehouse_name FROM sale_details sd JOIN sales s ON sd.sale_id = s.id JOIN warehouses w ON s.warehouse_id = w.id WHERE sd.product_id = @productId AND s.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter.Replace("warehouse_id", "s.warehouse_id")}) as movements
             UNION ALL
             SELECT date::timestamp as ""Date"", ref as ""Ref"", 'Purchase' as ""Type"", quantity as ""Quantity"", warehouse_name as ""WarehouseName""
-            FROM (SELECT p.date, p.ref, pd.quantity, w.name as warehouse_name FROM purchase_details pd JOIN purchases p ON pd.purchase_id = p.id JOIN warehouses w ON p.warehouse_id = w.id WHERE pd.product_id = @productId AND p.deleted_at IS NULL {warehouseFilter.Replace("warehouse_id", "p.warehouse_id")}) as movements
+            FROM (SELECT p.date, p.ref, pd.quantity, w.name as warehouse_name FROM purchase_details pd JOIN purchases p ON pd.purchase_id = p.id JOIN warehouses w ON p.warehouse_id = w.id WHERE pd.product_id = @productId AND p.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter.Replace("warehouse_id", "p.warehouse_id")}) as movements
             ORDER BY ""Date"" DESC";
         return await _uow.Connection.QueryAsync<ProductMovementReportDto>(sql, parameters, _uow.Transaction);
     }
@@ -327,7 +327,8 @@ public class ReportRepository : IReportRepository
             SELECT p.code, p.name, pw.qty as quantity, p.stock_alert as StockAlert
             FROM products p
             JOIN product_warehouse pw ON p.id = pw.product_id
-            WHERE pw.qty <= p.stock_alert AND p.deleted_at IS NULL {warehouseFilter}";
+            JOIN warehouses w ON pw.warehouse_id = w.id
+            WHERE pw.qty <= p.stock_alert AND p.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter}";
         
         return await _uow.Connection.QueryAsync<StockAlertReportDto>(sql, parameters, _uow.Transaction);
     }
@@ -363,17 +364,17 @@ public class ReportRepository : IReportRepository
             SELECT s.date::timestamp as ""Date"", s.ref as ""Ref"", 'Sale' as ""Type"", s.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM sales s 
             JOIN warehouses w ON s.warehouse_id = w.id 
-            JOIN users u ON s.user_id = u.id WHERE s.deleted_at IS NULL {warehouseFilter} {userFilter}
+            JOIN users u ON s.user_id = u.id WHERE s.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter} {userFilter}
             UNION ALL
             SELECT p.date::timestamp as ""Date"", p.ref as ""Ref"", 'Purchase' as ""Type"", p.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM purchases p 
             JOIN warehouses w ON p.warehouse_id = w.id 
-            JOIN users u ON p.user_id = u.id WHERE p.deleted_at IS NULL {warehouseFilter} {userFilter}
+            JOIN users u ON p.user_id = u.id WHERE p.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter} {userFilter}
             UNION ALL
             SELECT t.date::timestamp as ""Date"", t.ref as ""Ref"", 'Transfer' as ""Type"", t.grand_total as ""Total"", w.name as ""WarehouseName"", u.username as ""UserName"" 
             FROM transfers t 
             JOIN warehouses w ON t.to_warehouse_id = w.id 
-            JOIN users u ON t.user_id = u.id WHERE t.deleted_at IS NULL {warehouseFilter} {userFilter}
+            JOIN users u ON t.user_id = u.id WHERE t.deleted_at IS NULL AND w.deleted_at IS NULL {warehouseFilter} {userFilter}
             ");
 
         sqlBuilder.Append(@" ORDER BY ""Date"" DESC");

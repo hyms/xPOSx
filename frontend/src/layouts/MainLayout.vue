@@ -376,6 +376,17 @@
                             /></q-item-section>
                             <q-item-section>Almacenes</q-item-section>
                         </q-item>
+                        <q-item
+                            v-if="authStore.hasPermission('warehouses_view')"
+                            clickable
+                            to="/cash-registers"
+                            active-class="active-item"
+                        >
+                            <q-item-section avatar
+                                ><q-icon name="point_of_sale"
+                            /></q-item-section>
+                            <q-item-section>Cajas</q-item-section>
+                        </q-item>
                     </q-expansion-item>
 
                     <q-item

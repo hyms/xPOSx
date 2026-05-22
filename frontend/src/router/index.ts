@@ -42,6 +42,7 @@ export default route(function ({ store /*, ssrContext */ }) {
           { path: 'roles', component: () => import('../pages/roles/RoleList.vue'), meta: { permission: 'roles_view' } },
           { path: 'permissions', component: () => import('../pages/permissions/PermissionList.vue'), meta: { permission: 'permissions_view' } },
           { path: 'warehouses', component: () => import('../pages/warehouses/WarehouseList.vue'), meta: { permission: 'warehouses_view' } },
+          { path: 'cash-registers', component: () => import('../pages/cash-registers/CashRegisterList.vue'), meta: { permission: 'warehouses_view' } },
           { path: 'pos', component: () => import('../pages/pos/PosPage.vue'), meta: { permission: 'pos_view' } },
           { path: 'sales', component: () => import('../pages/sales/SaleList.vue'), meta: { permission: 'sales_view' } },
           { path: 'sales/create', component: () => import('../pages/sales/SaleForm.vue'), meta: { permission: 'sales_create' } },

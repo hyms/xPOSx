@@ -102,7 +102,7 @@ public class SaleRepository : ISaleRepository
                    s.tax_rate as TaxRate, s.tax_net as TaxNet, s.discount, s.shipping,
                    s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus,
                    s.shipping_status as ShippingStatus, s.notes, s.created_at as CreatedAt, s.created_by as CreatedBy,
-                   s.updated_at as UpdatedAt, s.user_id as UserId,
+                   s.updated_at as UpdatedAt, s.user_id as UserId, s.cash_shift_id as CashShiftId,
                    v.id as Vid, v.voucher_type as VoucherType, v.voucher_number as VoucherNumber,
                    v.cae, v.cae_expiration::timestamp as CaeExpiration, v.issued_at::timestamp as IssuedAt
             FROM sales s
@@ -136,8 +136,8 @@ public class SaleRepository : ISaleRepository
     public async Task<long> CreateAsync(Sale sale)
     {
         const string sql = @"
-            INSERT INTO sales (user_id, ref, date, is_pos, client_id, warehouse_id, tax_rate, tax_net, discount, shipping, grand_total, paid_amount, status, payment_status, shipping_status, notes, created_at, created_by)
-            VALUES (@UserId, @Ref, @Date, @IsPos, @ClientId, @WarehouseId, @TaxRate, @TaxNet, @Discount, @Shipping, @GrandTotal, @PaidAmount, @Status, @PaymentStatus, @ShippingStatus, @Notes, CURRENT_TIMESTAMP, @CreatedBy)
+            INSERT INTO sales (user_id, ref, date, is_pos, client_id, warehouse_id, tax_rate, tax_net, discount, shipping, grand_total, paid_amount, status, payment_status, shipping_status, notes, created_at, created_by, cash_shift_id)
+            VALUES (@UserId, @Ref, @Date, @IsPos, @ClientId, @WarehouseId, @TaxRate, @TaxNet, @Discount, @Shipping, @GrandTotal, @PaidAmount, @Status, @PaymentStatus, @ShippingStatus, @Notes, CURRENT_TIMESTAMP, @CreatedBy, @CashShiftId)
             RETURNING id";
         
         var saleId = await _uow.Connection.ExecuteScalarAsync<long>(sql, sale, _uow.Transaction);
