@@ -43,52 +43,28 @@
             </div>
         </div>
 
-        <FormDialog
+        <CategoryFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Categoría' : 'Nueva Categoría'"
-            @submit="saveCategory"
-            :saving="saving"
-        >
-            <q-input
-                v-model="formData.code"
-                label="Código"
-                lazy-rules
-                :rules="[(val) => !!val || 'Requerido']"
-                outlined
-                dense
-            />
-            <q-input
-                v-model="formData.name"
-                label="Nombre"
-                lazy-rules
-                :rules="[(val) => !!val || 'Requerido']"
-                outlined
-                dense
-            />
-        </FormDialog>
+            :initial-data="selectedCategoryData"
+            @saved="fetchCategories"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { categoryService } from "@/services/category.service";
 import type { Category } from "@/types";
-import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
+import CategoryFormDialog from "./components/CategoryFormDialog.vue";
 
 const $q = useQuasar();
 const categories = ref<Category[]>([]);
 const loading = ref(true);
 const filter = ref("");
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<Category>({
-    code: "",
-    name: "",
-});
+const selectedCategoryData = ref<any>(null);
 
 const columns = [
     {
@@ -133,33 +109,8 @@ const fetchCategories = async () => {
 };
 
 const openDialog = (category?: Category) => {
-    if (category) {
-        isEdit.value = true;
-        Object.assign(formData, { ...category });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, { code: "", name: "" });
-    }
+    selectedCategoryData.value = category ? { ...category } : null;
     showDialog.value = true;
-};
-
-const saveCategory = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await categoryService.update(formData.id!, formData);
-            $q.notify({ color: "positive", message: "Categoría actualizada" });
-        } else {
-            await categoryService.create(formData);
-            $q.notify({ color: "positive", message: "Categoría creada" });
-        }
-        showDialog.value = false;
-        fetchCategories();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar categoría" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDelete = (category: Category) => {

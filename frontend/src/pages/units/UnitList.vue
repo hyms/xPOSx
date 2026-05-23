@@ -43,93 +43,28 @@
             </div>
         </div>
 
-        <FormDialog
+        <UnitFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Unidad' : 'Nueva Unidad'"
-            @submit="saveUnit"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.name"
-                        label="Nombre"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.shortName"
-                        label="Nombre Corto"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12">
-                    <q-select
-                        v-model="formData.baseUnit"
-                        :options="unitOptions"
-                        label="Unidad Base"
-                        option-value="id"
-                        option-label="name"
-                        emit-value
-                        map-options
-                        clearable
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.operator"
-                        :options="['*', '/']"
-                        label="Operador"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model.number="formData.operatorValue"
-                        label="Valor"
-                        type="number"
-                        outlined
-                        dense
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :initial-data="selectedUnitData"
+            @saved="fetchUnits"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { unitService } from "@/services/unit.service";
 import type { Unit } from "@/types";
-import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
+import UnitFormDialog from "./components/UnitFormDialog.vue";
 
 const $q = useQuasar();
 const units = ref<Unit[]>([]);
 const loading = ref(true);
 const filter = ref("");
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<Unit>({
-    name: "",
-    shortName: "",
-    baseUnit: undefined,
-    operator: "*",
-    operatorValue: 1,
-});
+const selectedUnitData = ref<any>(null);
 
 const columns = [
     {
@@ -172,10 +107,6 @@ const columns = [
     },
 ];
 
-const unitOptions = computed(() =>
-    units.value.filter((u: Unit) => !u.baseUnit),
-);
-
 const fetchUnits = async () => {
     loading.value = true;
     try {
@@ -189,39 +120,8 @@ const fetchUnits = async () => {
 };
 
 const openDialog = (unit?: Unit) => {
-    if (unit) {
-        isEdit.value = true;
-        Object.assign(formData, { ...unit });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            name: "",
-            shortName: "",
-            baseUnit: undefined,
-            operator: "*",
-            operatorValue: 1,
-        });
-    }
+    selectedUnitData.value = unit ? { ...unit } : null;
     showDialog.value = true;
-};
-
-const saveUnit = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await unitService.update(formData.id!, formData);
-            $q.notify({ color: "positive", message: "Unidad actualizada" });
-        } else {
-            await unitService.create(formData);
-            $q.notify({ color: "positive", message: "Unidad creada" });
-        }
-        showDialog.value = false;
-        fetchUnits();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar unidad" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDelete = (unit: Unit) => {

@@ -83,6 +83,14 @@
                                             flat
                                             round
                                             color="primary"
+                                            icon="visibility"
+                                            size="sm"
+                                            @click="viewExpense(props.row.id)"
+                                        />
+                                        <q-btn
+                                            flat
+                                            round
+                                            color="primary"
                                             icon="edit"
                                             size="sm"
                                             @click="
@@ -112,6 +120,13 @@
 
                         <template v-slot:body-cell-actions="props">
                             <q-td :props="props">
+                                <q-btn
+                                    flat
+                                    round
+                                    color="primary"
+                                    icon="visibility"
+                                    @click="viewExpense(props.row.id)"
+                                />
                                 <q-btn
                                     flat
                                     round
@@ -325,6 +340,13 @@
                 dense
             />
         </FormDialog>
+        <!-- Expense Detail Dialog -->
+        <ExpenseDetailDialog
+            v-model="detailDialog"
+            :expense-id="selectedExpenseId"
+            :category-name="selectedExpenseCategoryName"
+            :warehouse-name="selectedExpenseWarehouseName"
+        />
     </q-page>
 </template>
 
@@ -336,8 +358,8 @@ import { warehouseService } from "@/services/warehouse.service";
 import { useConfirm } from "@/composables/useConfirm";
 import type { Expense, ExpenseCategory, ExpenseReadDto } from "@/types";
 import FormDialog from "@/components/FormDialog.vue";
-
 import { useCurrency } from "@/composables/useCurrency";
+import ExpenseDetailDialog from "./components/ExpenseDetailDialog.vue";
 
 const $q = useQuasar();
 const { confirmDelete } = useConfirm();
@@ -347,6 +369,19 @@ const { formatCurrency, currencySymbol } = useCurrency();
 const loadingExpenses = ref(false);
 const loadingCategories = ref(false);
 const saving = ref(false);
+
+const detailDialog = ref(false);
+const selectedExpenseId = ref<number | null>(null);
+const selectedExpenseCategoryName = ref("");
+const selectedExpenseWarehouseName = ref("");
+
+const viewExpense = (id: number) => {
+    const row = expenses.value.find((e) => e.id === id);
+    selectedExpenseId.value = id;
+    selectedExpenseCategoryName.value = row?.categoryName || "";
+    selectedExpenseWarehouseName.value = row?.warehouseName || "";
+    detailDialog.value = true;
+};
 
 // Data
 const expenses = ref<ExpenseReadDto[]>([]);

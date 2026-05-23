@@ -22,6 +22,12 @@
             </q-td>
           </template>
         </q-table>
+    <!-- Adjustment Detail Dialog -->
+    <AdjustmentDetailDialog
+      v-model="detailDialog"
+      :adjustment-id="selectedAdjustmentId"
+      :warehouse-name="selectedWarehouseName"
+    />
       </div>
     </div>
   </q-page>
@@ -34,12 +40,17 @@ import { adjustmentService } from '@/services/adjustment.service';
 import type { AdjustmentReadDto } from '@/types'
 import { useConfirm } from '@/composables/useConfirm'
 import BaseSearch from '@/components/base/BaseSearch.vue'
+import AdjustmentDetailDialog from './components/AdjustmentDetailDialog.vue';
 
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()
 const adjustments = ref<AdjustmentReadDto[]>([])
 const loading = ref(true)
 const filter = ref('')
+
+const detailDialog = ref(false)
+const selectedAdjustmentId = ref<number | null>(null)
+const selectedWarehouseName = ref('')
 
 const columns = [
   { name: 'date', label: 'Fecha', field: 'date', format: (val: string) => new Date(val).toLocaleDateString(), sortable: true, align: 'left' as const },
@@ -65,9 +76,12 @@ watch(filter, (newFilter) => {
   fetchAdjustments(newFilter)
 })
 
-const viewAdjustment = (_id: number) => {
-  $q.notify({ message: 'Detalle no implementado aún', color: 'info' })
-}
+const viewAdjustment = (id: number) => {
+  const row = adjustments.value.find((a) => a.id === id);
+  selectedAdjustmentId.value = id;
+  selectedWarehouseName.value = row?.warehouseName || "";
+  detailDialog.value = true;
+};
 
 const confirmDeleteAction = (adjustment: AdjustmentReadDto) => {
   confirmDelete(adjustment.ref, async () => {

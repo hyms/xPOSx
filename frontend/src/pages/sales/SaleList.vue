@@ -251,6 +251,13 @@
                         </q-td>
                     </template>
                 </q-table>
+        <!-- Detail Dialog -->
+        <SaleDetailDialog
+            v-model="detailDialog"
+            :sale-id="selectedSaleId"
+            :client-name="selectedSaleClientName"
+            :warehouse-name="selectedSaleWarehouseName"
+        />
             </div>
         </div>
     </q-page>
@@ -264,6 +271,7 @@ import { saleService } from "@/services/sale.service";
 import type { SaleReadDto, PagedResult, PagingParams } from "@/types";
 import { useConfirm } from "@/composables/useConfirm";
 import { useCurrency } from "@/composables/useCurrency";
+import SaleDetailDialog from "./components/SaleDetailDialog.vue";
 
 const $q = useQuasar();
 const router = useRouter();
@@ -272,6 +280,10 @@ const { confirmDelete } = useConfirm();
 const sales = ref<SaleReadDto[]>([]);
 const loading = ref(false);
 const filter = ref("");
+const detailDialog = ref(false);
+const selectedSaleId = ref<number | null>(null);
+const selectedSaleClientName = ref("");
+const selectedSaleWarehouseName = ref("");
 const pagination = ref({
     sortBy: "date",
     descending: true,
@@ -405,8 +417,12 @@ const onRequest = async (props: any) => {
     }
 };
 
-const viewSale = (_id: number) => {
-    $q.notify({ message: "Detalle no implementado aún", color: "info" });
+const viewSale = (id: number) => {
+    const saleRow = sales.value.find((s) => s.id === id);
+    selectedSaleId.value = id;
+    selectedSaleClientName.value = saleRow?.clientName || "";
+    selectedSaleWarehouseName.value = saleRow?.warehouseName || "";
+    detailDialog.value = true;
 };
 
 const printVoucher = (id: number) => {

@@ -63,6 +63,13 @@
             </q-td>
           </template>
     </q-table>
+    <!-- Detail Dialog -->
+    <QuotationDetailDialog
+      v-model="detailDialog"
+      :quotation-id="selectedQuotationId"
+      :client-name="selectedQuotationClientName"
+      :warehouse-name="selectedQuotationWarehouseName"
+    />
     </div>
   </q-page>
 </template>
@@ -75,6 +82,7 @@ import { quotationService } from '@/services/quotation.service';
 import type { QuotationReadDto } from '@/types'
 import { useConfirm } from '@/composables/useConfirm'
 import { useCurrency } from '@/composables/useCurrency';
+import QuotationDetailDialog from './components/QuotationDetailDialog.vue';
 
 const $q = useQuasar()
 const router = useRouter()
@@ -82,6 +90,10 @@ const { confirmDelete } = useConfirm()
 const { formatCurrency } = useCurrency();
 const loading = ref(false)
 const quotations = ref<QuotationReadDto[]>([])
+const detailDialog = ref(false)
+const selectedQuotationId = ref<number | null>(null)
+const selectedQuotationClientName = ref('')
+const selectedQuotationWarehouseName = ref('')
 
 
 const columns = [
@@ -115,8 +127,12 @@ const getStatusColor = (status: string) => {
 }
 
 const viewQuotation = (id: number) => {
-  $q.notify({ message: 'Detalle de cotización ' + id })
-}
+  const row = quotations.value.find((q) => q.id === id);
+  selectedQuotationId.value = id;
+  selectedQuotationClientName.value = row?.clientName || "";
+  selectedQuotationWarehouseName.value = row?.warehouseName || "";
+  detailDialog.value = true;
+};
 
 const printQuotation = (id: number) => {
   router.push(`/quotations/print/${id}`)

@@ -103,107 +103,26 @@
         </div>
 
         <!-- Provider Dialog -->
-        <FormDialog
+        <ProviderFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Proveedor' : 'Nuevo Proveedor'"
-            @submit="saveProvider"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.name"
-                        label="Nombre"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model.number="formData.code"
-                        label="Código"
-                        type="number"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.email"
-                        label="Email"
-                        type="email"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.phone"
-                        label="Teléfono"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.city"
-                        label="Ciudad"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.country"
-                        label="País"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12">
-                    <q-input
-                        v-model="formData.address"
-                        label="Dirección"
-                        type="textarea"
-                        autogrow
-                        outlined
-                        dense
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :initial-data="selectedProviderData"
+            @saved="fetchProviders"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { providerService } from "@/services/provider.service";
 import type { Provider } from "@/types";
-import FormDialog from "@/components/FormDialog.vue";
+import ProviderFormDialog from "./components/ProviderFormDialog.vue";
 
 const $q = useQuasar();
 const providers = ref<Provider[]>([]);
 const loading = ref(true);
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<Provider>({
-    name: "",
-    code: 0,
-    email: "",
-    phone: "",
-    city: "",
-    country: "",
-    address: "",
-});
+const selectedProviderData = ref<any>(null);
 
 const columns = [
     {
@@ -251,41 +170,8 @@ const fetchProviders = async () => {
 };
 
 const openDialog = (provider?: Provider) => {
-    if (provider) {
-        isEdit.value = true;
-        Object.assign(formData, { ...provider });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            name: "",
-            code: 0,
-            email: "",
-            phone: "",
-            city: "",
-            country: "",
-            address: "",
-        });
-    }
+    selectedProviderData.value = provider ? { ...provider } : null;
     showDialog.value = true;
-};
-
-const saveProvider = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await providerService.update(formData.id!, formData);
-            $q.notify({ color: "positive", message: "Proveedor actualizado" });
-        } else {
-            await providerService.create(formData);
-            $q.notify({ color: "positive", message: "Proveedor creado" });
-        }
-        showDialog.value = false;
-        fetchProviders();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar proveedor" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDelete = (provider: Provider) => {

@@ -98,94 +98,32 @@
         </div>
 
         <!-- Cash Register Dialog -->
-        <FormDialog
+        <CashRegisterFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Caja' : 'Nueva Caja'"
-            @submit="saveRegister"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-md">
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.name"
-                        label="Nombre de la Caja"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'El nombre es requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.warehouseId"
-                        :options="warehouseOptions"
-                        label="Almacén Asociado"
-                        emit-value
-                        map-options
-                        lazy-rules
-                        :rules="[(val) => !!val || 'El almacén es requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-sm-6 flex items-center">
-                    <q-toggle
-                        v-model="formData.isActive"
-                        label="Caja Activa (Disponible para ventas)"
-                        color="primary"
-                    />
-                </div>
-                <div class="col-12 col-sm-6 flex items-center">
-                    <q-toggle
-                        v-model="formData.isMatriz"
-                        label="¿Es Caja Principal del Almacén?"
-                        color="primary"
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :register-id="selectedRegisterId"
+            :initial-data="selectedRegisterData"
+            @saved="fetchRegisters"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from "vue";
-import { useQuasar } from "quasar";
+import { ref, onMounted } from "vue";
 import { cashShiftService, type CashRegister } from "@/services/cashShift.service";
 import { useWarehouseStore } from "@/stores/warehouse";
 import { useConfirm } from "@/composables/useConfirm";
-import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
+import CashRegisterFormDialog from "./components/CashRegisterFormDialog.vue";
 
-const $q = useQuasar();
 const { confirmDelete } = useConfirm();
 const warehouseStore = useWarehouseStore();
 
 const registers = ref<CashRegister[]>([]);
 const loading = ref(true);
 const filter = ref("");
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<{
-    id?: number;
-    name: string;
-    warehouseId: number;
-    isActive: boolean;
-    isMatriz: boolean;
-}>({
-    name: "",
-    warehouseId: 0,
-    isActive: true,
-    isMatriz: false,
-});
-
-const warehouseOptions = computed(() => {
-    return warehouseStore.warehouses.map((w) => ({
-        label: w.name,
-        value: w.id,
-    }));
-});
+const selectedRegisterId = ref<number | undefined>(undefined);
+const selectedRegisterData = ref<CashRegister | undefined>(undefined);
 
 const columns = [
     {
@@ -242,7 +180,7 @@ const fetchRegisters = async () => {
         const response = await cashShiftService.getAllRegisters();
         registers.value = response.data;
     } catch (error) {
-        // Handled globally, fallback notification
+        // Handled globally
     } finally {
         loading.value = false;
     }
@@ -250,48 +188,13 @@ const fetchRegisters = async () => {
 
 const openDialog = (register?: CashRegister) => {
     if (register) {
-        isEdit.value = true;
-        Object.assign(formData, { ...register });
+        selectedRegisterId.value = register.id;
+        selectedRegisterData.value = register;
     } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            id: undefined,
-            name: "",
-            warehouseId: warehouseStore.activeWarehouseId || (warehouseOptions.value[0]?.value as number) || 0,
-            isActive: true,
-            isMatriz: false,
-        });
+        selectedRegisterId.value = undefined;
+        selectedRegisterData.value = undefined;
     }
     showDialog.value = true;
-};
-
-const saveRegister = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            const payload = { ...formData };
-            await cashShiftService.updateRegister(formData.id!, payload as CashRegister);
-            $q.notify({
-                color: "positive",
-                message: "Caja actualizada correctamente",
-                icon: "check_circle",
-            });
-        } else {
-            const { id, ...payload } = formData;
-            await cashShiftService.createRegister(payload);
-            $q.notify({
-                color: "positive",
-                message: "Caja creada correctamente",
-                icon: "check_circle",
-            });
-        }
-        showDialog.value = false;
-        await fetchRegisters();
-    } catch (error) {
-        // Handled globally by the interceptor
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDeleteAction = (register: CashRegister) => {

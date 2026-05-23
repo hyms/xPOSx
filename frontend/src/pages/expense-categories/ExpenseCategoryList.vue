@@ -44,34 +44,16 @@
             </template>
         </BaseTable>
 
-        <FormDialog
+        <ExpenseCategoryFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Categoría' : 'Nueva Categoría'"
-            @submit="saveCategory"
-            :saving="saving"
-        >
-            <q-input
-                v-model="formData.name"
-                label="Nombre"
-                lazy-rules
-                :rules="[(val) => !!val || 'Requerido']"
-                outlined
-                dense
-            />
-            <q-input
-                v-model="formData.description"
-                label="Descripción"
-                type="textarea"
-                autogrow
-                outlined
-                dense
-            />
-        </FormDialog>
+            :initial-data="selectedCategoryData"
+            @saved="fetchItems"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { expenseService } from "@/services/expense.service";
 import type { ExpenseCategory } from "@/types";
@@ -80,7 +62,7 @@ import { useConfirm } from "@/composables/useConfirm";
 import BaseTable from "@/components/base/BaseTable.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
 import BaseButton from "@/components/base/BaseButton.vue";
-import FormDialog from "@/components/FormDialog.vue";
+import ExpenseCategoryFormDialog from "./components/ExpenseCategoryFormDialog.vue";
 
 const $q = useQuasar();
 const { confirmDelete } = useConfirm();
@@ -92,14 +74,8 @@ const {
     fetchItems,
 } = useTable<ExpenseCategory>("/expense-categories");
 
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<ExpenseCategory>({
-    name: "",
-    description: "",
-});
+const selectedCategoryData = ref<any>(null);
 
 const columns = [
     {
@@ -124,37 +100,8 @@ const columns = [
 ];
 
 const openDialog = (category?: ExpenseCategory) => {
-    if (category) {
-        isEdit.value = true;
-        Object.assign(formData, category);
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            id: undefined,
-            name: "",
-            description: "",
-        });
-    }
+    selectedCategoryData.value = category ? { ...category } : null;
     showDialog.value = true;
-};
-
-const saveCategory = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await expenseService.updateCategory(formData.id!, formData);
-            $q.notify({ color: "positive", message: "Categoría actualizada" });
-        } else {
-            await expenseService.createCategory(formData);
-            $q.notify({ color: "positive", message: "Categoría creada" });
-        }
-        showDialog.value = false;
-        fetchItems();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar categoría" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDeleteAction = (category: ExpenseCategory) => {

@@ -50,6 +50,13 @@
                         </q-td>
                     </template>
                 </q-table>
+        <!-- Transfer Detail Dialog -->
+        <TransferDetailDialog
+            v-model="detailDialog"
+            :transfer-id="selectedTransferId"
+            :from-warehouse-name="selectedFromWarehouseName"
+            :to-warehouse-name="selectedToWarehouseName"
+        />
             </div>
         </div>
     </q-page>
@@ -59,15 +66,23 @@
 import { ref, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import { transferService } from "@/services/transfer.service";
+import { useCurrency } from "@/composables/useCurrency";
 import type { TransferReadDto } from "@/types";
 import { useConfirm } from "@/composables/useConfirm";
 import BaseSearch from "@/components/base/BaseSearch.vue";
+import TransferDetailDialog from "./components/TransferDetailDialog.vue";
 
 const $q = useQuasar();
 const { confirmDelete } = useConfirm();
+const { formatCurrency } = useCurrency();
 const transfers = ref<TransferReadDto[]>([]);
 const loading = ref(true);
 const filter = ref("");
+
+const detailDialog = ref(false);
+const selectedTransferId = ref<number | null>(null);
+const selectedFromWarehouseName = ref("");
+const selectedToWarehouseName = ref("");
 
 const columns = [
     {
@@ -151,9 +166,12 @@ watch(filter, (newFilter) => {
     fetchTransfers(newFilter);
 });
 
-const viewTransfer = (_id: number) => {
-    // Logic to view details, maybe a dialog
-    $q.notify({ message: "Detalle no implementado aún", color: "info" });
+const viewTransfer = (id: number) => {
+    const row = transfers.value.find((t) => t.id === id);
+    selectedTransferId.value = id;
+    selectedFromWarehouseName.value = row?.fromWarehouseName || "";
+    selectedToWarehouseName.value = row?.toWarehouseName || "";
+    detailDialog.value = true;
 };
 
 const confirmDeleteAction = (transfer: TransferReadDto) => {

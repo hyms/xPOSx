@@ -106,107 +106,26 @@
         </div>
 
         <!-- Client Dialog -->
-        <FormDialog
+        <ClientFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Cliente' : 'Nuevo Cliente'"
-            @submit="saveClient"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.name"
-                        label="Nombre"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.nitCi"
-                        label="NIT/CI"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.phone"
-                        label="Teléfono"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.email"
-                        label="Email"
-                        type="email"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12">
-                    <q-input
-                        v-model="formData.companyName"
-                        label="Empresa"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.city"
-                        label="Ciudad"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12">
-                    <q-input
-                        v-model="formData.address"
-                        label="Dirección"
-                        type="textarea"
-                        autogrow
-                        outlined
-                        dense
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :initial-data="selectedClientData"
+            @saved="fetchClients"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { clientService } from "@/services/client.service";
 import type { Client } from "@/types";
-import FormDialog from "@/components/FormDialog.vue";
+import ClientFormDialog from "./components/ClientFormDialog.vue";
 
 const $q = useQuasar();
 const clients = ref<Client[]>([]);
 const loading = ref(true);
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<Client>({
-    name: "",
-    code: 0,
-    nitCi: "",
-    phone: "",
-    email: "",
-    companyName: "",
-    city: "",
-    address: "",
-});
+const selectedClientData = ref<any>(null);
 
 const columns = [
     {
@@ -257,42 +176,8 @@ const fetchClients = async () => {
 };
 
 const openDialog = (client?: Client) => {
-    if (client) {
-        isEdit.value = true;
-        Object.assign(formData, { ...client });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            name: "",
-            code: null,
-            nitCi: "",
-            phone: "",
-            email: "",
-            companyName: "",
-            city: "",
-            address: "",
-        });
-    }
+    selectedClientData.value = client ? { ...client } : null;
     showDialog.value = true;
-};
-
-const saveClient = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await clientService.update(formData.id!, formData);
-            $q.notify({ color: "positive", message: "Cliente actualizado" });
-        } else {
-            await clientService.create(formData);
-            $q.notify({ color: "positive", message: "Cliente creado" });
-        }
-        showDialog.value = false;
-        fetchClients();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar cliente" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDelete = (client: Client) => {

@@ -106,6 +106,14 @@
         </q-tab-panel>
       </q-tab-panels>
     </q-card>
+    <!-- Return Detail Dialog -->
+    <ReturnDetailDialog
+      v-model="detailDialog"
+      :return-id="selectedReturnId"
+      :return-type="returnType"
+      :associate-name="selectedAssociateName"
+      :warehouse-name="selectedWarehouseName"
+    />
   </q-page>
 </template>
 
@@ -116,14 +124,20 @@ import { returnService } from '@/services/return.service'
 import { useConfirm } from '@/composables/useConfirm'
 import type { SaleReturnReadDto, PurchaseReturnReadDto } from '@/types'
 import { useRouter } from 'vue-router'
-
 import { useCurrency } from '@/composables/useCurrency';
+import ReturnDetailDialog from './components/ReturnDetailDialog.vue';
 
 const $q = useQuasar()
 const { confirmDelete } = useConfirm()
 const router = useRouter()
 const tab = ref('sale_returns')
 const { formatCurrency } = useCurrency();
+
+const detailDialog = ref(false)
+const selectedReturnId = ref<number | null>(null)
+const returnType = ref<'sale' | 'purchase'>('sale')
+const selectedAssociateName = ref('')
+const selectedWarehouseName = ref('')
 
 const loadingSales = ref(false)
 const loadingPurchases = ref(false)
@@ -186,7 +200,12 @@ const getStatusColor = (status: string) => {
 }
 
 const viewSaleReturn = (id: number) => {
-  router.push(`/returns/sales/${id}`)
+  const row = saleReturns.value.find((r) => r.id === id);
+  selectedReturnId.value = id;
+  returnType.value = 'sale';
+  selectedAssociateName.value = row?.clientName || '';
+  selectedWarehouseName.value = row?.warehouseName || '';
+  detailDialog.value = true;
 }
 
 const printSaleReturnVoucher = (id: number) => {
@@ -194,7 +213,12 @@ const printSaleReturnVoucher = (id: number) => {
 }
 
 const viewPurchaseReturn = (id: number) => {
-  router.push(`/returns/purchases/${id}`)
+  const row = purchaseReturns.value.find((r) => r.id === id);
+  selectedReturnId.value = id;
+  returnType.value = 'purchase';
+  selectedAssociateName.value = row?.providerName || '';
+  selectedWarehouseName.value = row?.warehouseName || '';
+  detailDialog.value = true;
 }
 
 const printPurchaseReturnVoucher = (id: number) => {

@@ -58,139 +58,32 @@
         </div>
 
         <!-- User Dialog -->
-        <FormDialog
+        <UserFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Usuario' : 'Nuevo Usuario'"
-            @submit="saveUser"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                    <BaseInput
-                        v-model="formData.username"
-                        label="Nombre de Usuario"
-                        lazy-rules
-                        :rules="[rules.required]"
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <BaseInput
-                        v-model="formData.email"
-                        label="Email"
-                        type="email"
-                        lazy-rules
-                        :rules="[rules.required, rules.email]"
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <BaseInput
-                        v-model="formData.firstName"
-                        label="Nombre"
-                        lazy-rules
-                        :rules="[rules.required]"
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <BaseInput v-model="formData.lastName" label="Apellido" />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.role"
-                        :options="roleOptions"
-                        label="Rol"
-                        emit-value
-                        map-options
-                        lazy-rules
-                        :rules="[rules.required]"
-                        outlined
-                        dense
-                        hide-bottom-space
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-select
-                        v-model="formData.defaultWarehouseId"
-                        :options="warehouseOptions"
-                        label="Almacén por Defecto"
-                        emit-value
-                        map-options
-                        outlined
-                        dense
-                        clearable
-                        hide-bottom-space
-                    />
-                </div>
-                <div class="col-12 col-md-6 flex items-center">
-                    <q-toggle
-                        v-model="formData.allWarehousesAccess"
-                        label="Acceso a Todos los Almacenes"
-                        color="primary"
-                    />
-                </div>
-                <div class="col-12 col-md-6" v-if="!formData.allWarehousesAccess">
-                    <q-select
-                        v-model="formData.warehouseIds"
-                        :options="warehouseOptions"
-                        label="Almacenes Permitidos"
-                        emit-value
-                        map-options
-                        multiple
-                        use-chips
-                        outlined
-                        dense
-                        hide-bottom-space
-                    />
-                </div>
-                <div class="col-12 col-md-6" v-if="!isEdit">
-                    <BaseInput
-                        v-model="formData.password"
-                        label="Contraseña"
-                        type="password"
-                        lazy-rules
-                        :rules="[rules.required]"
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :initial-data="selectedUserData"
+            @saved="fetchUsers"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { userService } from "@/services/user.service";
 import type { User } from "@/types";
-import { roleService } from "@/services/role.service";
 import { warehouseService } from "@/services/warehouse.service";
-import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
-import BaseInput from "@/components/base/BaseInput.vue";
+import UserFormDialog from "./components/UserFormDialog.vue";
 import { useConfirm } from "@/composables/useConfirm";
-import { rules } from "@/utils/validations";
 
 const $q = useQuasar();
 const { confirmDelete } = useConfirm();
 const users = ref<User[]>([]);
 const loading = ref(true);
 const filter = ref("");
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-const roleOptions = ref<any[]>([]);
 const warehouseOptions = ref<any[]>([]);
-
-const formData = reactive<User>({
-    username: "",
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    role: 0,
-    isActive: true,
-    defaultWarehouseId: null,
-    warehouseIds: [],
-    allWarehousesAccess: true,
-});
+const selectedUserData = ref<any>(null);
 
 const columns = [
     {
@@ -272,18 +165,6 @@ const fetchUsers = async () => {
     }
 };
 
-const fetchRoles = async () => {
-    try {
-        const response = await roleService.getAll();
-        roleOptions.value = response.data.map((r) => ({
-            label: r.name,
-            value: r.id,
-        }));
-    } catch (error) {
-        console.error("Error fetching roles:", error);
-    }
-};
-
 const fetchWarehouses = async () => {
     try {
         const response = await warehouseService.getAll();
@@ -297,56 +178,8 @@ const fetchWarehouses = async () => {
 };
 
 const openDialog = (user?: User) => {
-    if (user) {
-        isEdit.value = true;
-        Object.assign(formData, { 
-            ...user, 
-            password: "",
-            defaultWarehouseId: user.defaultWarehouseId || null,
-            warehouseIds: user.warehouseIds || [],
-            allWarehousesAccess: user.allWarehousesAccess !== false,
-        });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            username: "",
-            email: "",
-            password: "",
-            firstName: "",
-            lastName: "",
-            role: 0,
-            isActive: true,
-            defaultWarehouseId: null,
-            warehouseIds: [],
-            allWarehousesAccess: true,
-        });
-    }
+    selectedUserData.value = user ? { ...user } : null;
     showDialog.value = true;
-};
-
-const saveUser = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await userService.update(formData.id!, formData);
-            $q.notify({
-                color: "positive",
-                message: "Usuario actualizado correctamente",
-            });
-        } else {
-            await userService.create(formData);
-            $q.notify({
-                color: "positive",
-                message: "Usuario creado correctamente",
-            });
-        }
-        showDialog.value = false;
-        fetchUsers();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar usuario" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDeleteAction = (user: User) => {
@@ -389,7 +222,6 @@ const handleToggleStatus = (user: User) => {
 
 onMounted(() => {
     fetchUsers();
-    fetchRoles();
     fetchWarehouses();
 });
 </script>

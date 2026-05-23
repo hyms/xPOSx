@@ -44,86 +44,30 @@
         </div>
 
         <!-- Warehouse Dialog -->
-        <FormDialog
+        <WarehouseFormDialog
             v-model="showDialog"
-            :title="isEdit ? 'Editar Almacén' : 'Nuevo Almacén'"
-            @submit="saveWarehouse"
-            :saving="saving"
-        >
-            <div class="row q-col-gutter-sm">
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.name"
-                        label="Nombre del Almacén"
-                        lazy-rules
-                        :rules="[(val) => !!val || 'Requerido']"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.city"
-                        label="Ciudad"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.mobile"
-                        label="Teléfono/Móvil"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12 col-md-6">
-                    <q-input
-                        v-model="formData.email"
-                        label="Email"
-                        type="email"
-                        outlined
-                        dense
-                    />
-                </div>
-                <div class="col-12">
-                    <q-input
-                        v-model="formData.country"
-                        label="País"
-                        outlined
-                        dense
-                    />
-                </div>
-            </div>
-        </FormDialog>
+            :initial-data="selectedWarehouseData"
+            @saved="fetchWarehouses"
+        />
     </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { warehouseService } from "@/services/warehouse.service";
 import type { Warehouse } from "@/types";
 import { useConfirm } from "@/composables/useConfirm";
-import FormDialog from "@/components/FormDialog.vue";
 import BaseSearch from "@/components/base/BaseSearch.vue";
+import WarehouseFormDialog from "./components/WarehouseFormDialog.vue";
 
 const $q = useQuasar();
 const { confirmDelete } = useConfirm();
 const warehouses = ref<Warehouse[]>([]);
 const loading = ref(true);
 const filter = ref("");
-const saving = ref(false);
 const showDialog = ref(false);
-const isEdit = ref(false);
-
-const formData = reactive<Warehouse>({
-    name: "",
-    city: "",
-    mobile: "",
-    email: "",
-    country: "",
-});
+const selectedWarehouseData = ref<any>(null);
 
 const columns = [
     {
@@ -174,45 +118,8 @@ const fetchWarehouses = async () => {
 };
 
 const openDialog = (warehouse?: Warehouse) => {
-    if (warehouse) {
-        isEdit.value = true;
-        Object.assign(formData, { ...warehouse });
-    } else {
-        isEdit.value = false;
-        Object.assign(formData, {
-            name: "",
-            city: "",
-            mobile: "",
-            email: "",
-            country: "",
-        });
-    }
+    selectedWarehouseData.value = warehouse ? { ...warehouse } : null;
     showDialog.value = true;
-};
-
-const saveWarehouse = async () => {
-    saving.value = true;
-    try {
-        if (isEdit.value) {
-            await warehouseService.update(formData.id!, formData);
-            $q.notify({
-                color: "positive",
-                message: "Almacén actualizado correctamente",
-            });
-        } else {
-            await warehouseService.create(formData);
-            $q.notify({
-                color: "positive",
-                message: "Almacén creado correctamente",
-            });
-        }
-        showDialog.value = false;
-        fetchWarehouses();
-    } catch (error) {
-        $q.notify({ color: "negative", message: "Error al guardar almacén" });
-    } finally {
-        saving.value = false;
-    }
 };
 
 const confirmDeleteAction = (warehouse: Warehouse) => {
