@@ -10,44 +10,38 @@ namespace XPos.Data.Repositories;
 
 public class CategoryRepository : ICategoryRepository
 {
-    private readonly string _connectionString;
-    public CategoryRepository(IConfiguration configuration)
+    private readonly IUnitOfWork _uow;
+    public CategoryRepository(IUnitOfWork uow)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException();
+        _uow = uow;
     }
-    private IDbConnection CreateConnection() => new NpgsqlConnection(_connectionString);
 
     public async Task<IEnumerable<Category>> GetAllAsync()
     {
-        using var connection = CreateConnection();
-        return await connection.QueryAsync<Category>("SELECT id, code, name FROM categories WHERE deleted_at IS NULL");
+        return await _uow.Connection.QueryAsync<Category>("SELECT id, code, name FROM categories WHERE deleted_at IS NULL", null, _uow.Transaction);
     }
 
     public async Task<Category?> GetByIdAsync(long id)
     {
-        using var connection = CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Category>("SELECT id, code, name FROM categories WHERE id = @id AND deleted_at IS NULL", new { id });
+        return await _uow.Connection.QueryFirstOrDefaultAsync<Category>("SELECT id, code, name FROM categories WHERE id = @id AND deleted_at IS NULL", new { id }, _uow.Transaction);
     }
 
     public async Task<long> CreateAsync(Category category)
     {
-        using var connection = CreateConnection();
         const string sql = "INSERT INTO categories (code, name, created_at) VALUES (@Code, @Name, CURRENT_TIMESTAMP) RETURNING id";
-        return await connection.ExecuteScalarAsync<long>(sql, category);
+        return await _uow.Connection.ExecuteScalarAsync<long>(sql, category, _uow.Transaction);
     }
 
     public async Task<bool> UpdateAsync(Category category)
     {
-        using var connection = CreateConnection();
         const string sql = "UPDATE categories SET code = @Code, name = @Name, updated_at = CURRENT_TIMESTAMP WHERE id = @Id";
-        return await connection.ExecuteAsync(sql, category) > 0;
+        return await _uow.Connection.ExecuteAsync(sql, category, _uow.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id)
     {
-        using var connection = CreateConnection();
         const string sql = "UPDATE categories SET deleted_at = CURRENT_TIMESTAMP WHERE id = @id";
-        return await connection.ExecuteAsync(sql, new { id }) > 0;
+        return await _uow.Connection.ExecuteAsync(sql, new { id }, _uow.Transaction) > 0;
     }
 }
 

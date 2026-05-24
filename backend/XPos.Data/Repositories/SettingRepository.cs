@@ -8,26 +8,21 @@ namespace XPos.Data.Repositories;
 
 public class SettingRepository : ISettingRepository
 {
-    private readonly string _connectionString;
+    private readonly IUnitOfWork _uow;
 
-    public SettingRepository(IConfiguration configuration)
+    public SettingRepository(IUnitOfWork uow)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") 
-            ?? throw new ArgumentNullException(nameof(configuration));
+        _uow = uow;
     }
-
-    private NpgsqlConnection CreateConnection() => new(_connectionString);
 
     public async Task<Setting?> GetAsync()
     {
-        using var connection = CreateConnection();
         const string sql = "SELECT * FROM settings ORDER BY id LIMIT 1";
-        return await connection.QueryFirstOrDefaultAsync<Setting>(sql);
+        return await _uow.Connection.QueryFirstOrDefaultAsync<Setting>(sql, null, _uow.Transaction);
     }
 
     public async Task<bool> UpdateAsync(Setting setting)
     {
-        using var connection = CreateConnection();
         const string sql = @"
             UPDATE settings 
             SET company_name = @CompanyName, 
@@ -66,13 +61,12 @@ public class SettingRepository : ISettingRepository
                 updated_at = @UpdatedAt
             WHERE id = @Id";
         setting.UpdatedAt = DateTime.UtcNow;
-        var rowsAffected = await connection.ExecuteAsync(sql, setting);
+        var rowsAffected = await _uow.Connection.ExecuteAsync(sql, setting, _uow.Transaction);
         return rowsAffected > 0;
     }
 
     public async Task<bool> UpdateMediaAsync(string type, string path)
     {
-        using var connection = CreateConnection();
         string column = type.ToLower() == "logo" ? "logo" : "favicon";
         string sql = $@"
             UPDATE settings 
@@ -81,10 +75,10 @@ public class SettingRepository : ISettingRepository
                 updated_at = @UpdatedAt
             WHERE id = (SELECT id FROM settings ORDER BY id LIMIT 1)";
         
-        var rowsAffected = await connection.ExecuteAsync(sql, new { 
+        var rowsAffected = await _uow.Connection.ExecuteAsync(sql, new { 
             Path = path, 
             UpdatedAt = DateTime.UtcNow 
-        });
+        }, _uow.Transaction);
         return rowsAffected > 0;
     }
 }

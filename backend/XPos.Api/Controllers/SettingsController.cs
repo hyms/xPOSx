@@ -26,6 +26,7 @@ public class SettingsController : ControllerBase
         _environment = environment;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -51,7 +52,8 @@ public class SettingsController : ControllerBase
                 CurrencyName = settings.CurrencyName,
                 SiatEnvironment = settings.SiatEnvironment,
                 SiatModality = settings.SiatModality,
-                SiatEmissionType = settings.SiatEmissionType
+                SiatEmissionType = settings.SiatEmissionType,
+                QrCodePath = settings.QrCodePath
             };
 
             _cache.Set(CacheKey, dto, TimeSpan.FromHours(24));
@@ -135,6 +137,7 @@ public class SettingsController : ControllerBase
         public int? SiatEnvironment { get; set; }
         public int? SiatModality { get; set; }
         public int? SiatEmissionType { get; set; }
+        public string? QrCodePath { get; set; }
     }
 
     [HttpPut("{id}")]

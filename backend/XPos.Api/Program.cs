@@ -5,6 +5,11 @@ using Npgsql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
 using Dapper;
 using XPos.Api.Authorization;
 using XPos.Data.Migrations;
@@ -17,12 +22,63 @@ SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
 SqlMapper.AddTypeHandler(new DateTimeOffsetTypeHandler());
 DefaultTypeMap.MatchNamesWithUnderscores = true;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Async(writeTo => writeTo.Console(new JsonFormatter()))
+    .WriteTo.Async(writeTo => writeTo.File(
+        formatter: new JsonFormatter(),
+        path: "logs/xpos-log-.json",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7))
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
+
+// Rate Limiting (Token Bucket) per IP Address
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("OrderCreationPolicy", httpContext =>
+    {
+        var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                        ?? httpContext.Connection.RemoteIpAddress?.ToString() 
+                        ?? "anonymous";
+
+        return RateLimitPartition.GetTokenBucketLimiter(ipAddress, _ => new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 5,
+            QueueLimit = 0,
+            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+            TokensPerPeriod = 5,
+            AutoReplenishment = true
+        });
+    });
+
+    options.AddPolicy("ReceiptUploadPolicy", httpContext =>
+    {
+        var ipAddress = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                        ?? httpContext.Connection.RemoteIpAddress?.ToString() 
+                        ?? "anonymous";
+
+        return RateLimitPartition.GetTokenBucketLimiter(ipAddress, _ => new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 3,
+            QueueLimit = 0,
+            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+            TokensPerPeriod = 3,
+            AutoReplenishment = true
+        });
+    });
+});
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
@@ -54,8 +110,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Current User Context
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<XPos.Domain.Interfaces.ICurrentUserService, XPos.Api.Services.CurrentUserService>();
+builder.Services.AddScoped<IAuditContextProvider, AuditContextProvider>();
 
 // Core Repositories
+builder.Services.AddScoped<ICmsRepository, CmsRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
@@ -93,6 +151,7 @@ builder.Services.AddScoped<IAdjustmentService, AdjustmentService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IQuotationService, QuotationService>();
 builder.Services.AddScoped<ICashShiftService, CashShiftService>();
+builder.Services.AddHttpClient<SiatSoapService>();
 builder.Services.AddScoped<XPos.Api.Filters.RequireOpenShiftFilter>();
 
 // Admin Settings Repositories
@@ -130,6 +189,19 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Excepción no controlada capturada en Middleware (Error 500): {Message}", ex.Message);
+        throw;
+    }
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -141,6 +213,8 @@ app.UseCors(policy => policy
     .AllowAnyHeader());
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

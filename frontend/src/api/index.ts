@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 import { Notify } from "quasar";
+import { useSettingsStore } from "@/stores/settings";
 
 class ApiClient {
   private static instance: ApiClient;
@@ -34,7 +35,18 @@ class ApiClient {
     });
 
     this.axiosInstance.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        const version = response.headers['x-settings-version'];
+        if (version) {
+          try {
+            const settingsStore = useSettingsStore();
+            settingsStore.updateSettingsVersion(parseInt(version, 10));
+          } catch (e) {
+            console.error("Error updating settings version in interceptor:", e);
+          }
+        }
+        return response;
+      },
       (error) => {
         if (error.response) {
           const status = error.response.status;
@@ -46,7 +58,7 @@ class ApiClient {
               localStorage.removeItem("token");
               localStorage.removeItem("username");
 
-              window.location.href = "/login";
+              window.location.href = "/";
             }
           } else if (status === 403) {
             Notify.create({

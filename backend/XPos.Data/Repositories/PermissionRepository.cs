@@ -8,37 +8,31 @@ namespace XPos.Data.Repositories;
 
 public class PermissionRepository : IPermissionRepository
 {
-    private readonly string _connectionString;
+    private readonly IUnitOfWork _uow;
 
-    public PermissionRepository(IConfiguration configuration)
+    public PermissionRepository(IUnitOfWork uow)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") 
-            ?? throw new ArgumentNullException(nameof(configuration));
+        _uow = uow;
     }
-
-    private NpgsqlConnection CreateConnection() => new(_connectionString);
 
     public async Task<IEnumerable<Permission>> GetAllAsync()
     {
-        using var connection = CreateConnection();
         const string sql = "SELECT * FROM permissions";
-        return await connection.QueryAsync<Permission>(sql);
+        return await _uow.Connection.QueryAsync<Permission>(sql, null, _uow.Transaction);
     }
 
     public async Task<Permission?> GetByIdAsync(long id)
     {
-        using var connection = CreateConnection();
         const string sql = "SELECT * FROM permissions WHERE id = @Id";
-        return await connection.QueryFirstOrDefaultAsync<Permission>(sql, new { Id = id });
+        return await _uow.Connection.QueryFirstOrDefaultAsync<Permission>(sql, new { Id = id }, _uow.Transaction);
     }
 
     public async Task<IEnumerable<Permission>> GetByRoleIdAsync(long roleId)
     {
-        using var connection = CreateConnection();
         const string sql = @"
             SELECT p.* FROM permissions p
             INNER JOIN role_has_permissions rp ON p.id = rp.permission_id
             WHERE rp.role_id = @RoleId";
-        return await connection.QueryAsync<Permission>(sql, new { RoleId = roleId });
+        return await _uow.Connection.QueryAsync<Permission>(sql, new { RoleId = roleId }, _uow.Transaction);
     }
 }

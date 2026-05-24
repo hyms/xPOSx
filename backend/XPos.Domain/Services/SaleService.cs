@@ -15,6 +15,9 @@ public class SaleService : ISaleService
     private readonly IUnitRepository _unitRepository;
     private readonly UnitConversionService _unitConversionService;
     private readonly ICashShiftRepository _cashShiftRepository;
+    private readonly IClientRepository _clientRepository;
+    private readonly IWarehouseRepository _warehouseRepository;
+    private readonly SiatSoapService _siatSoapService;
 
     public SaleService(
         IUnitOfWork uow, 
@@ -24,7 +27,10 @@ public class SaleService : ISaleService
         IPaymentRepository paymentRepository,
         IUnitRepository unitRepository,
         UnitConversionService unitConversionService,
-        ICashShiftRepository cashShiftRepository)
+        ICashShiftRepository cashShiftRepository,
+        IClientRepository clientRepository,
+        IWarehouseRepository warehouseRepository,
+        SiatSoapService siatSoapService)
     {
         _uow = uow;
         _saleRepository = saleRepository;
@@ -34,6 +40,9 @@ public class SaleService : ISaleService
         _unitRepository = unitRepository;
         _unitConversionService = unitConversionService;
         _cashShiftRepository = cashShiftRepository;
+        _clientRepository = clientRepository;
+        _warehouseRepository = warehouseRepository;
+        _siatSoapService = siatSoapService;
     }
 
     public async Task<PagedResult<SaleReadDto>> GetAllAsync(PagingParams pagingParams)
@@ -159,6 +168,250 @@ public class SaleService : ISaleService
             
             _uow.Commit();
             return deleted;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<long> CreateOnlineSaleAsync(Sale sale)
+    {
+        if (sale == null)
+        {
+            throw new ArgumentNullException(nameof(sale));
+        }
+
+        _uow.BeginTransaction();
+        try
+        {
+            if (sale.ClientId == 0)
+            {
+                var clients = await _clientRepository.GetAllAsync();
+                var firstClient = clients.FirstOrDefault();
+                if (firstClient == null)
+                {
+                    var newClient = new Client
+                    {
+                        Name = "Cliente General Web",
+                        NitCi = "0",
+                        Phone = "000000",
+                        Email = "web@client.com"
+                    };
+                    var newClientId = await _clientRepository.CreateAsync(newClient);
+                    sale.ClientId = newClientId;
+                }
+                else
+                {
+                    sale.ClientId = firstClient.Id;
+                }
+            }
+
+            if (sale.WarehouseId == 0)
+            {
+                var warehouses = await _warehouseRepository.GetAllAsync();
+                var firstWarehouse = warehouses.FirstOrDefault();
+                if (firstWarehouse != null)
+                {
+                    sale.WarehouseId = firstWarehouse.Id;
+                }
+            }
+
+            sale.IsPos = false;
+            sale.Status = "PENDING_VERIFICATION";
+            sale.PaymentStatus = "unpaid";
+            sale.Date = DateTime.UtcNow;
+            sale.CreatedBy = null; // Public sale, no authenticated user
+
+            if (string.IsNullOrEmpty(sale.Ref))
+            {
+                sale.Ref = $"WEB-{DateTime.Now:yyyyMMddHHmmss}";
+            }
+
+            // Use the repository to create the sale and detail rows
+            var saleId = await _saleRepository.CreateAsync(sale);
+
+            _uow.Commit();
+            return saleId;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<bool> ApproveOnlineSaleAsync(long id)
+    {
+        var sale = await _saleRepository.GetByIdAsync(id);
+        if (sale == null)
+        {
+            return false;
+        }
+
+        if (sale.Status != "PENDING_VERIFICATION")
+        {
+            throw new InvalidOperationException("El pedido no se encuentra en estado pendiente de verificación");
+        }
+
+        _uow.BeginTransaction();
+        try
+        {
+            // 1. Update status
+            await _saleRepository.UpdateStatusAsync(id, "PROCESSING", "paid");
+
+            // 2. Discount stock
+            if (sale.Details != null)
+            {
+                foreach (var detail in sale.Details)
+                {
+                    Unit? unit = null;
+                    if (detail.SaleUnitId.HasValue)
+                    {
+                        unit = await _unitRepository.GetByIdAsync(detail.SaleUnitId.Value);
+                    }
+
+                    var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
+                    
+                    // Subtract from inventory
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, sale.WarehouseId, -baseQuantity);
+                }
+            }
+
+            _uow.Commit();
+            return true;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<bool> VerifyOnlineSaleAsync(long id, long userId, long cashShiftId)
+    {
+        var sale = await _saleRepository.GetByIdAsync(id);
+        if (sale == null)
+        {
+            return false;
+        }
+
+        if (sale.Status != "PENDING_VERIFICATION")
+        {
+            throw new InvalidOperationException("La venta no se encuentra en estado pendiente de verificación.");
+        }
+
+        _uow.BeginTransaction();
+        try
+        {
+            // 1. Update status to 'PAID', and assign the cashier's userId & open cashShiftId
+            await _saleRepository.UpdateVerifyStatusAsync(id, "PAID", "paid", userId, cashShiftId);
+
+            // 2. Discount stock
+            if (sale.Details != null)
+            {
+                foreach (var detail in sale.Details)
+                {
+                    Unit? unit = null;
+                    if (detail.SaleUnitId.HasValue)
+                    {
+                        unit = await _unitRepository.GetByIdAsync(detail.SaleUnitId.Value);
+                    }
+
+                    var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
+                    
+                    // Subtract from inventory
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, sale.WarehouseId, -baseQuantity);
+                }
+            }
+
+            // 3. Register the payment in the system (payment_sales)
+            var paymentDto = new PaymentSaleDto
+            {
+                UserId = userId,
+                Date = DateTime.UtcNow,
+                Ref = "PAY-VERIFY-" + sale.Ref,
+                SaleId = id,
+                Amount = sale.GrandTotal,
+                Reglement = "Manual Bank Receipt",
+                CreatedBy = userId
+            };
+            await _paymentRepository.CreateSalePaymentAsync(paymentDto);
+
+            _uow.Commit();
+
+            // 4. Trigger the SIAT billing process (outside transaction for resilience)
+            try
+            {
+                var soapEnvelope = $@"<soapenv:Envelope xmlns:soapenv=""http://schemas.xmlsoap.org/soap/envelope/"" xmlns:siat=""http://siat.impuestos.gob.bo/"">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <siat:recepcionFactura>
+                            <nit>{sale.Nit ?? "0"}</nit>
+                            <razonSocial>{sale.RazonSocial ?? "Sin Nombre"}</razonSocial>
+                            <montoTotal>{sale.GrandTotal}</montoTotal>
+                        </siat:recepcionFactura>
+                    </soapenv:Body>
+                </soapenv:Envelope>";
+                
+                // Trigger SIAT billing as pilot service
+                await _siatSoapService.SendSiatSoapRequestAsync(
+                    "https://pilotosiat.impuestos.gob.bo/v2/ServicioFacturacionComputarizada",
+                    "recepcionFactura",
+                    soapEnvelope,
+                    timeoutSeconds: 3
+                );
+            }
+            catch (Exception)
+            {
+                // Externals failure (like SIAT pilot service) must not compromise database transaction success.
+                // We proceed since the database state was successfully committed.
+            }
+
+            return true;
+        }
+        catch
+        {
+            _uow.Rollback();
+            throw;
+        }
+    }
+
+    public async Task<bool> RejectOnlineSaleAsync(long id)
+    {
+        var sale = await _saleRepository.GetByIdAsync(id);
+        if (sale == null)
+        {
+            return false;
+        }
+
+        _uow.BeginTransaction();
+        try
+        {
+            // If it was already approved (PROCESSING) and we are rejecting/cancelling, we must restore stock
+            if (sale.Status == "PROCESSING" && sale.Details != null)
+            {
+                foreach (var detail in sale.Details)
+                {
+                    Unit? unit = null;
+                    if (detail.SaleUnitId.HasValue)
+                    {
+                        unit = await _unitRepository.GetByIdAsync(detail.SaleUnitId.Value);
+                    }
+
+                    var baseQuantity = _unitConversionService.CalculateBaseQuantity(detail.Quantity, unit);
+                    
+                    // Add back to inventory
+                    await _inventoryRepository.UpdateStockAsync(detail.ProductId, sale.WarehouseId, baseQuantity);
+                }
+            }
+
+            // Update status to 'REJECTED' or 'cancelled'
+            await _saleRepository.UpdateStatusAsync(id, "REJECTED", "unpaid");
+
+            _uow.Commit();
+            return true;
         }
         catch
         {

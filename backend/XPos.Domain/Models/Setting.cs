@@ -48,6 +48,7 @@ public class Setting
     public int? SiatEnvironment { get; set; }
     public int? SiatModality { get; set; }
     public int? SiatEmissionType { get; set; }
+    public string? QrCodePath { get; set; }
 
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

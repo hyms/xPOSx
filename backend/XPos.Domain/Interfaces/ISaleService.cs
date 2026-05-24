@@ -39,4 +39,30 @@ public interface ISaleService
     /// <param name="userId">The unique identifier of the operator performing the deletion.</param>
     /// <returns>True if the sale was successfully deleted; otherwise, false.</returns>
     Task<bool> DeleteSaleAsync(long id, long userId);
+
+    /// <summary>
+    /// Creates a pending online sale.
+    /// </summary>
+    /// <param name="sale">The sale containing online checkout details.</param>
+    /// <returns>The newly created online sale's ID.</returns>
+    Task<long> CreateOnlineSaleAsync(Sale sale);
+
+    /// <summary>
+    /// Approves a pending online sale, shifting status to 'PROCESSING' and actualizing inventory stock.
+    /// </summary>
+    /// <param name="id">The unique identifier of the online sale.</param>
+    /// <returns>True if successful; otherwise, false.</returns>
+    Task<bool> ApproveOnlineSaleAsync(long id);
+
+    /// <summary>
+    /// Verifies and approves a pending online sale. Sets status to 'PAID', registers the cashier operator, open cash shift, discounts stock, and triggers SIAT billing.
+    /// </summary>
+    Task<bool> VerifyOnlineSaleAsync(long id, long userId, long cashShiftId);
+
+    /// <summary>
+    /// Rejects/cancels an online sale, restoring inventory stock if the sale was already processed.
+    /// </summary>
+    /// <param name="id">The unique identifier of the online sale.</param>
+    /// <returns>True if successful; otherwise, false.</returns>
+    Task<bool> RejectOnlineSaleAsync(long id);
 }

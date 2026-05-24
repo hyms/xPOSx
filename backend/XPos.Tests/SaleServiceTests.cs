@@ -3,6 +3,8 @@ using XPos.Domain.Interfaces;
 using XPos.Domain.Models;
 using XPos.Domain.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace XPos.Tests;
 
@@ -15,6 +17,8 @@ public class SaleServiceTests
     private readonly Mock<IPaymentRepository> _paymentRepoMock;
     private readonly Mock<IUnitRepository> _unitRepoMock;
     private readonly Mock<ICashShiftRepository> _cashShiftRepoMock;
+    private readonly Mock<IClientRepository> _clientRepoMock;
+    private readonly Mock<IWarehouseRepository> _warehouseRepoMock;
     private readonly SaleService _saleService;
 
     public SaleServiceTests()
@@ -26,10 +30,14 @@ public class SaleServiceTests
         _paymentRepoMock = new Mock<IPaymentRepository>();
         _unitRepoMock = new Mock<IUnitRepository>();
         _cashShiftRepoMock = new Mock<ICashShiftRepository>();
+        _clientRepoMock = new Mock<IClientRepository>();
+        _warehouseRepoMock = new Mock<IWarehouseRepository>();
         
         // We can use the real UnitConversionService if it's simple enough or mock it.
         // Let's use the real one to test integration within Domain Services.
         var conversionService = new UnitConversionService();
+        var siatLoggerMock = new Mock<ILogger<SiatSoapService>>();
+        var siatService = new SiatSoapService(new HttpClient(), siatLoggerMock.Object);
         
         _saleService = new SaleService(
             _uowMock.Object,
@@ -39,7 +47,10 @@ public class SaleServiceTests
             _paymentRepoMock.Object,
             _unitRepoMock.Object,
             conversionService,
-            _cashShiftRepoMock.Object
+            _cashShiftRepoMock.Object,
+            _clientRepoMock.Object,
+            _warehouseRepoMock.Object,
+            siatService
         );
     }
 
@@ -164,5 +175,68 @@ public class SaleServiceTests
         _saleRepoMock.Verify(x => x.DeleteAsync(It.IsAny<long>(), It.IsAny<long>()), Times.Never);
         _uowMock.Verify(x => x.BeginTransaction(), Times.Once);
         _uowMock.Verify(x => x.Rollback(), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyOnlineSaleAsync_ShouldProcessSuccessfully_WhenSaleIsPending()
+    {
+        // Arrange
+        var saleId = 1L;
+        var userId = 2L;
+        var cashShiftId = 5L;
+        var sale = new Sale
+        {
+            Id = saleId,
+            WarehouseId = 10,
+            Status = "PENDING_VERIFICATION",
+            GrandTotal = 150.00m,
+            Details = new List<SaleDetail>
+            {
+                new SaleDetail { ProductId = 100, Quantity = 3, Price = 50.00m, SaleUnitId = 1 }
+            }
+        };
+
+        _saleRepoMock.Setup(x => x.GetByIdAsync(saleId)).ReturnsAsync(sale);
+        _unitRepoMock.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(new Unit { Id = 1, OperatorValue = 1 });
+        _saleRepoMock.Setup(x => x.UpdateVerifyStatusAsync(saleId, "PAID", "paid", userId, cashShiftId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _saleService.VerifyOnlineSaleAsync(saleId, userId, cashShiftId);
+
+        // Assert
+        result.Should().BeTrue();
+        _inventoryRepoMock.Verify(x => x.UpdateStockAsync(100, 10, -3), Times.Once); // Should discount stock (-3)
+        _paymentRepoMock.Verify(x => x.CreateSalePaymentAsync(It.Is<PaymentSaleDto>(p => p.Amount == 150.00m && p.SaleId == saleId)), Times.Once);
+        _saleRepoMock.Verify(x => x.UpdateVerifyStatusAsync(saleId, "PAID", "paid", userId, cashShiftId), Times.Once);
+        _uowMock.Verify(x => x.BeginTransaction(), Times.Once);
+        _uowMock.Verify(x => x.Commit(), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyOnlineSaleAsync_ShouldThrow_WhenSaleIsNotPending()
+    {
+        // Arrange
+        var saleId = 1L;
+        var userId = 2L;
+        var cashShiftId = 5L;
+        var sale = new Sale
+        {
+            Id = saleId,
+            WarehouseId = 10,
+            Status = "PAID",
+            Details = new List<SaleDetail>()
+        };
+
+        _saleRepoMock.Setup(x => x.GetByIdAsync(saleId)).ReturnsAsync(sale);
+
+        // Act
+        Func<Task> act = async () => await _saleService.VerifyOnlineSaleAsync(saleId, userId, cashShiftId);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("La venta no se encuentra en estado pendiente de verificación.");
+        
+        _inventoryRepoMock.Verify(x => x.UpdateStockAsync(It.IsAny<long>(), It.IsAny<long>(), It.IsAny<decimal>()), Times.Never);
+        _saleRepoMock.Verify(x => x.UpdateVerifyStatusAsync(It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>()), Times.Never);
     }
 }

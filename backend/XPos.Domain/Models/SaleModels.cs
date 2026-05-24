@@ -21,6 +21,9 @@ public class Sale
     public string? Notes { get; set; }
     public long? VoucherId { get; set; }
     public long? CashShiftId { get; set; }
+    public string? PaymentReceiptPath { get; set; }
+    public string? Nit { get; set; }
+    public string? RazonSocial { get; set; }
     
     // Audit fields
     public DateTime? CreatedAt { get; set; }
@@ -72,4 +75,8 @@ public class SaleReadDto
     public string Status { get; set; } = string.Empty;
     public string PaymentStatus { get; set; } = string.Empty;
     public long? VoucherId { get; set; }
+    public bool IsPos { get; set; }
+    public string? PaymentReceiptPath { get; set; }
+    public string? Nit { get; set; }
+    public string? RazonSocial { get; set; }
 }

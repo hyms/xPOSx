@@ -145,7 +145,7 @@
             style="transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background-color: var(--color-background-elevated);" 
         >
             <q-list padding style="padding-bottom: 60px;">
-                    <q-item clickable to="/" exact active-class="active-item">
+                    <q-item clickable to="/dashboard" exact active-class="active-item">
                         <q-item-section avatar>
                             <q-icon name="dashboard" />
                         </q-item-section>
@@ -188,6 +188,17 @@
                                 ><q-icon name="list_alt"
                             /></q-item-section>
                             <q-item-section>Ventas</q-item-section>
+                        </q-item>
+                        <q-item
+                            v-if="authStore.hasPermission('sales_view')"
+                            clickable
+                            to="/web-orders"
+                            active-class="active-item"
+                        >
+                            <q-item-section avatar
+                                ><q-icon name="shopping_bag"
+                            /></q-item-section>
+                            <q-item-section>Pedidos Web</q-item-section>
                         </q-item>
                         <q-item
                             v-if="authStore.hasPermission('quotations_view')"

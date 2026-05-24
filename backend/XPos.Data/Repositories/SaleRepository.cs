@@ -76,7 +76,7 @@ public class SaleRepository : ISaleRepository
 
         var dataSql = $@"
              SELECT s.id, s.ref, s.date::timestamp as Date, s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus, s.voucher_id as VoucherId,
-                    c.name as ClientName, w.name as WarehouseName
+                    c.name as ClientName, w.name as WarehouseName, s.is_pos as IsPos, s.payment_receipt_path as PaymentReceiptPath, s.nit, s.razon_social as RazonSocial
             {baseSql}
             ORDER BY {sortBy} {sortOrder}
             LIMIT @PageSize OFFSET @Offset
@@ -103,6 +103,7 @@ public class SaleRepository : ISaleRepository
                    s.grand_total as GrandTotal, s.paid_amount as PaidAmount, s.status, s.payment_status as PaymentStatus,
                    s.shipping_status as ShippingStatus, s.notes, s.created_at as CreatedAt, s.created_by as CreatedBy,
                    s.updated_at as UpdatedAt, s.user_id as UserId, s.cash_shift_id as CashShiftId,
+                   s.payment_receipt_path as PaymentReceiptPath, s.nit, s.razon_social as RazonSocial,
                    v.id as Vid, v.voucher_type as VoucherType, v.voucher_number as VoucherNumber,
                    v.cae, v.cae_expiration::timestamp as CaeExpiration, v.issued_at::timestamp as IssuedAt
             FROM sales s
@@ -136,8 +137,8 @@ public class SaleRepository : ISaleRepository
     public async Task<long> CreateAsync(Sale sale)
     {
         const string sql = @"
-            INSERT INTO sales (user_id, ref, date, is_pos, client_id, warehouse_id, tax_rate, tax_net, discount, shipping, grand_total, paid_amount, status, payment_status, shipping_status, notes, created_at, created_by, cash_shift_id)
-            VALUES (@UserId, @Ref, @Date, @IsPos, @ClientId, @WarehouseId, @TaxRate, @TaxNet, @Discount, @Shipping, @GrandTotal, @PaidAmount, @Status, @PaymentStatus, @ShippingStatus, @Notes, CURRENT_TIMESTAMP, @CreatedBy, @CashShiftId)
+            INSERT INTO sales (user_id, ref, date, is_pos, client_id, warehouse_id, tax_rate, tax_net, discount, shipping, grand_total, paid_amount, status, payment_status, shipping_status, notes, created_at, created_by, cash_shift_id, payment_receipt_path, nit, razon_social)
+            VALUES (@UserId, @Ref, @Date, @IsPos, @ClientId, @WarehouseId, @TaxRate, @TaxNet, @Discount, @Shipping, @GrandTotal, @PaidAmount, @Status, @PaymentStatus, @ShippingStatus, @Notes, CURRENT_TIMESTAMP, @CreatedBy, @CashShiftId, @PaymentReceiptPath, @Nit, @RazonSocial)
             RETURNING id";
         
         var saleId = await _uow.Connection.ExecuteScalarAsync<long>(sql, sale, _uow.Transaction);
@@ -162,6 +163,18 @@ public class SaleRepository : ISaleRepository
     {
         const string updateSaleSql = "UPDATE sales SET voucher_id = @VoucherId WHERE id = @Id";
         await _uow.Connection.ExecuteAsync(updateSaleSql, new { VoucherId = voucherId, Id = saleId }, _uow.Transaction);
+    }
+
+    public async Task<bool> UpdateStatusAsync(long id, string status, string paymentStatus)
+    {
+        const string sql = "UPDATE sales SET status = @status, payment_status = @paymentStatus, updated_at = CURRENT_TIMESTAMP WHERE id = @id";
+        return await _uow.Connection.ExecuteAsync(sql, new { id, status, paymentStatus }, _uow.Transaction) > 0;
+    }
+
+    public async Task<bool> UpdateVerifyStatusAsync(long id, string status, string paymentStatus, long userId, long cashShiftId)
+    {
+        const string sql = "UPDATE sales SET status = @status, payment_status = @paymentStatus, user_id = @userId, cash_shift_id = @cashShiftId, updated_at = CURRENT_TIMESTAMP, updated_by = @userId WHERE id = @id";
+        return await _uow.Connection.ExecuteAsync(sql, new { id, status, paymentStatus, userId, cashShiftId }, _uow.Transaction) > 0;
     }
 
     public async Task<bool> DeleteAsync(long id, long deletedBy)
