@@ -34,7 +34,7 @@
 
     <!-- Diálogo Abrir -->
     <q-dialog v-model="showOpenDialog">
-      <q-card style="min-width: 320px" class="glass-card">
+      <q-card style="min-width: 320px">
         <q-card-section class="bg-primary text-white">
           <div class="text-h6">Abrir Turno</div>
         </q-card-section>
@@ -51,7 +51,7 @@
 
     <!-- Diálogo Cerrar -->
     <q-dialog v-model="showCloseDialog">
-      <q-card style="min-width: 320px" class="glass-card">
+      <q-card style="min-width: 320px">
         <q-card-section class="bg-negative text-white">
           <div class="text-h6">Cerrar Caja (Arqueo)</div>
         </q-card-section>
@@ -68,7 +68,7 @@
 
     <!-- Diálogo Comprobante de Arqueo (Voucher) -->
     <q-dialog v-model="showReceiptDialog" persistent>
-      <q-card style="min-width: 400px; max-width: 480px" class="glass-card">
+      <q-card style="min-width: 400px; max-width: 480px">
         <q-card-section class="bg-primary text-white row items-center">
           <q-icon name="print" size="md" class="q-mr-sm" />
           <div class="text-h6 text-bold">Comprobante de Arqueo</div>
@@ -190,9 +190,4 @@ const printReceipt = () => {
 </script>
 
 <style scoped>
-.glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
 </style>

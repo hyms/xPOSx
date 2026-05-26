@@ -1,7 +1,7 @@
 <template>
     <q-page padding>
         <div class="row q-col-gutter-sm">
-            <div class="col-12 app-table-container">
+            <div class="col-12">
                 <q-table
                     title="Productos"
                     :rows="products"
@@ -291,11 +291,11 @@
             </div>
         </FormDialog>
 
-        <!-- Modal de Previsualización Glassmorphism -->
-        <q-dialog v-model="previewModal" backdrop-filter="blur(8px)">
-            <q-card class="glass-preview-card no-shadow">
-                <q-card-section class="row items-center q-pb-none">
-                    <div class="text-h6 text-white text-shadow text-bold">{{ selectedProduct?.name }}</div>
+        <!-- Modal de Previsualización Solid -->
+        <q-dialog v-model="previewModal">
+            <q-card style="width: 100%; max-width: 500px; border-radius: 12px;" class="no-shadow">
+                <q-card-section class="bg-primary text-white row items-center q-pb-none">
+                    <div class="text-h6 text-bold">{{ selectedProduct?.name }}</div>
                     <q-space />
                     <q-btn icon="close" flat round dense v-close-popup color="white" />
                 </q-card-section>
@@ -309,8 +309,8 @@
                     />
                 </q-card-section>
 
-                <q-card-section class="bg-black-transparent text-white text-center q-py-sm">
-                    <div class="text-subtitle2 text-grey-3">Código: {{ selectedProduct?.code }}</div>
+                <q-card-section class="text-center q-py-sm">
+                    <div class="text-subtitle2 text-grey-7">Código: {{ selectedProduct?.code }}</div>
                     <div class="text-primary text-bold text-h6 q-mt-xs">
                         {{ formatCurrency(selectedProduct?.price || 0) }}
                     </div>
@@ -332,8 +332,8 @@
         />
 
         <!-- Quick Add Dialogs -->
-        <q-dialog v-model="quickAdd.show" persistent backdrop-filter="blur(4px)">
-            <q-card style="width: 350px; border-radius: 15px" class="glass-dialog">
+        <q-dialog v-model="quickAdd.show" persistent>
+            <q-card style="width: 350px; border-radius: 12px;">
                 <q-card-section class="bg-primary text-white row items-center q-pb-none">
                     <div class="text-h6">Nueva {{ quickAdd.type === 'category' ? 'Categoría' : 'Unidad' }}</div>
                     <q-space />
@@ -827,31 +827,6 @@ onMounted(fetchData);
         color: white !important;
     }
 }
-.glass-dialog {
-    background: rgba(var(--color-background-elevated-rgb), 0.8);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.glass-preview-card {
-    background: rgba(0, 0, 0, 0.4) !important;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 500px;
-}
-
-.bg-black-transparent {
-    background: rgba(0, 0, 0, 0.6);
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
-}
-
-.text-shadow {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
 .hover-scale {
     transition: transform 0.2s ease-in-out;
     &:hover {

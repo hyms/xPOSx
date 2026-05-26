@@ -106,7 +106,7 @@
                             <div class="row q-col-gutter-md justify-center">
                                 <!-- Logo Upload -->
                                 <div class="col-12 col-sm-6">
-                                    <q-card class="glass-card q-pa-lg text-center">
+                                    <q-card flat bordered class="q-pa-lg text-center">
                                         <div class="text-h6 q-mb-md text-primary">Logo Principal</div>
                                         <div class="preview-container q-mb-md">
                                             <q-img
@@ -140,7 +140,7 @@
 
                                 <!-- Favicon Upload -->
                                 <div class="col-12 col-sm-6">
-                                    <q-card class="glass-card q-pa-lg text-center">
+                                    <q-card flat bordered class="q-pa-lg text-center">
                                         <div class="text-h6 q-mb-md text-primary">Favicon</div>
                                         <div class="preview-container q-mb-md flex flex-center">
                                             <div class="favicon-preview shadow-2 rounded-borders q-pa-sm bg-white">
@@ -313,10 +313,10 @@
                             </q-form>
                         </q-tab-panel>
 
-                        <q-tab-panel name="backup">
+                         <q-tab-panel name="backup">
                              <div class="row q-col-gutter-md justify-center">
                                 <div class="col-12 col-md-8">
-                                    <q-card class="glass-card q-pa-lg">
+                                    <q-card flat bordered class="q-pa-lg">
                                         <div class="text-h6 text-primary q-mb-md">Gestión de Respaldo</div>
                                         <div class="text-body1 q-mb-md">
                                             Genera una copia de seguridad completa de la base de datos o restaura el sistema desde un archivo de respaldo.
@@ -724,14 +724,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.glass-card {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-    border-radius: 16px;
-}
-
 .preview-container {
     min-height: 150px;
     display: flex;

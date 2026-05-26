@@ -1,17 +1,19 @@
 <template>
   <q-page padding>
-    <q-table
-      title="Compras"
-      :rows="purchases"
-      :columns="columns"
-      row-key="id"
-      v-model:pagination="pagination"
-      :loading="loading"
-      :filter="filter"
-      @request="onRequest"
-      binary-state-sort
-      :rows-per-page-options="[10, 20, 50, 100]"
-      >
+    <div class="row q-col-gutter-sm">
+      <div class="col-12">
+        <q-table
+          title="Compras"
+          :rows="purchases"
+          :columns="columns"
+          row-key="id"
+          v-model:pagination="pagination"
+          :loading="loading"
+          :filter="filter"
+          @request="onRequest"
+          binary-state-sort
+          :rows-per-page-options="[10, 20, 50, 100]"
+          >
       <template v-slot:top-right>
         <div class="row q-gutter-sm items-center full-width-xs">
           <q-input
@@ -103,6 +105,8 @@
       </template>
 
     </q-table>
+      </div>
+    </div>
   </q-page>
 </template>
 

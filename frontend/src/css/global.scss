@@ -2,12 +2,12 @@
 
 /* CSS Variables for Theming */
 :root {
-  --color-primary: #1976D2; /* Quasar primary default */
-  --color-secondary: #26A69A;
-  --color-accent: #9C27B0;
+  --color-primary: #005557; 
+  --color-secondary: #3b5c58;
+  --color-accent: #003a63;
 
   /* RGB values for primary color, for use in rgba functions */
-  --color-primary-rgb: 25, 118, 210; 
+  --color-primary-rgb: 0, 85, 87; 
   --color-text-light-rgb: 31, 41, 55; /* RGB for #1f2937 */
   --color-text-dark-rgb: 248, 250, 252; /* RGB for #f8fafc */
 
@@ -15,9 +15,9 @@
   --color-text-dark: #f8fafc; /* Light grey for dark mode text */
 
   --color-background-light: #ffffff;
-  --color-background-dark: #0f172a; /* Slate 900 */
+  --color-background-dark: #121212; 
   --color-background-elevated-light: #f5f5f5; /* Slightly darker than background for cards */
-  --color-background-elevated-dark: #1e293b; /* Slate 800 */
+  --color-background-elevated-dark: #212020; 
 
   --color-border-light: rgba(0, 0, 0, 0.05);
   --color-border-dark: rgba(255, 255, 255, 0.05);
@@ -32,6 +32,14 @@
   --color-background: var(--color-background-dark);
   --color-background-elevated: var(--color-background-elevated-dark);
   --color-border: var(--color-border-dark);
+
+  /* Override active tab text/indicator in dark mode for readable contrast */
+  .q-tab--active {
+    color: #ffffff !important;
+    .q-tab__indicator {
+      background: #ffffff !important;
+    }
+  }
 }
 
 /* Light Mode Variables (defaults) */
@@ -78,12 +86,13 @@ h1, h2, h3, h4, h5, h6 {
 .q-card {
   border-radius: 12px;
   background-color: var(--color-background-elevated);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid var(--color-border);
+  box-shadow: none !important;
 }
 
 .body--dark .q-card {
   border: 1px solid var(--color-border-dark);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: none !important;
 }
 
 /* Premium Dark Mode Colors */

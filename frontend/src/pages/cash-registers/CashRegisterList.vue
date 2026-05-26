@@ -9,7 +9,6 @@
                     row-key="id"
                     :loading="loading"
                     :filter="filter"
-                    card-class="glass-card"
                 >
                     <template v-slot:top-right>
                         <BaseSearch @search="filter = $event" />

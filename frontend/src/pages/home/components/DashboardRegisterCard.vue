@@ -1,5 +1,5 @@
 <template>
-    <q-card class="glass-card">
+    <q-card flat bordered>
         <q-card-section>
             <div class="row items-center justify-between">
                 <div class="text-h6">Caja: {{ registerName }}</div>
@@ -56,7 +56,7 @@
 
         <!-- Diálogo Comprobante de Arqueo -->
         <q-dialog v-model="showReceiptDialog" persistent>
-            <q-card style="min-width: 400px; max-width: 480px" class="glass-card">
+            <q-card style="min-width: 400px; max-width: 480px">
                 <q-card-section class="bg-primary text-white row items-center">
                     <q-icon name="print" size="md" class="q-mr-sm" />
                     <div class="text-h6 text-bold">Comprobante de Arqueo</div>
@@ -179,9 +179,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
 </style>

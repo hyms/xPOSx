@@ -546,7 +546,7 @@ onMounted(() => {
 <style lang="scss">
 .pos-cta-btn {
     background: var(--color-primary);
-    color: var(--color-text-dark) !important;
+    color: white !important;
     box-shadow: 0 6px 16px 0 rgba(var(--color-primary-rgb), 0.45);
     border-radius: 50px !important;
     margin: 12px !important;
@@ -554,7 +554,7 @@ onMounted(() => {
 
     .q-icon,
     .q-item__section--main {
-        color: var(--color-text-dark) !important;
+        color: white !important;
     }
 
     &:hover {
@@ -578,68 +578,24 @@ onMounted(() => {
     }
 
     .body--dark & {
-        color: var(--color-text-dark) !important;
-        background: rgba(255, 255, 255, 0.1);
+        color: #fff !important;
+        background: var(--color-primary);
 
         .q-item__section--main {
-            color: var(--color-text-dark);
+            color: #fff;
         }
 
         .q-icon {
-            color: var(--color-text-dark);
+            color: #fff;
         }
     }
 }
 
-.q-drawer {
-    .scroll {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(var(--color-primary-rgb), 0.3) transparent;
-        
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        &::-webkit-scrollbar-thumb {
-            background-color: rgba(var(--color-primary-rgb), 0.3);
-            border-radius: 3px;
-        }
+    .q-drawer {
+        background-color: var(--color-background-elevated) !important;
+        border-right: 1px solid var(--color-border);
     }
 
-    .q-item {
-        border-radius: 8px; /* Slightly less rounded pills */
-        margin: 6px 10px; /* Adjusted margin */
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        color: var(--color-text-light); /* Light mode text color */
-        font-weight: 500;
-
-        &:hover {
-            background: rgba(var(--color-primary-rgb), 0.08);
-            transform: translateX(3px); /* Subtle micro-interaction */
-            color: var(--color-primary); /* Primary color on hover */
-        }
-    }
-
-    /* Exclude expansion items from the global pill styling so children align nicely */
-    .q-expansion-item__container > .q-item {
-        margin: 4px 12px;
-    }
-
-    .body--dark & {
-        .q-item {
-            color: var(--color-text-dark); /* Dark mode text color */
-        }
-        .q-item:hover {
-            background: rgba(var(--color-primary-rgb), 0.15);
-            color: var(--color-primary);
-        }
-        .q-expansion-item {
-            color: var(--color-text-dark);
-        }
-    }
-}
 
 .rounded-borders {
     border-radius: 8px;

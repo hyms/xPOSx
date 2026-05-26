@@ -1,7 +1,7 @@
 <template>
     <q-page padding>
         <div class="row q-col-gutter-sm">
-            <div class="col-12 app-table-container">
+            <div class="col-12">
                 <q-table
                     v-if="loading && sales.length === 0"
                     class="q-mt-md"

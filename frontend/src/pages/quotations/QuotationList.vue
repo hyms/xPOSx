@@ -1,14 +1,15 @@
 <template>
   <q-page padding>
-    <div class="app-table-container">
-      <q-table
-        title="Cotizaciones"
-        :title-style="{ fontFamily: 'var(--font-family-display)', fontSize: '1.5rem', fontWeight: '700' }"
-        :rows="quotations"
-        :columns="columns"
-        row-key="id"
-        :loading="loading"
-        >
+    <div class="row q-col-gutter-sm">
+      <div class="col-12">
+        <q-table
+          title="Cotizaciones"
+          :title-style="{ fontFamily: 'var(--font-family-display)', fontSize: '1.5rem', fontWeight: '700' }"
+          :rows="quotations"
+          :columns="columns"
+          row-key="id"
+          :loading="loading"
+          >
       <template v-slot:top-right>
         <q-btn color="primary" label="Nueva" icon="add" to="/quotations/create" class="full-width-xs" />
       </template>
@@ -70,6 +71,7 @@
       :client-name="selectedQuotationClientName"
       :warehouse-name="selectedQuotationWarehouseName"
     />
+      </div>
     </div>
   </q-page>
 </template>

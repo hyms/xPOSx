@@ -336,8 +336,8 @@
         </q-card>
 
         <!-- Quick Add Product Dialog -->
-        <q-dialog v-model="quickAddProduct.show" persistent backdrop-filter="blur(4px)">
-            <q-card style="width: 600px; max-width: 90vw; border-radius: 15px" class="glass-dialog">
+        <q-dialog v-model="quickAddProduct.show" persistent>
+            <q-card style="width: 600px; max-width: 90vw; border-radius: 12px;">
                 <q-card-section class="bg-primary text-white row items-center q-pb-none">
                     <div class="text-h6">Nuevo Producto Rápido</div>
                     <q-space />
@@ -451,8 +451,8 @@
         </q-dialog>
 
         <!-- Quick Add Category/Unit Dialog -->
-        <q-dialog v-model="quickAdd.show" persistent backdrop-filter="blur(4px)">
-            <q-card style="width: 350px; max-width: 90vw; border-radius: 15px" class="glass-dialog">
+        <q-dialog v-model="quickAdd.show" persistent>
+            <q-card style="width: 350px; max-width: 90vw; border-radius: 12px;">
                 <q-card-section class="bg-primary text-white row items-center q-pb-none">
                     <div class="text-h6">Nueva {{ quickAdd.type === 'category' ? 'Categoría' : 'Unidad' }}</div>
                     <q-space />
@@ -829,9 +829,4 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.glass-dialog {
-    background: rgba(var(--color-background-elevated-rgb), 0.8);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
 </style>

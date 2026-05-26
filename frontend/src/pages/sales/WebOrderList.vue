@@ -1,101 +1,87 @@
 <template>
-  <q-page padding class="web-orders-page bg-grey-10-glass-back">
-    <div class="row items-center justify-between q-mb-lg">
-      <div>
-        <h4 class="text-weight-bold q-my-none text-primary">Pedidos Web por Confirmar</h4>
-        <p class="text-subtitle1 text-grey-6 q-mt-xs">Panel administrativo para validación de preventas QR y depósitos</p>
-      </div>
-
-      <div class="row q-gutter-sm">
-        <q-btn flat round dense icon="refresh" color="primary" @click="fetchOrders" />
-      </div>
-    </div>
-
-    <!-- Main Table Card -->
-    <q-card flat class="table-glass-card">
-      <q-table
-        :rows="webOrders"
-        :columns="columns"
-        row-key="id"
-        :loading="loading"
-        :pagination="pagination"
-        class="bg-transparent text-white-all"
-        no-data-label="No hay pedidos web pendientes de verificación"
-      >
-        <template v-slot:loading>
-          <q-inner-loading showing color="primary" />
-        </template>
-
-        <!-- Status column customization -->
-        <template v-slot:body-cell-status="props">
-          <q-td :props="props">
-            <q-chip 
-              :color="getStatusColor(props.row.status)" 
-              text-color="white" 
-              dense 
-              class="text-weight-bold"
-            >
-              {{ getStatusLabel(props.row.status) }}
-            </q-chip>
-          </q-td>
-        </template>
-
-        <!-- Payment status column -->
-        <template v-slot:body-cell-paymentStatus="props">
-          <q-td :props="props">
-            <q-chip 
-              :color="props.row.paymentStatus === 'paid' ? 'positive' : 'warning'" 
-              text-color="white" 
-              dense 
-              class="text-weight-bold"
-            >
-              {{ props.row.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE' }}
-            </q-chip>
-          </q-td>
-        </template>
-
-        <!-- Amount column -->
-        <template v-slot:body-cell-grandTotal="props">
-          <q-td :props="props" class="text-weight-bolder text-primary text-right">
-            {{ formatPrice(props.row.grandTotal) }}
-          </q-td>
-        </template>
-
-        <!-- Date column -->
-        <template v-slot:body-cell-date="props">
-          <q-td :props="props">
-            {{ new Date(props.row.date).toLocaleString() }}
-          </q-td>
-        </template>
-
-        <!-- Actions column -->
-        <template v-slot:body-cell-actions="props">
-          <q-td :props="props" class="text-center">
-            <q-btn 
-              color="primary" 
-              icon="visibility" 
-              label="Verificar" 
-              no-caps 
-              dense 
-              unelevated
-              class="q-px-sm text-weight-bold" 
-              @click="openVerifyModal(props.row)" 
+  <q-page padding>
+    <div class="row q-col-gutter-sm">
+      <div class="col-12">
+        <q-table
+          title="Pedidos Web por Confirmar"
+          :rows="webOrders"
+          :columns="columns"
+          row-key="id"
+          :loading="loading"
+          :pagination="pagination"
+          no-data-label="No hay pedidos web pendientes de verificación"
+        >
+          <template v-slot:top-right>
+            <q-btn
+              flat
+              round
+              dense
+              icon="refresh"
+              color="primary"
+              @click="fetchOrders"
             />
-          </q-td>
-        </template>
-      </q-table>
-    </q-card>
+          </template>
+
+          <template v-slot:loading>
+            <q-inner-loading showing color="primary" />
+          </template>
+
+          <!-- Status column customization -->
+          <template v-slot:body-cell-status="props">
+            <q-td :props="props">
+              <q-badge :color="getStatusColor(props.row.status)">
+                {{ getStatusLabel(props.row.status) }}
+              </q-badge>
+            </q-td>
+          </template>
+
+          <!-- Payment status column -->
+          <template v-slot:body-cell-paymentStatus="props">
+            <q-td :props="props">
+              <q-badge :color="props.row.paymentStatus === 'paid' ? 'positive' : 'warning'">
+                {{ props.row.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE' }}
+              </q-badge>
+            </q-td>
+          </template>
+
+          <!-- Amount column -->
+          <template v-slot:body-cell-grandTotal="props">
+            <q-td :props="props" class="text-weight-bold text-right text-primary">
+              {{ formatPrice(props.row.grandTotal) }}
+            </q-td>
+          </template>
+
+          <!-- Date column -->
+          <template v-slot:body-cell-date="props">
+            <q-td :props="props">
+              {{ new Date(props.row.date).toLocaleString() }}
+            </q-td>
+          </template>
+
+          <!-- Actions column -->
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props" class="text-center">
+              <q-btn 
+                flat
+                round
+                color="primary" 
+                icon="visibility" 
+                @click="openVerifyModal(props.row)" 
+              />
+            </q-td>
+          </template>
+        </q-table>
 
     <!-- Glassmorphism Order Verification Modal -->
-    <q-dialog v-model="verifyModalOpen" backdrop-filter="blur(15px)">
-      <q-card class="verify-modal-glass-card text-white-all" style="width: 800px; max-width: 90vw; border-radius: 20px;">
+    <q-dialog v-model="verifyModalOpen">
+      <q-card style="width: 800px; max-width: 90vw; border-radius: 12px;">
         <!-- Header -->
-        <q-card-section class="modal-header row items-center justify-between border-bottom q-py-md">
+        <q-card-section class="row items-center justify-between border-bottom q-py-md">
           <div class="row items-center">
             <q-icon name="qr_code_2" size="md" color="primary" class="q-mr-sm" />
             <div>
               <div class="text-h6 text-weight-bold">Verificar Pedido {{ selectedOrder?.ref }}</div>
-              <div class="text-caption text-grey-5">Fecha: {{ selectedOrder ? new Date(selectedOrder.date).toLocaleString() : '' }}</div>
+              <div class="text-caption text-grey-7">Fecha: {{ selectedOrder ? new Date(selectedOrder.date).toLocaleString() : '' }}</div>
             </div>
           </div>
           <q-btn icon="close" flat round dense v-close-popup />
@@ -111,39 +97,39 @@
             <!-- Left subcolumn: Details & Billing -->
             <div class="col-12 col-md-6">
               <!-- Billing Info -->
-              <div class="billing-box rounded-borders q-pa-md q-mb-md bg-white-trans-5 border-all">
+              <div class="rounded-borders q-pa-md q-mb-md bordered">
                 <span class="text-weight-bold text-subtitle1 block text-primary q-mb-sm">Datos de Facturación</span>
                 <div class="row q-mb-xs">
-                  <span class="col-5 text-grey-4">NIT / C.I.:</span>
+                  <span class="col-5">NIT / C.I.:</span>
                   <span class="col-7 text-weight-medium">{{ selectedOrderDetails.nit || 'No provisto' }}</span>
                 </div>
                 <div class="row q-mb-xs">
-                  <span class="col-5 text-grey-4">Razón Social:</span>
+                  <span class="col-5">Razón Social:</span>
                   <span class="col-7 text-weight-medium">{{ selectedOrderDetails.razonSocial || 'No provisto' }}</span>
                 </div>
                 <div class="row q-mb-xs">
-                  <span class="col-5 text-grey-4">Comentarios:</span>
-                  <span class="col-7 text-weight-medium italic text-grey-3">{{ selectedOrderDetails.notes || 'Ninguno' }}</span>
+                  <span class="col-5">Comentarios:</span>
+                  <span class="col-7 text-weight-medium italic text-grey-7">{{ selectedOrderDetails.notes || 'Ninguno' }}</span>
                 </div>
               </div>
 
               <!-- Products -->
               <span class="text-weight-bold text-subtitle1 block text-primary q-mb-sm">Productos Comprados</span>
-              <q-list separator class="bg-white-trans-3 border-all rounded-borders q-pa-xs">
+              <q-list separator class="bordered rounded-borders">
                 <q-item v-for="item in selectedOrderDetails.details" :key="item.id" class="q-py-sm">
                   <q-item-section>
                     <q-item-label class="text-weight-bold">{{ item.productName }}</q-item-label>
-                    <q-item-label caption class="text-grey-4">Cantidad: {{ item.quantity }}</q-item-label>
+                    <q-item-label caption>Cantidad: {{ item.quantity }}</q-item-label>
                   </q-item-section>
                   <q-item-section side class="text-right">
                     <span class="text-weight-bold text-primary">{{ formatPrice(item.total) }}</span>
-                    <span class="text-caption text-grey-4">{{ formatPrice(item.price) }} c/u</span>
+                    <span class="text-caption">{{ formatPrice(item.price) }} c/u</span>
                   </q-item-section>
                 </q-item>
               </q-list>
 
               <div class="row justify-between items-center q-mt-md q-px-sm">
-                <span class="text-h6 text-grey-4">Total General:</span>
+                <span class="text-h6">Total General:</span>
                 <span class="text-h5 text-weight-bolder text-primary">{{ formatPrice(selectedOrderDetails.grandTotal) }}</span>
               </div>
             </div>
@@ -151,7 +137,7 @@
             <!-- Right subcolumn: Receipt preview -->
             <div class="col-12 col-md-6 text-center">
               <span class="text-weight-bold text-subtitle1 block text-primary text-left q-mb-sm">Comprobante del Cliente</span>
-              <div class="receipt-preview-container rounded-borders border-all bg-black q-pa-sm flex flex-center" style="min-height: 250px;">
+              <div class="rounded-borders bordered q-pa-sm flex flex-center" style="min-height: 250px;">
                 <q-img 
                   v-if="selectedOrderDetails.paymentReceiptPath" 
                   :src="getReceiptUrl(selectedOrderDetails.paymentReceiptPath)" 
@@ -164,20 +150,20 @@
                     <q-spinner color="primary" size="30px" />
                   </template>
                 </q-img>
-                <div v-else class="text-grey-5">
+                <div v-else class="text-grey-6">
                   <q-icon name="image_not_supported" size="50px" />
                   <div>Sin captura de comprobante</div>
                 </div>
               </div>
-              <p class="text-caption text-grey-5 q-mt-xs">Haz clic en la imagen para ver en tamaño completo</p>
+              <p class="text-caption text-grey-6 q-mt-xs">Haz clic en la imagen para ver en tamaño completo</p>
             </div>
           </div>
         </q-card-section>
 
         <!-- Footer actions -->
-        <q-card-actions align="right" class="border-top q-py-md q-px-lg row justify-between bg-dark-glass-footer">
+        <q-card-actions align="right" class="border-top q-py-md q-px-lg row justify-between">
           <div>
-            <q-chip outline color="warning" text-color="white" v-if="selectedOrder?.status === 'PENDING_VERIFICATION'" class="text-weight-bold">
+            <q-chip outline color="warning" v-if="selectedOrder?.status === 'PENDING_VERIFICATION'" class="text-weight-bold">
               ESTADO: PENDIENTE DE REVISIÓN
             </q-chip>
           </div>
@@ -195,7 +181,7 @@
               color="negative" 
               unelevated 
               no-caps 
-              label="Rechazar / Cancelar" 
+              label="Rechazar" 
               icon="cancel" 
               class="q-px-md text-weight-bold" 
               :loading="processing"
@@ -206,7 +192,7 @@
               color="positive" 
               unelevated 
               no-caps 
-              label="Aprobar Pedido" 
+              label="Aprobar" 
               icon="check_circle" 
               class="q-px-md text-weight-bold" 
               :loading="processing"
@@ -230,6 +216,8 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+      </div>
+    </div>
   </q-page>
 </template>
 
@@ -427,77 +415,6 @@ const rejectOrder = () => {
 
 <style scoped>
 .web-orders-page {
-  background: radial-gradient(circle, #201a3c 0%, #0d091e 100%);
   min-height: calc(100vh - 50px);
-}
-
-.table-glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.verify-modal-glass-card {
-  background: rgba(30, 25, 55, 0.85) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.border-bottom {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.border-top {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.border-all {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.bg-white-trans-5 {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.bg-white-trans-3 {
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-.bg-dark-glass-footer {
-  background-color: rgba(15, 12, 30, 0.95);
-}
-
-.receipt-preview-container {
-  overflow: hidden;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-}
-
-.text-white-all :deep(*) {
-  color: #ffffff !important;
-}
-
-.text-white-all :deep(.text-primary) {
-  color: var(--q-primary) !important;
-}
-
-.text-white-all :deep(.q-chip *) {
-  color: inherit !important;
-}
-
-.text-white-all :deep(.q-table__card) {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-
-.text-white-all :deep(.q-table th) {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-.text-white-all :deep(.q-table tbody td) {
-  color: #ffffff !important;
 }
 </style>

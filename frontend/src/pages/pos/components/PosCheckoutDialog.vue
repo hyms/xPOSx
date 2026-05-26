@@ -1,7 +1,7 @@
 <template>
-    <q-dialog v-model="internalModel" persistent backdrop-filter="blur(8px)">
-        <q-card class="glass-checkout-card col-12 col-md-6">
-            <q-card-section class="glass-header text-white">
+    <q-dialog v-model="internalModel" persistent>
+        <q-card style="width: 500px; max-width: 90vw; border-radius: 12px;">
+            <q-card-section class="bg-primary text-white">
                 <div
                     class="text-h6 text-bold"
                     :style="{ fontFamily: 'var(--font-family-display)' }"
@@ -167,27 +167,6 @@ const notes = computed({
 </script>
 
 <style lang="scss" scoped>
-.glass-checkout-card {
-    background: rgba(
-        var(--color-background-elevated-rgb, 255, 255, 255),
-        0.7
-    ) !important;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
-}
-
-.glass-header {
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        rgba(var(--color-primary-rgb), 0.8) 100%
-    );
-    backdrop-filter: blur(5px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 .warning-box {
     background: rgba(255, 183, 0, 0.15);
     border: 1px dashed var(--q-warning, #f5c000);
