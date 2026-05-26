@@ -508,6 +508,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { useWarehouseStore } from "@/stores/warehouse";
 import { purchaseService } from "@/services/purchase.service";
 import { providerService } from "@/services/provider.service";
 import { warehouseService } from "@/services/warehouse.service";
@@ -520,6 +521,7 @@ import { useCurrency } from "@/composables/useCurrency";
 
 const $q = useQuasar();
 const router = useRouter();
+const warehouseStore = useWarehouseStore();
 const { formatCurrency, currencySymbol } = useCurrency();
 const saving = ref(false);
 
@@ -562,7 +564,7 @@ const formData = reactive<Partial<Purchase> & { details: PurchaseDetail[] }>({
     ref: `PR-${Date.now()}`,
     date: new Date().toISOString().substr(0, 10),
     providerId: undefined,
-    warehouseId: undefined,
+    warehouseId: warehouseStore.activeWarehouseId || undefined,
     grandTotal: 0,
     paidAmount: 0,
     status: "received",

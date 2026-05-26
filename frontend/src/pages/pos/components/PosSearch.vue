@@ -5,9 +5,9 @@
                 v-model="searchModel"
                 placeholder="Buscar producto o Código (F2)..."
                 outlined
-                dense
+                :dense="!$q.screen.lt.md"
                 bg-color="transparent"
-                class="pos-search-input"
+                class="pos-search-input touch-input-48"
                 @keyup.enter="$emit('scan')"
             >
                 <template v-slot:prepend>
@@ -31,11 +31,13 @@
                 option-value="id"
                 label="Categoría"
                 outlined
-                dense
+                :dense="!$q.screen.lt.md"
                 bg-color="transparent"
                 clearable
                 emit-value
                 map-options
+                stack-label
+                class="touch-input-48"
             />
         </div>
     </div>
@@ -65,6 +67,13 @@ const categoryModel = computed({
 </script>
 
 <style lang="scss" scoped>
+@media (max-width: 1023px) {
+    .touch-input-48 :deep(.q-field__control) {
+        height: 48px !important;
+        min-height: 48px !important;
+    }
+}
+
 .pos-search-input {
     :deep(.q-field__control) {
         background-color: var(--color-background-elevated) !important;

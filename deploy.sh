@@ -63,7 +63,11 @@ fi
 
 # 4. Despliegue en el servidor
 echo "--- Remote Deployment ---"
-ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "ubuntu@$SERVER_ADDRESS" << 'EOF'
+# Pasamos las variables explícitamente al entorno remoto
+ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "ubuntu@$SERVER_ADDRESS" \
+    "POSTGRES_DB='$POSTGRES_DB' POSTGRES_USER='$POSTGRES_USER' POSTGRES_PASSWORD='$POSTGRES_PASSWORD' \
+     JWT_KEY='$JWT_KEY' JWT_ISSUER='$JWT_ISSUER' JWT_AUDIENCE='$JWT_AUDIENCE' JWT_EXPIRE_DAYS='$JWT_EXPIRE_DAYS' \
+     bash -s" << 'EOF'
     set -e
     cd ~/xposx_deploy
 
@@ -78,7 +82,7 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
     echo "Restarting services..."
     # docker compose up -d se encarga de recrear solo lo necesario
     docker compose -f docker-compose.prod.yml up -d
-
+    
     echo "Status:"
     docker compose ps
 

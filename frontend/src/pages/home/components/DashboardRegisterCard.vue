@@ -53,12 +53,32 @@
                 </q-card-actions>
             </q-card>
         </q-dialog>
+
+        <!-- Diálogo Comprobante de Arqueo -->
+        <q-dialog v-model="showReceiptDialog" persistent>
+            <q-card style="min-width: 400px; max-width: 480px" class="glass-card">
+                <q-card-section class="bg-primary text-white row items-center">
+                    <q-icon name="print" size="md" class="q-mr-sm" />
+                    <div class="text-h6 text-bold">Comprobante de Arqueo</div>
+                </q-card-section>
+
+                <q-card-section class="q-pa-md bg-grey-2 text-dark scroll" style="max-height: 60vh">
+                    <pre class="q-ma-none text-weight-medium" style="font-family: 'Courier New', Courier, monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.4;">{{ receiptText }}</pre>
+                </q-card-section>
+
+                <q-card-actions align="right" class="q-pa-md">
+                    <q-btn flat label="Cerrar" color="grey" v-close-popup />
+                    <q-btn color="primary" label="Imprimir" icon="print" @click="printReceipt" unelevated />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-card>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useCashShiftStore } from '@/stores/cashShiftStore';
+import { cashShiftService } from '@/services/cashShift.service';
 import { useQuasar } from 'quasar';
 import { date } from 'quasar';
 
@@ -66,6 +86,8 @@ const $q = useQuasar();
 const store = useCashShiftStore();
 const showCloseDialog = ref(false);
 const showOpenDialog = ref(false);
+const showReceiptDialog = ref(false);
+const receiptText = ref('');
 const loading = computed(() => store.loading);
 
 const endingCashActual = ref(0);
@@ -88,12 +110,54 @@ const openDialog = () => {
 
 const handleClose = async () => {
     if (!activeShift.value) return;
+    const shiftId = activeShift.value.shiftId;
     try {
-        await store.closeShift(activeShift.value.shiftId, endingCashActual.value, closingNotes.value);
+        await store.closeShift(shiftId, endingCashActual.value, closingNotes.value);
         $q.notify({ color: 'positive', message: 'Caja cerrada exitosamente' });
         showCloseDialog.value = false;
+
+        try {
+            const res = await cashShiftService.getReceiptPayload(shiftId);
+            receiptText.value = res.data.formattedText;
+            showReceiptDialog.value = true;
+        } catch (err) {
+            $q.notify({ color: 'warning', message: 'Caja cerrada, pero no se pudo generar el comprobante' });
+        }
     } catch (e) {
         $q.notify({ color: 'negative', message: 'Error al cerrar' });
+    }
+};
+
+const printReceipt = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Imprimir Comprobante de Arqueo</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', Courier, monospace;
+                            white-space: pre-wrap;
+                            font-size: 14px;
+                            padding: 20px;
+                            width: 80mm;
+                            margin: 0 auto;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${receiptText.value}</pre>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        }
+                    <\/script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 };
 

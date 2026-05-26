@@ -83,6 +83,16 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
     set -e
     cd ~/xposx_deploy
 
+    # Creamos un archivo .env temporal en el servidor para que docker compose lo lea
+    # Solo las variables necesarias para producción Neon
+    cat << ENV_EOF > .env
+NEON=$NEON
+JWT_KEY=$JWT_KEY
+JWT_ISSUER=$JWT_ISSUER
+JWT_AUDIENCE=$JWT_AUDIENCE
+JWT_EXPIRE_DAYS=$JWT_EXPIRE_DAYS
+ENV_EOF
+
     echo "Loading images..."
     if [ -f xposx-backend.tar ]; then
         docker load -i xposx-backend.tar
@@ -92,14 +102,13 @@ ssh -i "$PEM_PATH" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
     fi
 
     echo "Restarting services with Neon DB..."
-    # The variables are already in the environment from the SSH command prefix
     docker compose -f docker-compose.neon.yml up -d --remove-orphans
 
     echo "Status:"
     docker compose ps
 
-    echo "Cleaning up tar files..."
-    rm -f *.tar
+    echo "Cleaning up tar and env files..."
+    rm -f *.tar .env
 EOF
 
 # Cleanup local

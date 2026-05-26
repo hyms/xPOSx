@@ -285,8 +285,8 @@ const fetchOrders = async () => {
     });
     sales.value = res.data.items || [];
     
-    // Filter web orders reactively (isPos is false and status is pending)
-    webOrders.value = sales.value.filter(sale => sale.isPos === false);
+    // Filter web orders reactively (only those starting with 'WEB-')
+    webOrders.value = sales.value.filter(sale => sale.ref && sale.ref.startsWith('WEB-'));
   } catch (error) {
     console.error('Error fetching web orders:', error);
     $q.notify({

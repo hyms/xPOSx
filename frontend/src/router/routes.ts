@@ -1,6 +1,6 @@
 import { RouteRecordRaw } from 'vue-router';
 
-const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'portal-secreto-9382';
+const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'admin';
 
 const routes: RouteRecordRaw[] = [
   // Public Shop Routes

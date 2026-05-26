@@ -42,6 +42,9 @@ export const useSettingsStore = defineStore('settings', {
       try {
         const response = await api.get<SettingState>('/settings');
         this.settings = response.data;
+        if (this.settings && this.settings.settingsVersion) {
+          localStorage.setItem('settings_version', String(this.settings.settingsVersion));
+        }
         this.updateFavicon();
       } catch (error) {
         console.error('Error fetching settings:', error);

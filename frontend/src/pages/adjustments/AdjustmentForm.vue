@@ -152,6 +152,7 @@
 import { ref, onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { useWarehouseStore } from "@/stores/warehouse";
 import { adjustmentService } from "@/services/adjustment.service";
 import type { Adjustment, AdjustmentDetail } from "@/types";
 import { warehouseService } from "@/services/warehouse.service";
@@ -161,6 +162,7 @@ import type { Product } from "@/types";
 
 const $q = useQuasar();
 const router = useRouter();
+const warehouseStore = useWarehouseStore();
 const warehouses = ref<Warehouse[]>([]);
 const products = ref<Product[]>([]);
 const allProducts = ref<Product[]>([]);
@@ -170,7 +172,7 @@ const isEdit = ref(false);
 
 const formData = reactive<Adjustment>({
     date: new Date().toISOString().split("T")[0],
-    warehouseId: 0,
+    warehouseId: warehouseStore.activeWarehouseId || 0,
     items: 0,
     notes: "",
     details: [],

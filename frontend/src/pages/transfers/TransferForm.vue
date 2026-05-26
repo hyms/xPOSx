@@ -166,6 +166,7 @@
 import { ref, onMounted, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
+import { useWarehouseStore } from "@/stores/warehouse";
 import { transferService } from "@/services/transfer.service";
 import type { Transfer, TransferDetail } from "@/types";
 import { warehouseService } from "@/services/warehouse.service";
@@ -175,6 +176,7 @@ import type { Product } from "@/types";
 
 const $q = useQuasar();
 const router = useRouter();
+const warehouseStore = useWarehouseStore();
 const warehouses = ref<Warehouse[]>([]);
 const products = ref<Product[]>([]);
 const allProducts = ref<Product[]>([]);
@@ -184,7 +186,7 @@ const isEdit = ref(false);
 
 const formData = reactive<Transfer>({
     date: new Date().toISOString().split("T")[0],
-    fromWarehouseId: 0,
+    fromWarehouseId: warehouseStore.activeWarehouseId || 0,
     toWarehouseId: 0,
     items: 0,
     grandTotal: 0,

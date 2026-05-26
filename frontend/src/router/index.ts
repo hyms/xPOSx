@@ -7,6 +7,7 @@ import {
 } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import routes from './routes'
+import { setupNavigationGuard } from './guards'
 
 /*
  * If not building with SSR mode, you can
@@ -32,26 +33,8 @@ export default route(function ({ store /*, ssrContext */ }) {
     history: createHistory(process.env.VUE_ROUTER_BASE)
   })
 
-  Router.beforeEach((to) => {
-    const authStore = useAuthStore(store)
-
-    // Block traditional routes completely & silently
-    if (to.path === '/login' || to.path === '/admin') {
-      return '/'
-    }
-
-    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-      // Silent redirect to home instead of exposing a login page
-      return '/'
-    } else if (to.meta.guest && authStore.isAuthenticated) {
-      // If already logged in and visiting secret entry point, send to dashboard
-      return '/dashboard'
-    }
-
-    // Permission check
-    if (to.meta.permission && !authStore.hasPermission(to.meta.permission as string)) {
-      return '/'
-    }
+  Router.beforeEach(async (to, from) => {
+    return await setupNavigationGuard(to, from, store)
   })
 
   return Router

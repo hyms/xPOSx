@@ -28,21 +28,25 @@
                     <q-input
                         v-model="formData.clientNit"
                         label="NIT / CI"
-                        dense
+                        :dense="!$q.screen.lt.md"
                         outlined
+                        stack-label
                         :loading="isSearchingClient"
                         @keyup.enter="onNitSearch"
                         @blur="onNitSearch"
+                        class="touch-input-48"
                     />
                 </div>
                 <div class="col-7">
                     <q-input
                         v-model="formData.clientName"
                         label="Razón Social"
-                        dense
+                        :dense="!$q.screen.lt.md"
                         outlined
+                        stack-label
                         readonly
-                        class="bg-grey-2"
+                        class="touch-input-48"
+                        input-class="text-weight-bold"
                     />
                 </div>
             </div>
@@ -53,11 +57,13 @@
                 option-label="name"
                 option-value="id"
                 label="Almacén"
-                dense
+                :dense="!$q.screen.lt.md"
                 outlined
                 emit-value
                 map-options
+                stack-label
                 @update:model-value="$emit('fetch-stocks')"
+                class="touch-input-48"
             />
         </div>
 
@@ -172,10 +178,12 @@
                         v-model.number="taxRate"
                         label="Impuesto %"
                         type="number"
-                        dense
+                        :dense="!$q.screen.lt.md"
                         outlined
+                        stack-label
                         input-class="text-right"
                         @update:model-value="$emit('calculate-totals')"
+                        class="touch-input-48"
                     />
                 </div>
                 <div class="col-4">
@@ -183,10 +191,12 @@
                         v-model.number="discount"
                         label="Descuento $"
                         type="number"
-                        dense
+                        :dense="!$q.screen.lt.md"
                         outlined
+                        stack-label
                         input-class="text-right"
                         @update:model-value="$emit('calculate-totals')"
+                        class="touch-input-48"
                     />
                 </div>
                 <div class="col-4">
@@ -194,10 +204,12 @@
                         v-model.number="shipping"
                         label="Envío $"
                         type="number"
-                        dense
+                        :dense="!$q.screen.lt.md"
                         outlined
+                        stack-label
                         input-class="text-right"
                         @update:model-value="$emit('calculate-totals')"
+                        class="touch-input-48"
                     />
                 </div>
             </div>
@@ -384,6 +396,17 @@ const shipping = computed({
 </script>
 
 <style lang="scss" scoped>
+@media (max-width: 1023px) {
+    .touch-input-48 :deep(.q-field__control) {
+        height: 48px !important;
+        min-height: 48px !important;
+    }
+}
+
+.body--dark .touch-input-48 :deep(.q-field__control) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .glass-register-card {
     background: rgba(
         var(--color-background-elevated-rgb, 255, 255, 255),

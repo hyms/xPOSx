@@ -353,6 +353,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue";
 import { useQuasar } from "quasar";
+import { useWarehouseStore } from "@/stores/warehouse";
 import { expenseService } from "@/services/expense.service";
 import { warehouseService } from "@/services/warehouse.service";
 import { useConfirm } from "@/composables/useConfirm";
@@ -362,6 +363,7 @@ import { useCurrency } from "@/composables/useCurrency";
 import ExpenseDetailDialog from "./components/ExpenseDetailDialog.vue";
 
 const $q = useQuasar();
+const warehouseStore = useWarehouseStore();
 const { confirmDelete } = useConfirm();
 const tab = ref("expenses");
 const { formatCurrency, currencySymbol } = useCurrency();
@@ -395,7 +397,7 @@ const isEditExpense = ref(false);
 const expenseForm = reactive<Expense>({
     date: new Date().toISOString().substr(0, 10),
     expenseCategoryId: 0,
-    warehouseId: 0,
+    warehouseId: warehouseStore.activeWarehouseId || 0,
     details: "",
     amount: 0,
 });
