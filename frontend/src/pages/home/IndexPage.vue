@@ -1,6 +1,12 @@
 <template>
     <q-page padding>
         <div class="row q-col-gutter-sm q-mb-md">
+            <div class="col-12 col-md-6">
+                <DashboardRegisterCard />
+            </div>
+        </div>
+
+        <div class="row q-col-gutter-sm q-mb-md">
             <!-- Quick Stats -->
             <div class="col-12 col-md-3">
                 <q-card class="bg-primary text-white">
@@ -225,6 +231,7 @@
 import { ref, onMounted } from "vue";
 import { reportService } from "@/services/report.service";
 import type { DashboardSummaryDto } from "@/types";
+import DashboardRegisterCard from "./components/DashboardRegisterCard.vue";
 
 import { useCurrency } from "@/composables/useCurrency";
 

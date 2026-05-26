@@ -16,9 +16,11 @@
                     <span class="gt-xs">xPOSx Admin</span>
                 </q-toolbar-title>
 
-                <q-space />
+                    <q-space />
 
-                <div class="row items-center no-wrap q-gutter-sm">
+                    <HeaderRegisterIndicator />
+
+                    <div class="row items-center no-wrap q-gutter-sm">
                     <!-- Warehouse Selector -->
                     <q-select
                         v-if="warehouseStore.warehouses.length > 0"
@@ -448,6 +450,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar, AppFullscreen } from "quasar";
+import HeaderRegisterIndicator from "@/components/HeaderRegisterIndicator.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useWarehouseStore } from "@/stores/warehouse";
 import type { Warehouse } from "@/types";

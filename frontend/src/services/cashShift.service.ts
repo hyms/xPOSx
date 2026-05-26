@@ -22,6 +22,17 @@ export interface CashShift {
   closingNotes?: string;
 }
 
+export interface ActiveShiftDto {
+  shiftId: number;
+  registerId: number;
+  registerName: string;
+  userId: number;
+  username: string;
+  status: string;
+  openedAt: string;
+  startingCash: number;
+}
+
 export interface OpenShiftPayload {
   registerId: number;
   startingCash: number;
@@ -58,7 +69,7 @@ export const cashShiftService = {
     api.delete<{ message: string }>(`/CashRegisters/${id}`),
   
   getActiveShift: () => 
-    api.get<CashShift | null>('/CashShifts/active'),
+    api.get<ActiveShiftDto | null>('/CashShifts/active'),
   
   openShift: (payload: OpenShiftPayload) => 
     api.post<{ shiftId: number; message: string }>('/CashShifts/open', payload),

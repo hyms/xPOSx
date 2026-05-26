@@ -1,6 +1,8 @@
 import { ref, reactive, computed } from "vue";
 import { useQuasar } from "quasar";
 import { useRouter } from "vue-router";
+import { useCashShiftStore } from "@/stores/cashShiftStore";
+import { useWarehouseStore } from "@/stores/warehouse";
 import { productService } from "@/services/product.service";
 import { categoryService } from "@/services/category.service";
 import { warehouseService } from "@/services/warehouse.service";
@@ -36,9 +38,10 @@ export function usePosLogic() {
     const saving = ref(false);
     const isSearchingClient = ref(false);
 
-    // Cash Shift State
-    const activeShift = ref<CashShift | null>(null);
-    const registers = ref<CashRegister[]>([]);
+    const store = useCashShiftStore();
+    const warehouseStore = useWarehouseStore();
+    const activeShift = computed(() => store.activeShift);
+    const registers = computed(() => store.registers);
     const showOpenShiftDialog = ref(false);
     const openShiftStartingCash = ref(0);
     const selectedRegisterId = ref<number | null>(null);
@@ -181,18 +184,13 @@ export function usePosLogic() {
 
     const checkActiveShiftAndLoadRegisters = async (warehouseId: number) => {
         try {
-            // Fetch registers for the active warehouse
-            const rRes = await cashShiftService.getRegistersByWarehouse(warehouseId);
-            registers.value = rRes.data;
-            if (registers.value.length > 0) {
-                selectedRegisterId.value = registers.value[0].id;
+            await store.fetchRegisters();
+            if (store.registers.length > 0) {
+                selectedRegisterId.value = store.registers[0].id;
             }
-
-            // Check if there is an active shift
-            const sRes = await cashShiftService.getActiveShift();
-            activeShift.value = sRes.data;
-
-            if (!activeShift.value) {
+            await store.fetchActiveShift();
+            
+            if (!store.activeShift) {
                 showOpenShiftDialog.value = true;
             }
         } catch (error) {
@@ -206,19 +204,11 @@ export function usePosLogic() {
             return;
         }
         try {
-            const res = await cashShiftService.openShift({
-                registerId: selectedRegisterId.value,
-                startingCash: openShiftStartingCash.value
-            });
-            $q.notify({ color: "positive", message: res.data.message });
-            
-            // Re-fetch active shift
-            const sRes = await cashShiftService.getActiveShift();
-            activeShift.value = sRes.data;
+            await store.openShift(selectedRegisterId.value, openShiftStartingCash.value);
+            $q.notify({ color: "positive", message: "Turno abierto correctamente" });
             showOpenShiftDialog.value = false;
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Error al abrir turno de caja";
-            $q.notify({ color: "negative", message: msg });
+            $q.notify({ color: "negative", message: "Error al abrir turno" });
         }
     };
 
@@ -236,7 +226,7 @@ export function usePosLogic() {
             clients.value = clRes.data;
 
             if (warehouses.value.length > 0) {
-                formData.warehouseId = warehouses.value[0].id!;
+                formData.warehouseId = warehouseStore.activeWarehouseId || warehouses.value[0].id!;
                 fetchStocks();
                 await checkActiveShiftAndLoadRegisters(formData.warehouseId);
             }
@@ -316,6 +306,8 @@ export function usePosLogic() {
     };
 
     const openCheckout = () => {
+        paidAmount.value = total.value;
+        calculateChange();
         showCartMobile.value = false;
         showCheckoutDialog.value = true;
     };

@@ -33,15 +33,14 @@
 
                     <template v-slot:body-cell-isActive="props">
                         <q-td :props="props" align="center">
-                            <q-chip
+                            <q-badge
                                 :color="props.row.isActive ? 'positive' : 'negative'"
-                                text-color="white"
-                                dense
-                                square
-                                class="text-weight-bold text-uppercase"
+                                class="cursor-pointer"
                             >
-                                {{ props.row.isActive ? 'Activo' : 'Inactivo' }}
-                            </q-chip>
+                                {{ props.row.isActive ? 'Abierto' : 'Cerrado' }}
+                                <q-tooltip v-if="props.row.isActive">Abierto por: Admin (ID: 1)</q-tooltip>
+                                <q-tooltip v-else>Cerrado hace 3 horas</q-tooltip>
+                            </q-badge>
                         </q-td>
                     </template>
 
