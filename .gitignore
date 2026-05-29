@@ -1,24 +1,34 @@
-# .gitignore for .NET, Vue, and Docker
+# .gitignore for .NET, Vue (Quasar), and Docker
+
+## [OS / IDE / Editors]
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+.tmp/
+.vscode/
+.vs/
+.idea/
+*.user
+*.userosscache
+*.sln.doccache
+*.suo
+*.sln.docstates
 
 ## [Visual Studio / .NET]
 bin/
 obj/
-*.user
-*.userosscache
-*.sln.doccache
-*.suo
-*.user
-*.userosscache
-*.sln.doccache
-*.suo
-.vs/
-.vscode/
 appsettings.Development.json
+out/
+publish/
 
-## [Node / Vue]
+## [Node / Vue / Quasar]
 node_modules/
+.pnpm-store/
 dist/
 dist-ssr/
+.quasar/
 *.local
 .eslintcache
 .stylelintcache
@@ -32,21 +42,22 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+.playwright/
+.playwright-mcp/
 
 ## [Docker]
 .docker/
 *.tar
 *.tar.gz
 
-## [OS / IDE]
-.DS_Store
-Thumbs.db
-*.swp
-*.bak
-.tmp/
+## [Local Files & Database Backups]
+*.sql
+*.bkp
+*.dump
+agents.md
+*.png
 .env
 .env.local
 .env.*.local
 .agents/
-.idea/
-.playwright*
+skills-lock.json

@@ -1,9 +1,15 @@
+# Dockerignore for Node / Vue / Quasar Frontend
 .git
 .github
 .vscode
+.vs
+.idea
 node_modules/
+.pnpm-store/
 dist/
 .quasar/
 .env*
 !.env.defaults
-npm-debug.log
+*.log
+Dockerfile
+docker-compose*

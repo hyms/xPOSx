@@ -34,7 +34,7 @@
           </q-btn>
 
           <!-- Backoffice Portal Button -->
-          <q-btn outline no-caps color="primary" label="POS Admin" to="/admin" class="backoffice-btn xs-hide" icon="dashboard" />
+          <q-btn outline no-caps color="primary" label="POS Admin" to="/admin-pos" class="backoffice-btn xs-hide" icon="dashboard" />
         </div>
       </q-toolbar>
     </q-header>

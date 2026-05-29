@@ -84,7 +84,7 @@ const onSubmit = async () => {
         message: 'Bienvenido de nuevo',
         icon: 'check_circle'
       })
-      router.push('/dashboard')
+      router.push('/admin-pos/dashboard')
     }
   } catch (error: any) {
     let message = 'Error al iniciar sesión'

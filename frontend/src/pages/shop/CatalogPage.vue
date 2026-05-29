@@ -297,8 +297,8 @@ onMounted(async () => {
 
   try {
     const [prodResponse, catResponse] = await Promise.all([
-      productService.getAll(),
-      categoryService.getAll()
+      productService.getPublic(),
+      categoryService.getPublic()
     ]);
     products.value = prodResponse.data;
     categories.value = catResponse.data;

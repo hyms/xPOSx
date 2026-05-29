@@ -19,15 +19,21 @@ public class OnlineSalesController : ControllerBase
     private readonly ISaleService _saleService;
     private readonly ICmsRepository _cmsRepository;
     private readonly IWebHostEnvironment _environment;
+    private readonly IProductRepository _productRepository;
+    private readonly ICategoryRepository _categoryRepository;
 
     public OnlineSalesController(
         ISaleService saleService,
         ICmsRepository cmsRepository,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IProductRepository productRepository,
+        ICategoryRepository categoryRepository)
     {
         _saleService = saleService;
         _cmsRepository = cmsRepository;
         _environment = environment;
+        _productRepository = productRepository;
+        _categoryRepository = categoryRepository;
     }
 
     [AllowAnonymous]
@@ -40,6 +46,30 @@ public class OnlineSalesController : ControllerBase
             return NotFound(new { message = "Página no encontrada" });
         }
         return Ok(page);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("products/public")]
+    public async Task<IActionResult> GetPublicProducts()
+    {
+        var products = await _productRepository.GetPublicProductsAsync();
+        return Ok(products);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("products/public/top")]
+    public async Task<IActionResult> GetTopSellingProducts([FromQuery] int limit = 5)
+    {
+        var products = await _productRepository.GetTopSellingAsync(limit);
+        return Ok(products);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("categories/public")]
+    public async Task<IActionResult> GetPublicCategories()
+    {
+        var categories = await _categoryRepository.GetAllAsync();
+        return Ok(categories);
     }
 
     [AllowAnonymous]

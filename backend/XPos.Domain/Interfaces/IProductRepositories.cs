@@ -29,4 +29,6 @@ public interface IProductRepository
     Task<bool> UpdateCostAsync(long productId, decimal newCost);
     Task<bool> DeleteAsync(long id);
     Task<IEnumerable<Product>> GetByCategoryAsync(long categoryId);
+    Task<IEnumerable<Product>> GetTopSellingAsync(int limit);
+    Task<IEnumerable<Product>> GetPublicProductsAsync();
 }

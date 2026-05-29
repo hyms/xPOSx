@@ -89,7 +89,7 @@
                         >
                             <q-list style="min-width: 180px">
                                 <q-item-label header>Usuario</q-item-label>
-                                <q-item clickable v-close-popup to="/profile">
+                                <q-item clickable v-close-popup to="/admin-pos/profile">
                                     <q-item-section avatar
                                         ><q-icon name="person" color="primary"
                                     /></q-item-section>
@@ -98,7 +98,7 @@
                                 <q-item
                                     clickable
                                     v-close-popup
-                                    to="/settings"
+                                    to="/admin-pos/settings"
                                     v-if="
                                         authStore.hasPermission('settings_view')
                                     "
@@ -147,7 +147,7 @@
             style="transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background-color: var(--color-background-elevated);" 
         >
             <q-list padding style="padding-bottom: 60px;">
-                    <q-item clickable to="/dashboard" exact active-class="active-item">
+                    <q-item clickable to="/admin-pos/dashboard" exact active-class="active-item">
                         <q-item-section avatar>
                             <q-icon name="dashboard" />
                         </q-item-section>
@@ -157,7 +157,7 @@
                     <q-item
                         v-if="authStore.hasPermission('pos_view')"
                         clickable
-                        to="/pos"
+                        to="/admin-pos/pos"
                         exact
                         active-class="active-item"
                         class="pos-cta-btn"
@@ -183,7 +183,7 @@
                         <q-item
                             v-if="authStore.hasPermission('sales_view')"
                             clickable
-                            to="/sales"
+                            to="/admin-pos/sales"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -194,7 +194,7 @@
                         <q-item
                             v-if="authStore.hasPermission('sales_view')"
                             clickable
-                            to="/web-orders"
+                            to="/admin-pos/web-orders"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -205,7 +205,7 @@
                         <q-item
                             v-if="authStore.hasPermission('quotations_view')"
                             clickable
-                            to="/quotations"
+                            to="/admin-pos/quotations"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -216,7 +216,7 @@
                         <q-item
                             v-if="authStore.hasPermission('expenses_view')"
                             clickable
-                            to="/expenses"
+                            to="/admin-pos/expenses"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -227,7 +227,7 @@
                         <q-item
                             v-if="authStore.hasPermission('returns_view')"
                             clickable
-                            to="/returns"
+                            to="/admin-pos/returns"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -247,7 +247,7 @@
                         <q-item
                             v-if="authStore.hasPermission('products_view')"
                             clickable
-                            to="/products"
+                            to="/admin-pos/products"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -258,7 +258,7 @@
                         <q-item
                             v-if="authStore.hasPermission('purchases_view')"
                             clickable
-                            to="/purchases"
+                            to="/admin-pos/purchases"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -269,7 +269,7 @@
                         <q-item
                             v-if="authStore.hasPermission('transfers_view')"
                             clickable
-                            to="/transfers"
+                            to="/admin-pos/transfers"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -280,7 +280,7 @@
                         <q-item
                             v-if="authStore.hasPermission('adjustments_view')"
                             clickable
-                            to="/adjustments"
+                            to="/admin-pos/adjustments"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -291,7 +291,7 @@
                         <q-item
                             v-if="authStore.hasPermission('categories_view')"
                             clickable
-                            to="/categories"
+                            to="/admin-pos/categories"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -302,7 +302,7 @@
                         <q-item
                             v-if="authStore.hasPermission('units_view')"
                             clickable
-                            to="/units"
+                            to="/admin-pos/units"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -322,7 +322,7 @@
                         <q-item
                             v-if="authStore.hasPermission('clients_view')"
                             clickable
-                            to="/clients"
+                            to="/admin-pos/clients"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -333,7 +333,7 @@
                         <q-item
                             v-if="authStore.hasPermission('providers_view')"
                             clickable
-                            to="/providers"
+                            to="/admin-pos/providers"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -355,7 +355,7 @@
                         <q-item
                             v-if="authStore.hasPermission('users_view')"
                             clickable
-                            to="/users"
+                            to="/admin-pos/users"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -366,7 +366,7 @@
                         <q-item
                             v-if="authStore.hasPermission('roles_view')"
                             clickable
-                            to="/roles"
+                            to="/admin-pos/roles"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -374,14 +374,14 @@
                             /></q-item-section>
                             <q-item-section>Roles</q-item-section>
                         </q-item>
-                        <!-- <q-item v-if="authStore.hasPermission('permissions_view')" clickable to="/permissions" active-class="active-item">
+                        <!-- <q-item v-if="authStore.hasPermission('permissions_view')" clickable to="/admin-pos/permissions" active-class="active-item">
               <q-item-section avatar><q-icon name="key" /></q-item-section>
               <q-item-section>Permisos</q-item-section>
             </q-item> -->
                         <q-item
                             v-if="authStore.hasPermission('warehouses_view')"
                             clickable
-                            to="/warehouses"
+                            to="/admin-pos/warehouses"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -392,7 +392,7 @@
                         <q-item
                             v-if="authStore.hasPermission('warehouses_view')"
                             clickable
-                            to="/cash-registers"
+                            to="/admin-pos/cash-registers"
                             active-class="active-item"
                         >
                             <q-item-section avatar
@@ -405,7 +405,7 @@
                     <q-item
                         v-if="authStore.hasPermission('reports_view')"
                         clickable
-                        to="/reports"
+                        to="/admin-pos/reports"
                         active-class="active-item"
                     >
                         <q-item-section avatar
@@ -417,7 +417,7 @@
                     <q-item
                         v-if="authStore.hasPermission('settings_view')"
                         clickable
-                        to="/settings"
+                        to="/admin-pos/settings"
                         active-class="active-item"
                     >
                         <q-item-section avatar
@@ -534,7 +534,7 @@ function toggleFullscreen() {
 
 function logout() {
     authStore.logout();
-    router.push("/login");
+    router.push("/admin-pos");
 }
 
 onMounted(() => {

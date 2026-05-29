@@ -25,7 +25,7 @@
           <div class="text-h5 text-center q-mt-md q-mx-auto max-width-md opacity-90">
             Escanea, transfiere y asegura tus productos favoritos con total facilidad y seguridad.
           </div>
-          <q-btn label="Explorar Catálogo" to="/catalog" color="primary" size="lg" no-caps class="q-mt-xl shadow-glow text-weight-bold" />
+          <q-btn label="Explorar Catálogo" to="/productos" color="primary" size="lg" no-caps class="q-mt-xl shadow-glow text-weight-bold" />
         </q-carousel-slide>
 
         <q-carousel-slide :name="2" class="column no-wrap flex-center text-white q-px-lg">
@@ -36,7 +36,7 @@
           <div class="text-h5 text-center q-mt-md q-mx-auto max-width-md opacity-90">
             Sube tu comprobante de pago comprimido al instante desde tu dispositivo.
           </div>
-          <q-btn label="Ver Productos" to="/catalog" color="primary" size="lg" no-caps class="q-mt-xl shadow-glow text-weight-bold" />
+          <q-btn label="Ver Productos" to="/productos" color="primary" size="lg" no-caps class="q-mt-xl shadow-glow text-weight-bold" />
         </q-carousel-slide>
       </q-carousel>
     </div>
@@ -64,6 +64,90 @@
         </div>
       </div>
 
+      <!-- Section: Top 5 Best Sellers -->
+      <div v-if="topProducts.length > 0" class="q-mb-xl">
+        <div class="row items-center justify-between q-mb-md">
+          <div>
+            <h3 class="text-weight-bold q-my-none text-primary">Top 5 Más Vendidos</h3>
+            <p class="text-subtitle1 text-grey-6 q-mt-xs">Los productos favoritos de nuestra comunidad</p>
+          </div>
+        </div>
+
+        <div v-if="loading" class="row justify-center q-py-xl">
+          <q-spinner-dots color="primary" size="40px" />
+        </div>
+
+        <div v-else class="row q-col-gutter-lg justify-center">
+          <div 
+            v-for="(product, index) in topProducts" 
+            :key="product.id" 
+            class="col-12 col-sm-6 col-md-2 col-lg-2"
+            style="min-width: 220px;"
+          >
+            <q-card class="product-card glass-card hover-lift relative-position flex column justify-between">
+              <!-- Image container -->
+              <div class="product-image-container relative-position overflow-hidden">
+                <q-img 
+                  :src="product.image || '/icons/placeholder_product.png'" 
+                  height="160px" 
+                  fit="cover" 
+                  class="product-img"
+                >
+                  <template #error>
+                    <div class="absolute-full flex flex-center bg-grey-3 text-grey-7">
+                      <q-icon name="image" size="36px" />
+                    </div>
+                  </template>
+                </q-img>
+                <!-- Ranking Badge with metals for first 3 -->
+                <q-avatar 
+                  size="36px" 
+                  :style="{ 
+                    backgroundColor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : 'var(--q-primary)',
+                    color: index < 2 ? '#000000' : '#FFFFFF',
+                    fontWeight: 'bold',
+                    border: '2px solid white'
+                  }"
+                  class="absolute top-left q-ma-sm shadow-2 text-subtitle1"
+                >
+                  {{ index + 1 }}
+                </q-avatar>
+              </div>
+
+              <!-- Content -->
+              <q-card-section class="q-pa-sm flex-grow">
+                <div class="text-caption text-primary text-weight-bold text-uppercase tracking-wider">
+                  {{ product.category?.name || product.categoryName || 'General' }}
+                </div>
+                <div class="text-subtitle1 text-weight-bold q-mt-xs text-ellipsis-2 text-height-tight" style="min-height: 2.2rem; font-size: 0.95rem;">
+                  {{ product.name }}
+                </div>
+                <div class="row items-center justify-between q-mt-sm">
+                  <span class="text-subtitle1 text-weight-bolder text-primary">
+                    {{ formatPrice(product.price) }}
+                  </span>
+                </div>
+              </q-card-section>
+
+              <!-- Actions -->
+              <q-card-actions class="q-px-sm q-pb-sm q-pt-none">
+                <q-btn 
+                  color="primary" 
+                  unelevated 
+                  no-caps 
+                  dense
+                  icon="add_shopping_cart" 
+                  label="Al carrito" 
+                  class="full-width text-weight-bold" 
+                  @click="addToCart(product)"
+                  style="font-size: 0.85rem;"
+                />
+              </q-card-actions>
+            </q-card>
+          </div>
+        </div>
+      </div>
+
       <!-- Section: Featured Products Grid -->
       <div class="q-mb-xl">
         <div class="row items-center justify-between q-mb-md">
@@ -71,21 +155,21 @@
             <h3 class="text-weight-bold q-my-none text-primary">Productos Destacados</h3>
             <p class="text-subtitle1 text-grey-6 q-mt-xs">Nuestra selección exclusiva para pre-venta</p>
           </div>
-          <q-btn flat no-caps color="primary" label="Ver todo el catálogo" icon-right="arrow_forward" to="/catalog" class="text-weight-bold" />
+          <q-btn flat no-caps color="primary" label="Ver todo el catálogo" icon-right="arrow_forward" to="/productos" class="text-weight-bold" />
         </div>
 
         <div v-if="loading" class="row justify-center q-py-xl">
           <q-spinner-dots color="primary" size="40px" />
         </div>
 
-        <div v-else-if="products.length === 0" class="text-center q-py-xl">
+        <div v-else-if="featuredProducts.length === 0" class="text-center q-py-xl glass-card q-pa-md">
           <q-icon name="inventory_2" size="60px" color="grey-5" />
           <p class="text-h6 text-grey-6 q-mt-md">No hay productos destacados disponibles en este momento.</p>
         </div>
 
         <div v-else class="row q-col-gutter-lg">
           <div 
-            v-for="product in products.slice(0, 8)" 
+            v-for="product in featuredProducts.slice(0, 8)" 
             :key="product.id" 
             class="col-12 col-sm-6 col-md-3"
           >
@@ -116,7 +200,7 @@
               <!-- Content -->
               <q-card-section class="q-pa-md flex-grow">
                 <div class="text-subtitle2 text-primary text-weight-bold text-uppercase tracking-wider">
-                  {{ product.categoryName || 'General' }}
+                  {{ product.category?.name || product.categoryName || 'General' }}
                 </div>
                 <div class="text-h6 text-weight-bold q-mt-xs text-ellipsis-2 text-height-tight">
                   {{ product.name }}
@@ -152,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { productService } from '@/services/product.service';
@@ -164,7 +248,12 @@ const slide = ref(1);
 const autoplay = ref(true);
 const loading = ref(true);
 const products = ref<any[]>([]);
+const topProducts = ref<any[]>([]);
 const categories = ref<any[]>([]);
+
+const featuredProducts = computed(() => {
+  return products.value.filter(p => p.isFeatured || p.is_featured);
+});
 
 const router = useRouter();
 const $q = useQuasar();
@@ -173,17 +262,19 @@ const { formatCurrency } = useCurrency();
 
 onMounted(async () => {
   try {
-    const [prodResponse, catResponse] = await Promise.all([
-      productService.getAll(),
-      categoryService.getAll()
+    const [prodResponse, topResponse, catResponse] = await Promise.all([
+      productService.getPublic(),
+      productService.getPublicTop(5),
+      categoryService.getPublic()
     ]);
     products.value = prodResponse.data;
+    topProducts.value = topResponse.data;
     categories.value = catResponse.data;
   } catch (err) {
     console.error('Error fetching shop data:', err);
     $q.notify({
       color: 'negative',
-      message: 'No se pudieron cargar los productos destacados.',
+      message: 'No se pudieron cargar los datos de la tienda.',
       icon: 'report_problem'
     });
   } finally {
@@ -207,7 +298,7 @@ const addToCart = (product: any) => {
 };
 
 const goToCatalogWithCategory = (catId: number) => {
-  router.push({ path: '/catalog', query: { categoryId: catId.toString() } });
+  router.push({ path: '/productos', query: { categoryId: catId.toString() } });
 };
 </script>
 

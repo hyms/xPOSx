@@ -1,6 +1,6 @@
 import { RouteRecordRaw } from 'vue-router';
 
-const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'admin';
+const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'admin-pos';
 
 const routes: RouteRecordRaw[] = [
   // Public Shop Routes
@@ -9,7 +9,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../layouts/PublicLayout.vue'),
     meta: { requiresAuth: false },
     children: [
-      { path: '', component: () => import('../pages/shop/IndexPage.vue') },
+      { path: '', component: () => import('../pages/shop/IndexShop.vue') },
       { path: 'productos', component: () => import('../pages/shop/CatalogPage.vue') },
       { path: 'carrito', component: () => import('../pages/shop/CartPage.vue') },
       { path: 'p/:slug', component: () => import('../pages/shop/CmsPage.vue') }
@@ -28,7 +28,7 @@ const routes: RouteRecordRaw[] = [
 
   // Private Backoffice Routes
   {
-    path: '/',
+    path: '/admin-pos',
     component: () => import('../layouts/MainLayout.vue'),
     meta: { requiresAuth: true },
     children: [
@@ -108,6 +108,17 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', component: () => import('../components/PurchaseReturnPrint.vue'), props: true }
     ]
+  },
+
+  // Automatic Redirection for old Admin/Backoffice routes to /admin-pos/...
+  {
+    path: '/:adminRoute(dashboard|users|roles|permissions|warehouses|cash-registers|pos|sales|web-orders|quotations|categories|units|products|purchases|expenses|expense-categories|returns|adjustments|transfers|clients|providers|profile|reports|settings)/:pathMatch(.*)*',
+    redirect: to => {
+      const adminRoute = to.params.adminRoute;
+      const pathMatch = to.params.pathMatch;
+      const suffix = pathMatch ? `/${Array.isArray(pathMatch) ? pathMatch.join('/') : pathMatch}` : '';
+      return `/admin-pos/${adminRoute}${suffix}`;
+    }
   },
 
   // Redirect all unknown, traditional, and unauthorized routes to Shop Index (/)

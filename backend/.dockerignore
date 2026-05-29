@@ -1,7 +1,9 @@
+# Dockerignore for .NET Backend
 .git
 .github
 .vscode
 .vs
+.idea
 bin/
 obj/
 *.user
@@ -9,3 +11,10 @@ obj/
 *.sln.docstates
 out/
 publish/
+appsettings.Development.json
+*.db
+*.sql
+*.bkp
+*.dump
+Dockerfile
+docker-compose*

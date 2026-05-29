@@ -2,8 +2,8 @@ import type { RouteLocationNormalized } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useWarehouseStore } from '@/stores/warehouse';
 
-// Obtener la ruta secreta de administración de las variables de entorno o usar 'admin' como fallback robusto
-const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'admin';
+// Obtener la ruta secreta de administración de las variables de entorno o usar 'admin-pos' como fallback robusto
+const secretLoginPath = import.meta.env.VITE_ADMIN_SECRET_PATH || 'admin-pos';
 const secretLoginFullPath = secretLoginPath.startsWith('/') ? secretLoginPath : `/${secretLoginPath}`;
 
 /**
@@ -59,9 +59,9 @@ export async function setupNavigationGuard(
 
   // Caso 2: Bloquear de forma silenciosa e impenetrable los endpoints tradicionales de login/admin
   // para evitar la exposición innecesaria de accesos.
-  if (secretLoginFullPath !== '/admin' && (targetPath === '/login' || targetPath === '/admin')) {
+  if (secretLoginFullPath !== '/admin-pos' && (targetPath === '/login' || targetPath === '/admin-pos')) {
     return '/';
-  } else if (secretLoginFullPath === '/admin' && targetPath === '/login') {
+  } else if (secretLoginFullPath === '/admin-pos' && targetPath === '/login') {
     return '/';
   }
 
@@ -69,7 +69,7 @@ export async function setupNavigationGuard(
   if (isPublicRoute(to)) {
     // Si un usuario ya autenticado intenta ir al login secreto, lo movemos al dashboard privado
     if (targetPath.toLowerCase() === secretLoginFullPath.toLowerCase() && authStore.isAuthenticated) {
-      return '/dashboard';
+      return '/admin-pos/dashboard';
     }
     return true;
   }

@@ -6,5 +6,6 @@ export const categoryService = {
   getById: (id: number) => api.get<Category>(`/categories/${id}`),
   create: (category: Category) => api.post('/categories', category),
   update: (id: number, category: Category) => api.put(`/categories/${id}`, category),
-  delete: (id: number) => api.delete(`/categories/${id}`)
+  delete: (id: number) => api.delete(`/categories/${id}`),
+  getPublic: () => api.get<Category[]>('/categories/public')
 }

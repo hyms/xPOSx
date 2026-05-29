@@ -102,6 +102,7 @@ public class ProductRepository : IProductRepository
         var sqlBuilder = new StringBuilder(@"
             SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
                    p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   p.is_featured, p.is_web_available,
                    (SELECT COALESCE(SUM(pw.qty), 0) FROM product_warehouse pw WHERE pw.product_id = p.id AND pw.warehouse_id = @activeWarehouseId) as stock,
                    c.id, c.code, c.name,
                    u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
@@ -138,6 +139,7 @@ public class ProductRepository : IProductRepository
         var sqlBuilder = new StringBuilder(@"
             SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
                    p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   p.is_featured, p.is_web_available,
                    (SELECT COALESCE(SUM(pw.qty), 0) FROM product_warehouse pw WHERE pw.product_id = p.id AND pw.warehouse_id = @activeWarehouseId) as stock,
                    c.id, c.code, c.name,
                    u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
@@ -169,8 +171,8 @@ public class ProductRepository : IProductRepository
         // Initial stock creation (if any) would be handled via inventory operations after product creation.
 
         const string sql = @"
-            INSERT INTO products (code, name, cost, price, category_id, unit_id, unit_sale_id, unit_purchase_id, tax_net, tax_method, note, stock_alert, is_variant, not_selling, is_active, image, created_at) 
-            VALUES (@Code, @Name, @Cost, @Price, @CategoryId, @UnitId, @UnitSaleId, @UnitPurchaseId, @TaxNet, @TaxMethod, @Note, @StockAlert, @IsVariant, @NotSelling, @IsActive, @Image, CURRENT_TIMESTAMP) 
+            INSERT INTO products (code, name, cost, price, category_id, unit_id, unit_sale_id, unit_purchase_id, tax_net, tax_method, note, stock_alert, is_variant, not_selling, is_active, image, is_featured, is_web_available, created_at) 
+            VALUES (@Code, @Name, @Cost, @Price, @CategoryId, @UnitId, @UnitSaleId, @UnitPurchaseId, @TaxNet, @TaxMethod, @Note, @StockAlert, @IsVariant, @NotSelling, @IsActive, @Image, @IsFeatured, @IsWebAvailable, CURRENT_TIMESTAMP) 
             RETURNING id";
         return await _uow.Connection.ExecuteScalarAsync<long>(sql, product, _uow.Transaction);
     }
@@ -186,7 +188,7 @@ public class ProductRepository : IProductRepository
                 unit_id = @UnitId, unit_sale_id = @UnitSaleId, unit_purchase_id = @UnitPurchaseId, 
                 tax_net = @TaxNet, tax_method = @TaxMethod, note = @Note, stock_alert = @StockAlert, 
                 is_variant = @IsVariant, not_selling = @NotSelling, is_active = @IsActive, 
-                image = @Image, updated_at = CURRENT_TIMESTAMP 
+                image = @Image, is_featured = @IsFeatured, is_web_available = @IsWebAvailable, updated_at = CURRENT_TIMESTAMP 
             WHERE id = @Id");
         
         var parameters = new DynamicParameters(product);
@@ -253,5 +255,56 @@ public class ProductRepository : IProductRepository
         }
 
         return await _uow.Connection.QueryAsync<Product>(sqlBuilder.ToString(), parameters, _uow.Transaction);
+    }
+
+    public async Task<IEnumerable<Product>> GetTopSellingAsync(int limit)
+    {
+        const string sql = @"
+            SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
+                   p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   p.is_featured, p.is_web_available,
+                   c.id, c.code, c.name,
+                   u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN units u ON p.unit_id = u.id
+            LEFT JOIN (
+                SELECT product_id, SUM(quantity) as total_qty
+                FROM sale_details sd
+                INNER JOIN sales s ON sd.sale_id = s.id AND s.deleted_at IS NULL
+                GROUP BY product_id
+            ) sales_summary ON p.id = sales_summary.product_id
+            WHERE p.deleted_at IS NULL 
+              AND p.is_web_available = true 
+              AND p.is_active = true
+            ORDER BY COALESCE(sales_summary.total_qty, 0) DESC, p.id ASC
+            LIMIT @Limit";
+
+        return await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sql,
+            (p, c, u) => { p.Category = c; p.Unit = u; return p; },
+            new { Limit = limit },
+            splitOn: "id,id",
+            transaction: _uow.Transaction);
+    }
+
+    public async Task<IEnumerable<Product>> GetPublicProductsAsync()
+    {
+        const string sql = @"
+            SELECT p.id, p.code, p.name, p.cost, p.price, p.category_id, p.unit_id, p.unit_sale_id, p.unit_purchase_id,
+                   p.tax_net, p.tax_method, p.note, p.stock_alert, p.is_variant, p.not_selling, p.is_active, p.image,
+                   p.is_featured, p.is_web_available,
+                   c.id, c.code, c.name,
+                   u.id, u.name, u.short_name, u.base_unit, u.operator, u.operator_value
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN units u ON p.unit_id = u.id
+            WHERE p.deleted_at IS NULL 
+              AND p.is_web_available = true 
+              AND p.is_active = true";
+
+        return await _uow.Connection.QueryAsync<Product, Category, Unit, Product>(sql,
+            (p, c, u) => { p.Category = c; p.Unit = u; return p; },
+            splitOn: "id,id",
+            transaction: _uow.Transaction);
     }
 }

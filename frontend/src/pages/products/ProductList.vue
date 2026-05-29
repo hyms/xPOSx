@@ -60,6 +60,26 @@
                         </q-td>
                     </template>
 
+                    <template v-slot:body-cell-name="props">
+                        <q-td :props="props">
+                            <div class="text-weight-bold">{{ props.row.name }}</div>
+                            <div class="row items-center q-gutter-xs q-mt-xs">
+                                <q-badge v-if="props.row.isFeatured" color="accent" text-color="white" dense>
+                                    <q-icon name="star" size="12px" class="q-mr-xs" />
+                                    Destacado
+                                </q-badge>
+                                <q-badge v-if="props.row.isWebAvailable" color="positive" dense>
+                                    <q-icon name="language" size="12px" class="q-mr-xs" />
+                                    Web
+                                </q-badge>
+                                <q-badge v-else color="grey-5" dense>
+                                    <q-icon name="language" size="12px" class="q-mr-xs" />
+                                    No Web
+                                </q-badge>
+                            </div>
+                        </q-td>
+                    </template>
+
                     <template v-slot:body-cell-actions="props">
                         <q-td :props="props">
                             <q-btn
@@ -235,6 +255,16 @@
                         <q-checkbox
                             v-model="formData.notSelling"
                             label="No disponible para venta"
+                        />
+                        <q-checkbox
+                            v-model="formData.isFeatured"
+                            label="Destacado (Web)"
+                            color="accent"
+                        />
+                        <q-checkbox
+                            v-model="formData.isWebAvailable"
+                            label="Disponible para la web"
+                            color="positive"
                         />
                     </div>
                 </div>
@@ -528,6 +558,8 @@ const formData = reactive<Product & { image?: string }>({
     isActive: true,
     notSelling: false,
     image: "",
+    isFeatured: false,
+    isWebAvailable: true,
 });
 
 const columns = [
@@ -610,7 +642,9 @@ const openDialog = (product?: any) => {
         Object.assign(formData, { 
             ...product,
             categoryId: product.categoryId || product.category_id || product.category?.id,
-            unitId: product.unitId || product.unit_id || product.unit?.id
+            unitId: product.unitId || product.unit_id || product.unit?.id,
+            isFeatured: product.isFeatured ?? product.is_featured ?? false,
+            isWebAvailable: product.isWebAvailable ?? product.is_web_available ?? true
         });
     } else {
         isEdit.value = false;
@@ -626,6 +660,8 @@ const openDialog = (product?: any) => {
             isActive: true,
             notSelling: false,
             image: "",
+            isFeatured: false,
+            isWebAvailable: true
         });
     }
     showDialog.value = true;

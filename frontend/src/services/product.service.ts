@@ -6,5 +6,7 @@ export const productService = {
   getById: (id: number) => api.get<Product>(`/products/${id}`),
   create: (product: Product) => api.post('/products', product),
   update: (id: number, product: Product) => api.put(`/products/${id}`, product),
-  delete: (id: number) => api.delete(`/products/${id}`)
+  delete: (id: number) => api.delete(`/products/${id}`),
+  getPublic: () => api.get<Product[]>('/products/public'),
+  getPublicTop: (limit = 5) => api.get<Product[]>(`/products/public/top?limit=${limit}`)
 }

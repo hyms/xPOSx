@@ -40,4 +40,6 @@ export interface Product {
   notSelling?: boolean
   isActive?: boolean
   image?: string
+  isFeatured?: boolean
+  isWebAvailable?: boolean
 }
