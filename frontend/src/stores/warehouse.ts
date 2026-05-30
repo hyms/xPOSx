@@ -9,6 +9,25 @@ interface WarehouseState {
   loading: boolean
 }
 
+function getActiveWarehouseIdFromToken(): number | null {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const claims = JSON.parse(jsonPayload);
+    return claims.active_warehouse_id ? Number(claims.active_warehouse_id) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export const useWarehouseStore = defineStore('warehouse', {
   state: (): WarehouseState => ({
     warehouses: [],
@@ -29,13 +48,26 @@ export const useWarehouseStore = defineStore('warehouse', {
         const response = await warehouseService.getAll()
         this.warehouses = response.data
         
-        if (!this.activeWarehouseId && this.warehouses.length > 0) {
-          const savedId = localStorage.getItem('active_warehouse_id')
-          if (savedId) {
-            this.activeWarehouseId = Number(savedId)
-          } else {
-            this.activeWarehouseId = this.warehouses[0].id
-            localStorage.setItem('active_warehouse_id', String(this.activeWarehouseId))
+        let savedId = localStorage.getItem('active_warehouse_id')
+          ? Number(localStorage.getItem('active_warehouse_id'))
+          : null;
+
+        // If no saved ID or it's not in the list of available warehouses, fallback to first warehouse
+        if (!savedId || !this.warehouses.some((w: Warehouse) => w.id === savedId)) {
+          if (this.warehouses.length > 0) {
+            savedId = this.warehouses[0].id;
+          }
+        }
+
+        const tokenWarehouseId = getActiveWarehouseIdFromToken();
+
+        if (savedId !== null) {
+          this.activeWarehouseId = savedId;
+          localStorage.setItem('active_warehouse_id', String(savedId));
+
+          // If the token claim is different from the active warehouse ID, switch it to sync the backend!
+          if (savedId !== tokenWarehouseId) {
+            await this.setActiveWarehouse(savedId);
           }
         }
       } finally {
